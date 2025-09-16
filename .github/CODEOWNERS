@@ -1,0 +1,18 @@
+# CODEOWNERS - adjust handles to your team
+# Each line is a file pattern followed by one or more owners.
+# Learn more: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @Siddharth0089
+
+# Backend (Express)
+/rentally-backend/ @Siddharth0089
+
+# Flutter app
+/rentally/ @Siddharth0089
+
+# Admin app (web)
+/rentally-admin/ @Siddharth0089
+
+# Tip: add your friend's GitHub handle here too, e.g.
+# /rentally-backend/ @your-friends-username
