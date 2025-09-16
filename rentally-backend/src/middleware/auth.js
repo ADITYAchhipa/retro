@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const prisma = require('../lib/prisma');
 
 const auth = async (req, res, next) => {
   try {
@@ -12,9 +12,20 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Check if user still exists and is active
-    const user = await User.findById(decoded.userId).select('-password');
+
+    // Check if user still exists and is active (Prisma)
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        avatar: true,
+        isVerified: true,
+        isActive: true,
+      },
+    });
     if (!user || !user.isActive) {
       return res.status(401).json({ 
         error: 'Token is no longer valid.' 

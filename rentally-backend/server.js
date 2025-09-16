@@ -1,22 +1,37 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const passport = require('passport');
 require('dotenv').config();
 
-// Initialize Prisma Client
-const prisma = new PrismaClient();
+// Optional: Initialize Prisma Client only if DB is enabled
+const DB_ENABLED = (process.env.DB_ENABLED || 'false').toLowerCase() === 'true';
+let prisma = null;
+if (DB_ENABLED) {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    prisma = new PrismaClient();
+  } catch (e) {
+    console.warn('Prisma not available. Ensure @prisma/client is installed and schema is generated.');
+  }
+}
 
-// Import routes
-const authRoutes = require('./src/routes/auth');
-const userRoutes = require('./src/routes/users');
-const propertyRoutes = require('./src/routes/properties');
-const bookingRoutes = require('./src/routes/bookings');
+// Load route modules only when DB is enabled to avoid importing Prisma-dependent code
+let authRoutes, userRoutes, propertyRoutes, bookingRoutes;
+if (DB_ENABLED) {
+  authRoutes = require('./src/routes/auth');
+  userRoutes = require('./src/routes/users');
+  propertyRoutes = require('./src/routes/properties');
+  bookingRoutes = require('./src/routes/bookings');
+}
 
-// Import passport config
-require('./src/config/passport');
+// Import passport strategies only when DB is enabled
+if (DB_ENABLED) {
+  require('./src/config/passport');
+} else {
+  console.log('ℹ️  DB_ENABLED=false, skipping passport strategy initialization');
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -45,6 +60,10 @@ app.use(passport.initialize());
 
 // Database connection
 async function connectDatabase() {
+  if (!DB_ENABLED || !prisma) {
+    console.log('ℹ️  DB_ENABLED=false, skipping database connection');
+    return;
+  }
   try {
     await prisma.$connect();
     console.log('✅ Connected to PostgreSQL');
@@ -57,10 +76,19 @@ async function connectDatabase() {
 connectDatabase();
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/properties', propertyRoutes);
-app.use('/api/bookings', bookingRoutes);
+if (DB_ENABLED) {
+  app.use('/api/auth', authRoutes);
+  app.use('/api/users', userRoutes);
+  app.use('/api/properties', propertyRoutes);
+  app.use('/api/bookings', bookingRoutes);
+} else {
+  app.get('/api', (req, res) => {
+    res.json({
+      status: 'OK',
+      message: 'API running without database. Set DB_ENABLED=true and configure .env to enable full API.'
+    });
+  });
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

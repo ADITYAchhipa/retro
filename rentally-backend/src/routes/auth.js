@@ -93,12 +93,12 @@ router.post('/login', [
 
     const { email, password } = req.body;
 
-    // Find user
-    const user = await prisma.user.findUnique({ 
+    // Find user (use findFirst unless you have a composite unique on email+authProvider)
+    const user = await prisma.user.findFirst({ 
       where: { 
         email,
         authProvider: 'LOCAL'
-      }
+      },
     });
     if (!user) {
       return res.status(400).json({ error: 'Invalid credentials' });
@@ -156,11 +156,12 @@ router.get('/google/callback',
   passport.authenticate('google', { session: false }),
   async (req, res) => {
     try {
-      const token = generateToken(req.user._id);
-      
-      // Update last login
-      req.user.lastLogin = new Date();
-      await req.user.updateLastActive();
+      const token = generateToken(req.user.id);
+      // Update last login/active in DB
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { lastLogin: new Date(), lastActive: new Date() },
+      });
 
       // Redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -186,11 +187,12 @@ router.get('/facebook/callback',
   passport.authenticate('facebook', { session: false }),
   async (req, res) => {
     try {
-      const token = generateToken(req.user._id);
-      
-      // Update last login
-      req.user.lastLogin = new Date();
-      await req.user.updateLastActive();
+      const token = generateToken(req.user.id);
+      // Update last login/active in DB
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { lastLogin: new Date(), lastActive: new Date() },
+      });
 
       // Redirect to frontend with token
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -207,7 +209,24 @@ router.get('/facebook/callback',
 // @access  Private
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password');
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        avatar: true,
+        isVerified: true,
+        phone: true,
+        address: true,
+        preferences: true,
+        ratings: true,
+        stats: true,
+        tokens: true,
+        subscription: true,
+      },
+    });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -215,7 +234,7 @@ router.get('/me', auth, async (req, res) => {
     res.json({
       success: true,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -242,8 +261,9 @@ router.get('/me', auth, async (req, res) => {
 router.post('/logout', auth, async (req, res) => {
   try {
     // Update last active time
-    await User.findByIdAndUpdate(req.user.userId, {
-      'stats.lastActive': new Date()
+    await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { lastActive: new Date() },
     });
 
     res.json({
@@ -261,12 +281,15 @@ router.post('/logout', auth, async (req, res) => {
 // @access  Private
 router.post('/refresh', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, isActive: true },
+    });
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'User not found or inactive' });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(req.user.userId);
     
     res.json({
       success: true,
