@@ -8,6 +8,11 @@ import PropertiesPage from '@/pages/PropertiesPage'
 import BookingsPage from '@/pages/BookingsPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
 import SettingsPage from '@/pages/SettingsPage'
+import ReviewsPage from '@/pages/ReviewsPage'
+import ContentModerationPage from '@/pages/ContentModerationPage'
+import PaymentsPage from '@/pages/PaymentsPage'
+import LogsPage from '@/pages/LogsPage'
+import SupportPage from '@/pages/SupportPage'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -32,8 +37,13 @@ function App() {
                   <Route path="/users" element={<UsersPage />} />
                   <Route path="/properties" element={<PropertiesPage />} />
                   <Route path="/bookings" element={<BookingsPage />} />
+                  <Route path="/reviews" element={<ReviewsPage />} />
+                  <Route path="/content" element={<ContentModerationPage />} />
+                  <Route path="/payments" element={<PaymentsPage />} />
+                  <Route path="/logs" element={<LogsPage />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/support" element={<SupportPage />} />
                 </Routes>
               </Layout>
             ) : (
