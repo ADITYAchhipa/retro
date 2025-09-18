@@ -1,0 +1,124 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rentaly}
+      POSTGRES_USER: ${POSTGRES_USER:-rentaly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rentaly}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.24
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.24
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  minio:
+    image: minio/minio:RELEASE.2024-07-26T18-06-17Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  stripe-mock:
+    image: stripe/stripe-mock:latest
+    ports:
+      - "12111:12111"
+      - "12112:12112"
+
+  django:
+    build:
+      context: ../../apps/backend/django_core
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-rentaly}
+      POSTGRES_USER: ${POSTGRES_USER:-rentaly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rentaly}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-secret}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../apps/backend/django_core:/app
+
+  fastapi-realtime:
+    build:
+      context: ../../apps/backend/fastapi-realtime
+    depends_on:
+      redis:
+        condition: service_started
+    ports:
+      - "8101:8000"
+    volumes:
+      - ../../apps/backend/fastapi-realtime:/app
+
+  fastapi-fx:
+    build:
+      context: ../../apps/backend/fastapi-fx
+    depends_on:
+      redis:
+        condition: service_started
+    ports:
+      - "8102:8000"
+    volumes:
+      - ../../apps/backend/fastapi-fx:/app
+
+  fastapi-ml:
+    build:
+      context: ../../apps/backend/fastapi-ml
+    ports:
+      - "8103:8000"
+    volumes:
+      - ../../apps/backend/fastapi-ml:/app
+
+volumes:
+  postgres_data:
+  es_data:
+  minio_data:

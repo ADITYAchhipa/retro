@@ -1,0 +1,39 @@
+# Dart/Flutter
+.dart_tool/
+.packages
+.pub-cache/
+build/
+flutter_*.png
+
+# IntelliJ/VSCode
+.idea/
+.vscode/
+*.iml
+
+# Android
+**/android/.gradle/
+**/android/local.properties
+**/android/app/release/
+**/android/app/debug/
+
+# iOS/macOS
+**/ios/Pods/
+**/ios/.generated/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/App.framework
+**/ios/Flutter/engine/
+**/macos/Flutter/ephemeral/
+
+# Linux/Windows build
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# Web
+**/web/.dart_tool/
+
+# Misc
+*.log
+*.lock.hive
+*.lock.hive-journal
