@@ -14,5 +14,25 @@
 # Admin app (web)
 /rentally-admin/ @Siddharth0089 @ADITYAchhipa
 
+# Repo meta and automation
+/.github/ @Siddharth0089 @ADITYAchhipa
+/.github/workflows/** @Siddharth0089 @ADITYAchhipa
+
+# Prisma schema and migrations
+/rentally-backend/prisma/** @Siddharth0089 @ADITYAchhipa
+
+# Flutter assets
+/rentally/assets/** @Siddharth0089 @ADITYAchhipa
+
+# Infra & DevOps
+/infra/** @Siddharth0089 @ADITYAchhipa
+/docker-compose.yml @Siddharth0089 @ADITYAchhipa
+
+# Docs
+*.md @Siddharth0089 @ADITYAchhipa
+/README.md @Siddharth0089 @ADITYAchhipa
+/COLLABORATION_GUIDE.md @Siddharth0089 @ADITYAchhipa
+
 # Tip: add your friend's GitHub handle here too, e.g.
 # /rentally-backend/ @your-friends-username
+
