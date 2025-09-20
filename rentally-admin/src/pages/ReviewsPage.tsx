@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { StarIcon, MagnifyingGlassIcon, FunnelIcon, CheckCircleIcon, XCircleIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline'
+import { StarIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline'
 
 interface ReviewItem {
   id: string

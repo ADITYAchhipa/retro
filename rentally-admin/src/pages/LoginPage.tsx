@@ -5,7 +5,6 @@ import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '@/stores/authStore'
-import api from '@/lib/api'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -29,19 +28,30 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
     try {
-      const response = await api.post('/auth/login', data)
-      const { token, user } = response.data
-
-      if (user.role !== 'ADMIN') {
-        toast.error('Access denied. Admin privileges required.')
-        return
+      // Demo credentials for frontend-only admin panel
+      if (data.email === 'admin@rentally.com' && data.password === 'admin123') {
+        const mockUser = {
+          id: 'admin-1',
+          name: 'Admin User',
+          email: 'admin@rentally.com',
+          role: 'ADMIN',
+          avatar: undefined
+        }
+        
+        const mockToken = 'demo-admin-token-' + Date.now()
+        
+        login(mockToken, mockUser)
+        toast.success('Welcome back!')
+      } else {
+        toast.error('Invalid credentials. Use: admin@rentally.com / admin123')
       }
-
-      login(token, user)
-      toast.success('Welcome back!')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Login failed')
+      toast.error('Login failed')
     } finally {
       setIsLoading(false)
     }
@@ -51,8 +61,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100">
-            <svg className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
+            <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
             </svg>
           </div>
@@ -116,7 +126,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

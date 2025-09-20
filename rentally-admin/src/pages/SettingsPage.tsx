@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import {
-  UserIcon,
   CogIcon,
+  UserIcon,
   BellIcon,
   ShieldCheckIcon,
-  KeyIcon,
-  GlobeAltIcon,
-  CurrencyDollarIcon,
-  EnvelopeIcon
+  KeyIcon
 } from '@heroicons/react/24/outline'
 
 export default function SettingsPage() {

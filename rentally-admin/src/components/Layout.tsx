@@ -17,7 +17,7 @@ import {
   DocumentTextIcon,
   LifebuoyIcon,
 } from '@heroicons/react/24/outline'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '../stores/authStore'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -68,7 +68,7 @@ export default function Layout({ children }: LayoutProps) {
                   to={item.href}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-primary-100 text-primary-700'
+                      ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                   onClick={() => setSidebarOpen(false)}
@@ -98,7 +98,7 @@ export default function Layout({ children }: LayoutProps) {
                   to={item.href}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
                     isActive
-                      ? 'bg-primary-100 text-primary-700'
+                      ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -117,7 +117,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="sticky top-0 z-10 flex h-16 bg-white shadow-sm border-b border-gray-200">
           <button
             type="button"
-            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
+            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
@@ -129,7 +129,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="ml-4 flex items-center md:ml-6 space-x-4 relative">
               {/* Notifications */}
               <button
-                className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 onClick={() => setShowNotifications((v) => !v)}
                 aria-label="Notifications"
               >
@@ -153,7 +153,7 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
                   </div>
                   <div className="px-4 py-2 border-t border-gray-200 text-right">
-                    <button className="text-sm text-primary-600 hover:text-primary-700" onClick={() => setShowNotifications(false)}>Close</button>
+                    <button className="text-sm text-blue-600 hover:text-blue-700" onClick={() => setShowNotifications(false)}>Close</button>
                   </div>
                 </div>
               )}

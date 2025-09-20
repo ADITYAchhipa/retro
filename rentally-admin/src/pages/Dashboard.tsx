@@ -8,7 +8,8 @@ import {
   ArrowDownIcon
 } from '@heroicons/react/24/outline'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
-import api from '@/lib/api'
+import { useCountryStore } from '@/stores/countryStore'
+// import api from '@/lib/api'
 
 const stats = [
   { name: 'Total Users', value: '2,847', change: '+12%', changeType: 'increase', icon: UsersIcon },
@@ -33,18 +34,51 @@ const propertyTypeData = [
   { name: 'Equipment', value: 5, color: '#EF4444' },
 ]
 
+const recentBookings = [
+  { id: 1, property: 'Modern Apartment Downtown', user: 'John Smith', amount: '$340', status: 'confirmed' },
+  { id: 2, property: 'Tesla Model 3', user: 'Sarah Wilson', amount: '$85', status: 'pending' },
+  { id: 3, property: 'Beach House Villa', user: 'Mike Johnson', amount: '$520', status: 'confirmed' }
+]
+
 export default function Dashboard() {
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard'],
+  const { selectedCountry } = useCountryStore()
+  
+  const { isLoading } = useQuery({
+    queryKey: ['analytics', selectedCountry.code],
     queryFn: async () => {
-      // Mock data for now - replace with actual API call
+      // Mock data that varies by country
+      const baseData = {
+        users: 2847,
+        properties: 1234,
+        bookings: 5678,
+        revenue: 89432
+      }
+      
+      // Simulate country-specific data
+      if (selectedCountry.code === 'ALL') {
+        return baseData
+      }
+      
+      const countryMultipliers: Record<string, number> = {
+        'US': 1.0,
+        'GB': 0.3,
+        'DE': 0.25,
+        'CA': 0.2,
+        'AU': 0.15,
+        'IN': 0.4,
+        'JP': 0.2,
+        'FR': 0.18,
+        'BR': 0.12,
+        'MX': 0.08
+      }
+      
+      const multiplier = countryMultipliers[selectedCountry.code] || 0.05
+      
       return {
-        stats,
-        recentBookings: [
-          { id: 1, property: 'Modern Apartment', user: 'John Doe', amount: '$450', status: 'confirmed' },
-          { id: 2, property: 'Tesla Model 3', user: 'Jane Smith', amount: '$120', status: 'pending' },
-          { id: 3, property: 'Beach House', user: 'Mike Johnson', amount: '$890', status: 'confirmed' },
-        ]
+        users: Math.floor(baseData.users * multiplier),
+        properties: Math.floor(baseData.properties * multiplier),
+        bookings: Math.floor(baseData.bookings * multiplier),
+        revenue: Math.floor(baseData.revenue * multiplier)
       }
     }
   })
@@ -150,7 +184,7 @@ export default function Dashboard() {
             <h3 className="text-lg font-medium text-gray-900">Recent Bookings</h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {dashboardData?.recentBookings.map((booking) => (
+            {recentBookings.map((booking: any) => (
               <div key={booking.id} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div>
