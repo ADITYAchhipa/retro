@@ -19,12 +19,10 @@ class AuthWrapper extends ConsumerWidget {
       case AuthStatus.authenticated:
         final userRole = authState.user?.role ?? UserRole.seeker;
         switch (userRole) {
-          case UserRole.admin:
-            // In-app admin panel disabled; use web admin instead. Send to home.
-            return const OriginalHomeScreen();
           case UserRole.owner:
             return const CleanOwnerDashboardScreen();
           case UserRole.seeker:
+          default:
             return const OriginalHomeScreen();
         }
       case AuthStatus.loading:

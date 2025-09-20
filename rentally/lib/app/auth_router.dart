@@ -48,7 +48,6 @@ import '../features/payouts/payout_history_screen.dart';
 import '../features/payouts/withdrawal_screen.dart';
 import '../features/calendar/calendar_sync_screen.dart';
 import '../features/owner/promote_listing_screen.dart';
-import '../features/agency/agency_management_screen.dart';
 import '../features/security/two_factor_setup_screen.dart';
 import '../features/support/ticket_list_screen.dart';
 import '../features/support/dispute_resolution_screen.dart';
@@ -60,6 +59,7 @@ import '../features/payment/payment_integration_screen.dart' show PaymentIntegra
 import '../features/widgets/property_gallery_widget.dart' show FullScreenGallery;
 import '../features/video/video_tour_system.dart' show VideoTourSchedulingScreen;
 import '../features/support/contact_support_screen.dart';
+import '../features/compliance/gdpr_compliance_screen.dart';
 
 // Root navigator key to allow certain routes to appear above the ShellRoute
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -137,7 +137,7 @@ class Routes {
   static const String withdrawal = '/payouts/withdraw';
   static const String calendarSync = '/calendar-sync';
   static const String promoteListing = '/promote-listing';
-  static const String agency = '/agency';
+  static const String compliance = '/compliance';
   static const String twoFactor = '/security/2fa';
   static const String tickets = '/support/tickets';
   static const String contactSupport = '/support/contact';
@@ -415,16 +415,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           return _fadeSlidePage(child: ModularReviewsScreen(propertyId: propertyId));
         },
       ),
-      // Calendar Sync and Agency Management as immersive (root navigator)
+      // Calendar Sync as immersive (root navigator)
       GoRoute(
         path: Routes.calendarSync,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const CalendarSyncScreen()),
       ),
       GoRoute(
-        path: Routes.agency,
+        path: Routes.compliance,
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const AgencyManagementScreen()),
+        pageBuilder: (context, state) => _fadeSlidePage(child: const GDPRComplianceScreen()),
       ),
       // Settings & Monetization flows (immersive, outside Shell)
       GoRoute(

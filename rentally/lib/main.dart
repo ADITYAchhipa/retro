@@ -120,8 +120,8 @@ class _MyAppState extends ConsumerState<MyApp> {
       } else if (savedTheme == 'system') {
         ref.read(AppNotifiers.themeModeProvider.notifier).state = ThemeMode.system;
       } else {
-        // Default to following device settings
-        ref.read(AppNotifiers.themeModeProvider.notifier).state = ThemeMode.system;
+        // Default to light theme
+        ref.read(AppNotifiers.themeModeProvider.notifier).state = ThemeMode.light;
       }
     } catch (_) {
       // ignore errors, default locale will be used

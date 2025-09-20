@@ -14,7 +14,7 @@ lib/
 │   └── router.dart        # App routing configuration
 ├── features/              # Feature modules
 │   ├── analytics/         # Analytics and tracking
-│   ├── ar/               # Augmented Reality features
+│  
 │   ├── auth/             # Authentication screens
 │   ├── country/          # Country selection
 │   ├── home/             # Home screen and dashboard

@@ -105,5 +105,4 @@ class User {
 enum UserRole {
   seeker,
   owner,
-  admin,
 }

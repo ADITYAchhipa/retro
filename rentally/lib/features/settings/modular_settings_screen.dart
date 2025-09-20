@@ -1284,28 +1284,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             }
           },
         ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.group, color: Colors.orange),
-          ),
-          title: const Text('Agency Management'),
-          subtitle: const Text('Co-owners and staff'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.agency);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
+        
       ],
     );
   }
@@ -1316,9 +1295,9 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         return 'Seeker';
       case UserRole.owner:
         return 'Owner';
-      case UserRole.admin:
-        return 'Admin';
       case UserRole.guest:
+        return 'Guest';
+      default:
         return 'Guest';
     }
   }
@@ -1503,6 +1482,28 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
       'Privacy & Data',
       Icons.privacy_tip,
       [
+        ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.indigo.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.privacy_tip, color: Colors.indigo),
+          ),
+          title: const Text('Privacy & Data'),
+          subtitle: const Text('Manage data rights and consent'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            ref.read(immersiveRouteOpenProvider.notifier).state = true;
+            await context.push(Routes.compliance);
+            if (mounted) {
+              ref.read(immersiveRouteOpenProvider.notifier).state = false;
+            }
+          },
+        ),
+        const Divider(height: 1),
         SwitchListTile(
           secondary: Container(
             width: 40,

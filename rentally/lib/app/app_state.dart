@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum UserRole { seeker, owner, admin }
+enum UserRole { seeker, owner }
 
 enum AuthStatus { 
   initial, 
@@ -103,14 +103,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
           name: 'Test Owner',
           phone: '+1234567891',
           role: UserRole.owner,
-        );
-      } else if (email == 'admin@test.com' && password == 'admin123') {
-        user = const User(
-          id: 'admin_001',
-          email: 'admin@test.com',
-          name: 'Test Admin',
-          phone: '+1234567892',
-          role: UserRole.admin,
         );
       } else if (email == 'demo@rentally.com' && password == 'demo123') {
         user = const User(

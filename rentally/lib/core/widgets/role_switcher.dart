@@ -108,10 +108,10 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
         return app.UserRole.seeker;
       case UserRole.owner:
         return app.UserRole.owner;
-      case UserRole.admin:
-        return app.UserRole.admin;
       case UserRole.guest:
         // Default seekers for guest mode in app state
+        return app.UserRole.seeker;
+      default:
         return app.UserRole.seeker;
     }
   }
@@ -122,10 +122,10 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
         return 'Seeker';
       case UserRole.owner:
         return 'Owner';
-      case UserRole.admin:
-        return 'Admin';
       case UserRole.guest:
         return 'Guest';
+      default:
+        return 'Seeker';
     }
   }
 
@@ -136,10 +136,10 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
         return Icons.search;
       case UserRole.owner:
         return Icons.business;
-      case UserRole.admin:
-        return Icons.admin_panel_settings;
       case UserRole.guest:
         return Icons.person;
+      default:
+        return Icons.search;
     }
   }
 
@@ -366,10 +366,10 @@ class CompactRoleSwitcher extends StatelessWidget {
         return 'Seeker';
       case UserRole.owner:
         return 'Owner';
-      case UserRole.admin:
-        return 'Admin';
       case UserRole.guest:
         return 'Guest';
+      default:
+        return 'Seeker';
     }
   }
 
@@ -379,10 +379,10 @@ class CompactRoleSwitcher extends StatelessWidget {
         return Icons.search;
       case UserRole.owner:
         return Icons.business;
-      case UserRole.admin:
-        return Icons.admin_panel_settings;
       case UserRole.guest:
         return Icons.person;
+      default:
+        return Icons.search;
     }
   }
 }

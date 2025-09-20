@@ -109,7 +109,6 @@ enum UserRole {
   guest,
   seeker,
   owner,
-  admin,
 }
 
 class UserPreferences {
