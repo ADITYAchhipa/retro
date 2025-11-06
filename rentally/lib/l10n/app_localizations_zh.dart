@@ -4,273 +4,267 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Chinese (`zh`).
+class AppLocalizationsZh extends AppLocalizations {
+  AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'Rentaly';
+  String get appTitle => 'Rentally';
 
   @override
-  String get splashWelcome => 'Welcome to Rentally';
+  String get splashWelcome => '欢迎使用 Rentally';
 
   @override
-  String get onboarding => 'Onboarding';
+  String get onboarding => '引导';
 
   @override
-  String get country => 'Select Country';
+  String get country => '国家';
 
   @override
-  String get login => 'Login';
+  String get login => '登录 / 注册';
 
   @override
-  String get role => 'Choose Role';
+  String get role => '选择角色';
 
   @override
-  String get home => 'Home';
+  String get home => '首页';
 
   @override
-  String get search => 'Search';
+  String get search => '搜索';
 
   @override
-  String get listing => 'Listing';
+  String get listing => '房源';
 
   @override
-  String get booking => 'Booking';
+  String get booking => '预订';
 
   @override
-  String get payment => 'Payment';
+  String get payment => '支付';
 
   @override
-  String get confirmation => 'Confirmation';
+  String get confirmation => '确认';
 
   @override
-  String get ownerDashboard => 'Owner Dashboard';
+  String get ownerDashboard => '房东仪表板';
 
   @override
-  String get addListing => 'Add Listing';
+  String get addListing => '添加房源';
 
   @override
-  String get bookingRequests => 'Booking Requests';
+  String get bookingRequests => '预订请求';
 
   @override
-  String get settings => 'Settings';
+  String get settings => '设置';
 
   @override
-  String get next => 'Next';
+  String get next => '下一步';
 
   @override
-  String get skip => 'Skip';
+  String get skip => '跳过';
 
   @override
-  String get continueLabel => 'Continue';
+  String get continueLabel => '继续';
 
   @override
-  String get seeker => 'Seeker';
+  String get seeker => '租客';
 
   @override
-  String get owner => 'Owner';
+  String get owner => '所有者';
 
   @override
-  String get themeMode => 'Theme Mode';
+  String get themeMode => '主题模式';
 
   @override
-  String get system => 'System';
+  String get system => '系统';
 
   @override
-  String get light => 'Light';
+  String get light => '轻';
 
   @override
-  String get dark => 'Dark';
+  String get dark => '深色';
 
   @override
-  String get themePreview => 'Theme preview';
+  String get themePreview => '主题预览';
 
   @override
-  String get current => 'Current';
+  String get current => '当前';
 
   @override
-  String get appTagline => 'Find Rooms, Vehicles, & More Anywhere in the World';
+  String get appTagline => '在世界任何地方寻找房间、车辆等';
 
   @override
-  String get onboardingSlide1Title => 'Find Rentals Across the Globe';
+  String get onboardingSlide1Title => '在全球范围内寻找租赁';
 
   @override
-  String get onboardingSlide1Desc =>
-      'Discover rooms, apartments, and vehicles in any country';
+  String get onboardingSlide1Desc => '在任何国家发现房间、公寓和车辆';
 
   @override
-  String get onboardingSlide2Title => 'Pay in Your Currency, Stay Anywhere';
+  String get onboardingSlide2Title => '用您的货币支付，住在任何地方';
 
   @override
-  String get onboardingSlide2Desc =>
-      'Automatic currency conversion and local payment methods';
+  String get onboardingSlide2Desc => '自动货币转换和本地支付方式';
 
   @override
-  String get onboardingSlide3Title =>
-      'Be a Seeker or Become an Owner Instantly';
+  String get onboardingSlide3Title => '立即成为租客或房东';
 
   @override
-  String get onboardingSlide3Desc =>
-      'Switch between finding rentals and listing your properties';
+  String get onboardingSlide3Desc => '在寻找租赁和出租您的房产之间切换';
 
   @override
-  String get getStarted => 'Get Started';
+  String get getStarted => '开始使用';
 
   @override
-  String get register => 'Register';
+  String get register => '注册';
 
   @override
-  String get email => 'Email';
+  String get email => '邮箱';
 
   @override
-  String get password => 'Password';
+  String get password => '密码';
 
   @override
-  String get name => 'Name';
+  String get name => '姓名';
 
   @override
-  String get phone => 'Phone';
+  String get phone => '电话';
 
   @override
-  String get confirmPassword => 'Confirm Password';
+  String get confirmPassword => '确认密码';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => '忘记密码？';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account?';
+  String get dontHaveAccount => '没有账户？';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account?';
+  String get alreadyHaveAccount => '已有账户？';
 
   @override
-  String get signUp => 'Sign Up';
+  String get signUp => '注册';
 
   @override
-  String get signIn => 'Sign In';
+  String get signIn => '登录';
 
   @override
-  String get searchHint => 'Search location, property, or vehicle...';
+  String get searchHint => '搜索位置、房产或车辆...';
 
   @override
-  String get filters => 'Filters';
+  String get filters => '筛选';
 
   @override
-  String get categories => 'Categories';
+  String get categories => '分类';
 
   @override
-  String get referralAndEarn => 'Referral & Earn';
+  String get referralAndEarn => '推荐赚取';
 
   @override
-  String get dashboard => 'Dashboard';
+  String get dashboard => '仪表板';
 
   @override
-  String get rewards => 'Rewards';
+  String get rewards => '奖励';
 
   @override
-  String get history => 'History';
+  String get history => '历史';
 
   @override
-  String get totalTokens => 'Total Tokens';
+  String get totalTokens => '总代币';
 
   @override
-  String get totalReferrals => 'Total Referrals';
+  String get totalReferrals => '总推荐数';
 
   @override
-  String get yourReferralCode => 'Your Referral Code';
+  String get yourReferralCode => '您的推荐码';
 
   @override
-  String get copyCode => 'Copy Code';
+  String get copyCode => '复制代码';
 
   @override
-  String get shareCodeToEarnTokens =>
-      'Share this code with friends to earn tokens';
+  String get shareCodeToEarnTokens => '与朋友分享此代码以赚取代币';
 
   @override
-  String get quickActions => 'Quick Actions';
+  String get quickActions => '快速操作';
 
   @override
-  String get shareCode => 'Share Code';
+  String get shareCode => '分享代码';
 
   @override
-  String get inviteFriends => 'Invite Friends';
+  String get inviteFriends => '邀请朋友';
 
   @override
-  String get recentActivity => 'Recent Activity';
+  String get recentActivity => '最近活动';
 
   @override
-  String get availableBalance => 'Available Balance';
+  String get availableBalance => '可用余额';
 
   @override
-  String get earnTokensFor => 'Earn Tokens For';
+  String get earnTokensFor => '赚取代币';
 
   @override
-  String get userSignup => 'User Signup';
+  String get userSignup => '用户注册';
 
   @override
-  String get firstBooking => 'First Booking';
+  String get firstBooking => '首次预订';
 
   @override
-  String get hostRegistration => 'Host Registration';
+  String get hostRegistration => '房东注册';
 
   @override
-  String get propertyListing => 'Property Listing';
+  String get propertyListing => '房源发布';
 
   @override
-  String get firstReview => 'First Review';
+  String get firstReview => '首次评价';
 
   @override
-  String get redeemTokens => 'Redeem Tokens';
+  String get redeemTokens => '兑换代币';
 
   @override
-  String get tokensToRedeem => 'Tokens to Redeem';
+  String get tokensToRedeem => '要兑换的代币';
 
   @override
-  String get available => 'Available';
+  String get available => '可用';
 
   @override
-  String get redeemNow => 'Redeem Now';
+  String get redeemNow => '立即兑换';
 
   @override
-  String get noTransactionsYet => 'No transactions yet';
+  String get noTransactionsYet => '暂无交易';
 
   @override
-  String get startReferringToSeeHistory =>
-      'Start referring friends to see your transaction history';
+  String get startReferringToSeeHistory => '开始推荐朋友以查看您的交易历史';
 
   @override
-  String get rooms => 'Rooms';
+  String get rooms => '房间';
 
   @override
-  String get apartments => 'Apartments';
+  String get apartments => '公寓';
 
   @override
-  String get vehicles => 'Vehicles';
+  String get vehicles => '车辆';
 
   @override
-  String get cars => 'Cars';
+  String get cars => '汽车';
 
   @override
-  String get bikes => 'Bikes';
+  String get bikes => '自行车';
 
   @override
-  String get priceRange => 'Price Range';
+  String get priceRange => '价格范围';
 
   @override
-  String get amenities => 'Amenities';
+  String get amenities => '设施';
 
   @override
   String get wifi => 'Wi-Fi';
 
   @override
-  String get ac => 'AC';
+  String get ac => '空调';
 
   @override
-  String get parking => 'Parking';
+  String get parking => '停车';
 
   @override
-  String get insurance => 'Insurance';
+  String get insurance => '保险';
 
   @override
   String get applyFilters => 'Apply Filters';
@@ -285,13 +279,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listView => 'List View';
 
   @override
-  String get featured => 'Featured';
+  String get featured => '精选';
 
   @override
   String get nearYou => 'Near You';
 
   @override
-  String get popular => 'Popular';
+  String get popular => '热门';
 
   @override
   String get bookNow => 'Book Now';
@@ -330,7 +324,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get guests => 'Guests';
 
   @override
-  String get duration => 'Duration';
+  String get duration => '时长';
 
   @override
   String get days => 'days';
@@ -357,7 +351,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taxes => 'Taxes';
 
   @override
-  String get total => 'Total';
+  String get total => '总计';
 
   @override
   String get paymentMethod => 'Payment Method';
@@ -436,7 +430,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agreeTerms => 'I agree to the Terms & Cancellation Policies';
 
   @override
-  String get apply => 'Apply';
+  String get apply => '申请';
 
   @override
   String get tokensToApply => 'Tokens to apply';
@@ -450,7 +444,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get clear => 'Clear';
+  String get clear => '清楚';
 
   @override
   String tokenUnitEquation(Object currency) {
@@ -644,7 +638,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listingTitle => 'Listing Title';
 
   @override
-  String get description => 'Description';
+  String get description => '描述';
 
   @override
   String get propertyType => 'Property Type';
@@ -656,7 +650,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apartment => 'Apartment';
 
   @override
-  String get house => 'House';
+  String get house => '房屋';
 
   @override
   String get vehicle => 'Vehicle';
@@ -680,16 +674,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pricePerHour => 'Price per Hour';
 
   @override
-  String get address => 'Address';
+  String get address => '地址';
 
   @override
-  String get city => 'City';
+  String get city => '城市';
 
   @override
-  String get state => 'State';
+  String get state => '状态';
 
   @override
-  String get zipCode => 'ZIP Code';
+  String get zipCode => '邮编';
 
   @override
   String get bedrooms => 'Bedrooms';
@@ -795,7 +789,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typeMessage => 'Type a message...';
 
   @override
-  String get send => 'Send';
+  String get send => '发送';
 
   @override
   String get online => 'Online';
@@ -852,7 +846,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatWith => 'Chat with';
 
   @override
-  String get support => 'Support';
+  String get support => '支持';
 
   @override
   String get helpCenter => 'Help Center';
@@ -879,7 +873,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
-  String get profile => 'Profile';
+  String get profile => '个人资料';
 
   @override
   String get editProfile => 'Edit Profile';
@@ -900,10 +894,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gender => 'Gender';
 
   @override
-  String get male => 'Male';
+  String get male => '男性';
 
   @override
-  String get female => 'Female';
+  String get female => '女性';
 
   @override
   String get other => 'Other';
@@ -1110,10 +1104,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noReviews => 'No reviews yet';
 
   @override
-  String get comment => 'Comment';
+  String get comment => '评论';
 
   @override
-  String get submit => 'Submit';
+  String get submit => '提交';
 
   @override
   String get advancedSearch => 'Advanced Search';
@@ -1122,7 +1116,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get location => 'Location';
+  String get location => '位置';
 
   @override
   String get cityOrAddress => 'City or Address';
@@ -1155,7 +1149,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpSupport => 'Help & Support';
 
   @override
-  String get about => 'About';
+  String get about => '大约';
 
   @override
   String get darkMode => 'Dark Mode';
@@ -1181,7 +1175,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookings => 'Bookings';
 
   @override
-  String get help => 'Help';
+  String get help => '帮助';
 
   @override
   String get save => 'Save';
@@ -1193,7 +1187,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => '确认';
 
   @override
   String get yes => 'Yes';
@@ -1232,7 +1226,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportProperty => 'Report Property';
 
   @override
-  String get rating => 'Rating';
+  String get rating => '评分';
 
   @override
   String get readAllReviews => 'Read All Reviews';
@@ -1247,13 +1241,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingCompleted => 'Booking Completed';
 
   @override
-  String get subtotal => 'Subtotal';
+  String get subtotal => '小计';
 
   @override
   String get fees => 'Fees';
 
   @override
-  String get discount => 'Discount';
+  String get discount => '折扣';
 
   @override
   String get adminDashboard => 'Admin Dashboard';
@@ -1277,7 +1271,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hourAgo => 'hour ago';
 
   @override
-  String get close => 'Close';
+  String get close => '接近';
 
   @override
   String get dynamicPricing => 'Dynamic Pricing';

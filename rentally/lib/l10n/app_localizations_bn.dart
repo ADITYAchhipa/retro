@@ -4,157 +4,158 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Bengali Bangla (`bn`).
+class AppLocalizationsBn extends AppLocalizations {
+  AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
-  String get appTitle => 'Rentaly';
+  String get appTitle => 'রেন্টালি';
 
   @override
-  String get splashWelcome => 'Welcome to Rentally';
+  String get splashWelcome => 'রেন্টালিতে আপনাকে স্বাগতম';
 
   @override
-  String get onboarding => 'Onboarding';
+  String get onboarding => 'অনবোর্ডিং';
 
   @override
-  String get country => 'Select Country';
+  String get country => 'দেশ';
 
   @override
-  String get login => 'Login';
+  String get login => 'লগইন / সাইন আপ';
 
   @override
-  String get role => 'Choose Role';
+  String get role => 'ভূমিকা নির্বাচন করুন';
 
   @override
-  String get home => 'Home';
+  String get home => 'হোম';
 
   @override
-  String get search => 'Search';
+  String get search => 'অনুসন্ধান';
 
   @override
-  String get listing => 'Listing';
+  String get listing => 'তালিকা';
 
   @override
-  String get booking => 'Booking';
+  String get booking => 'বুকিং';
 
   @override
-  String get payment => 'Payment';
+  String get payment => 'পেমেন্ট';
 
   @override
-  String get confirmation => 'Confirmation';
+  String get confirmation => 'নিশ্চিতকরণ';
 
   @override
-  String get ownerDashboard => 'Owner Dashboard';
+  String get ownerDashboard => 'মালিক ড্যাশবোর্ড';
 
   @override
-  String get addListing => 'Add Listing';
+  String get addListing => 'তালিকা যোগ করুন';
 
   @override
-  String get bookingRequests => 'Booking Requests';
+  String get bookingRequests => 'বুকিং অনুরোধ';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'সেটিংস';
 
   @override
-  String get next => 'Next';
+  String get next => 'পরবর্তী';
 
   @override
-  String get skip => 'Skip';
+  String get skip => 'এড়িয়ে যান';
 
   @override
-  String get continueLabel => 'Continue';
+  String get continueLabel => 'চালিয়ে যান';
 
   @override
-  String get seeker => 'Seeker';
+  String get seeker => 'অনুসন্ধানকারী';
 
   @override
-  String get owner => 'Owner';
+  String get owner => 'মালিক';
 
   @override
-  String get themeMode => 'Theme Mode';
+  String get themeMode => 'থিম মোড';
 
   @override
-  String get system => 'System';
+  String get system => 'সিস্টেম';
 
   @override
-  String get light => 'Light';
+  String get light => 'হালকা';
 
   @override
-  String get dark => 'Dark';
+  String get dark => 'গাঢ়';
 
   @override
-  String get themePreview => 'Theme preview';
+  String get themePreview => 'থিম পূর্বরূপ';
 
   @override
-  String get current => 'Current';
+  String get current => 'বর্তমান';
 
   @override
-  String get appTagline => 'Find Rooms, Vehicles, & More Anywhere in the World';
+  String get appTagline =>
+      'বিশ্বের যেকোনো জায়গায় রুম, গাড়ি এবং আরও অনেক কিছু খুঁজুন';
 
   @override
-  String get onboardingSlide1Title => 'Find Rentals Across the Globe';
+  String get onboardingSlide1Title => 'বিশ্বব্যাপী ভাড়া খুঁজুন';
 
   @override
   String get onboardingSlide1Desc =>
-      'Discover rooms, apartments, and vehicles in any country';
+      'যেকোনো দেশে রুম, অ্যাপার্টমেন্ট এবং গাড়ি আবিষ্কার করুন';
 
   @override
-  String get onboardingSlide2Title => 'Pay in Your Currency, Stay Anywhere';
+  String get onboardingSlide2Title =>
+      'আপনার মুদ্রায় পেমেন্ট করুন, যেকোনো জায়গায় থাকুন';
 
   @override
   String get onboardingSlide2Desc =>
-      'Automatic currency conversion and local payment methods';
+      'স্বয়ংক্রিয় মুদ্রা রূপান্তর এবং স্থানীয় পেমেন্ট পদ্ধতি';
 
   @override
-  String get onboardingSlide3Title =>
-      'Be a Seeker or Become an Owner Instantly';
+  String get onboardingSlide3Title => 'অনুসন্ধানকারী হন বা তাৎক্ষণিক মালিক হন';
 
   @override
   String get onboardingSlide3Desc =>
-      'Switch between finding rentals and listing your properties';
+      'ভাড়া খোঁজা এবং আপনার সম্পত্তি তালিকাভুক্ত করার মধ্যে স্যুইচ করুন';
 
   @override
-  String get getStarted => 'Get Started';
+  String get getStarted => 'শুরু করুন';
 
   @override
-  String get register => 'Register';
+  String get register => 'নিবন্ধন করুন';
 
   @override
-  String get email => 'Email';
+  String get email => 'ইমেইল';
 
   @override
-  String get password => 'Password';
+  String get password => 'পাসওয়ার্ড';
 
   @override
-  String get name => 'Name';
+  String get name => 'নাম';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'ফোন';
 
   @override
-  String get confirmPassword => 'Confirm Password';
+  String get confirmPassword => 'পাসওয়ার্ড নিশ্চিত করুন';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => 'পাসওয়ার্ড ভুলে গেছেন?';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account?';
+  String get dontHaveAccount => 'অ্যাকাউন্ট নেই?';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account?';
+  String get alreadyHaveAccount => 'ইতিমধ্যে অ্যাকাউন্ট আছে?';
 
   @override
-  String get signUp => 'Sign Up';
+  String get signUp => 'সাইন আপ';
 
   @override
-  String get signIn => 'Sign In';
+  String get signIn => 'সাইন ইন';
 
   @override
-  String get searchHint => 'Search location, property, or vehicle...';
+  String get searchHint => 'অবস্থান, সম্পত্তি বা গাড়ি অনুসন্ধান করুন...';
 
   @override
-  String get filters => 'Filters';
+  String get filters => 'ফিল্টার';
 
   @override
   String get categories => 'Categories';
@@ -163,7 +164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralAndEarn => 'Referral & Earn';
 
   @override
-  String get dashboard => 'Dashboard';
+  String get dashboard => 'ড্যাশবোর্ড';
 
   @override
   String get rewards => 'Rewards';
@@ -240,7 +241,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start referring friends to see your transaction history';
 
   @override
-  String get rooms => 'Rooms';
+  String get rooms => 'রুম';
 
   @override
   String get apartments => 'Apartments';
@@ -258,16 +259,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get priceRange => 'Price Range';
 
   @override
-  String get amenities => 'Amenities';
+  String get amenities => 'সুবিধা';
 
   @override
-  String get wifi => 'Wi-Fi';
+  String get wifi => 'ওয়াই-ফাই';
 
   @override
   String get ac => 'AC';
 
   @override
-  String get parking => 'Parking';
+  String get parking => 'পার্কিং';
 
   @override
   String get insurance => 'Insurance';
@@ -294,10 +295,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get popular => 'Popular';
 
   @override
-  String get bookNow => 'Book Now';
+  String get bookNow => 'এখনই বুক করুন';
 
   @override
-  String get viewDetails => 'View Details';
+  String get viewDetails => 'বিস্তারিত দেখুন';
 
   @override
   String get perNight => 'per night';
@@ -315,19 +316,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectDates => 'Select Dates';
 
   @override
-  String get checkIn => 'Check In';
+  String get checkIn => 'চেক ইন';
 
   @override
-  String get checkOut => 'Check Out';
+  String get checkOut => 'চেক আউট';
 
   @override
-  String get checkInTime => 'Check-in time';
+  String get checkInTime => 'চেক ইন সময়';
 
   @override
-  String get checkOutTime => 'Check-out time';
+  String get checkOutTime => 'চেক আউট সময়';
 
   @override
-  String get guests => 'Guests';
+  String get guests => 'অতিথি';
 
   @override
   String get duration => 'Duration';
@@ -348,25 +349,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralCredits => 'Referral credits';
 
   @override
-  String get basePrice => 'Base Price';
+  String get basePrice => 'মূল দাম';
 
   @override
-  String get serviceFee => 'Service Fee';
+  String get serviceFee => 'সেবা ফি';
 
   @override
-  String get taxes => 'Taxes';
+  String get taxes => 'কর';
 
   @override
   String get total => 'Total';
 
   @override
-  String get paymentMethod => 'Payment Method';
+  String get paymentMethod => 'পেমেন্ট পদ্ধতি';
 
   @override
-  String get creditCard => 'Credit Card';
+  String get creditCard => 'ক্রেডিট কার্ড';
 
   @override
-  String get paypal => 'PayPal';
+  String get paypal => 'পেপ্যাল';
 
   @override
   String get cashOnArrival => 'Cash on arrival';
@@ -515,10 +516,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueAction => 'Continue';
 
   @override
-  String get adults => 'Adults';
+  String get adults => 'প্রাপ্তবয়স্ক';
 
   @override
-  String get children => 'Children';
+  String get children => 'শিশু';
 
   @override
   String get infants => 'Infants';
@@ -548,7 +549,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingError => 'Booking Error';
 
   @override
-  String get retry => 'Retry';
+  String get retry => 'পুনরায় চেষ্টা করুন';
 
   @override
   String get requestSubmitted => 'Request Submitted';
@@ -558,7 +559,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your booking request has been sent to the host.';
 
   @override
-  String get ok => 'OK';
+  String get ok => 'ঠিক আছে';
 
   @override
   String get couponApplied10 => 'Coupon applied: 10% off base';
@@ -620,7 +621,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingConfirmed => 'Booking Confirmed';
 
   @override
-  String get bookingId => 'Booking ID';
+  String get bookingId => 'বুকিং আইডি';
 
   @override
   String get thankYou => 'Thank you for your booking';
@@ -644,28 +645,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listingTitle => 'Listing Title';
 
   @override
-  String get description => 'Description';
+  String get description => 'বিবরণ';
 
   @override
-  String get propertyType => 'Property Type';
+  String get propertyType => 'সম্পত্তির ধরন';
 
   @override
-  String get room => 'Room';
+  String get room => 'রুম';
 
   @override
-  String get apartment => 'Apartment';
+  String get apartment => 'অ্যাপার্টমেন্ট';
 
   @override
-  String get house => 'House';
+  String get house => 'বাড়ি';
 
   @override
-  String get vehicle => 'Vehicle';
+  String get vehicle => 'গাড়ি';
 
   @override
-  String get car => 'Car';
+  String get car => 'কার';
 
   @override
-  String get bike => 'Bike';
+  String get bike => 'বাইক';
 
   @override
   String get pricePerNight => 'Price per Night';
@@ -680,31 +681,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pricePerHour => 'Price per Hour';
 
   @override
-  String get address => 'Address';
+  String get address => 'ঠিকানা';
 
   @override
-  String get city => 'City';
+  String get city => 'শহর';
 
   @override
-  String get state => 'State';
+  String get state => 'রাজ্য';
 
   @override
-  String get zipCode => 'ZIP Code';
+  String get zipCode => 'পিন কোড';
 
   @override
-  String get bedrooms => 'Bedrooms';
+  String get bedrooms => 'বেডরুম';
 
   @override
-  String get bathrooms => 'Bathrooms';
+  String get bathrooms => 'বাথরুম';
 
   @override
-  String get maxGuests => 'Max Guests';
+  String get maxGuests => 'সর্বোচ্চ অতিথি';
 
   @override
   String get selectAmenities => 'Select Amenities';
 
   @override
-  String get photos => 'Photos';
+  String get photos => 'ছবি';
 
   @override
   String get addPhotos => 'Add Photos';
@@ -728,7 +729,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inactive => 'Inactive';
 
   @override
-  String get pending => 'Pending';
+  String get pending => 'অপেক্ষমাণ';
 
   @override
   String get approved => 'Approved';
@@ -749,7 +750,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestDate => 'Request Date';
 
   @override
-  String get totalAmount => 'Total Amount';
+  String get totalAmount => 'মোট পরিমাণ';
 
   @override
   String get noListings => 'No listings yet';
@@ -786,10 +787,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chat => 'Chat';
 
   @override
-  String get messages => 'Messages';
+  String get messages => 'বার্তা';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'বিজ্ঞপ্তি';
 
   @override
   String get typeMessage => 'Type a message...';
@@ -798,13 +799,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get send => 'Send';
 
   @override
-  String get online => 'Online';
+  String get online => 'অনলাইন';
 
   @override
-  String get offline => 'Offline';
+  String get offline => 'অফলাইন';
 
   @override
-  String get lastSeen => 'Last seen';
+  String get lastSeen => 'শেষ দেখা';
 
   @override
   String get noMessages => 'No messages yet';
@@ -855,37 +856,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get support => 'Support';
 
   @override
-  String get helpCenter => 'Help Center';
+  String get helpCenter => 'সাহায্য কেন্দ্র';
 
   @override
   String get contactUs => 'Contact Us';
 
   @override
-  String get faq => 'FAQ';
+  String get faq => 'প্রায়শই জিজ্ঞাসিত প্রশ্ন';
 
   @override
-  String get reportIssue => 'Report Issue';
+  String get reportIssue => 'সমস্যা রিপোর্ট করুন';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => 'সেবার শর্তাবলী';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'গোপনীয়তা নীতি';
 
   @override
   String get aboutUs => 'About Us';
 
   @override
-  String get version => 'Version';
+  String get version => 'সংস্করণ';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'প্রোফাইল';
 
   @override
   String get editProfile => 'Edit Profile';
 
   @override
-  String get personalInfo => 'Personal Information';
+  String get personalInfo => 'ব্যক্তিগত তথ্য';
 
   @override
   String get firstName => 'First Name';
@@ -915,7 +916,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveChanges => 'Save Changes';
 
   @override
-  String get changePassword => 'Change Password';
+  String get changePassword => 'পাসওয়ার্ড পরিবর্তন করুন';
 
   @override
   String get currentPassword => 'Current Password';
@@ -930,22 +931,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePassword => 'Update Password';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'লগ আউট';
 
   @override
-  String get deleteAccount => 'Delete Account';
+  String get deleteAccount => 'অ্যাকাউন্ট মুছুন';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'বাতিল';
 
   @override
   String get upcoming => 'Upcoming';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'সম্পূর্ণ';
 
   @override
-  String get cancelled => 'Cancelled';
+  String get cancelled => 'বাতিল';
 
   @override
   String get noUpcomingBookings => 'No Upcoming Bookings';
@@ -969,7 +970,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You don\'t have any cancelled bookings.';
 
   @override
-  String get bookingDetails => 'Booking Details';
+  String get bookingDetails => 'বুকিং বিবরণ';
 
   @override
   String get modify => 'Modify';
@@ -987,7 +988,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nights => 'nights';
 
   @override
-  String get bookingDate => 'Booking Date';
+  String get bookingDate => 'বুকিং তারিখ';
 
   @override
   String get totalPrice => 'Total Price';
@@ -1002,7 +1003,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getDirections => 'Get Directions';
 
   @override
-  String get writeReview => 'Write Review';
+  String get writeReview => 'পর্যালোচনা লিখুন';
 
   @override
   String get wishlist => 'Wishlist';
@@ -1104,7 +1105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAtLeastOneImage => 'Please select at least one image';
 
   @override
-  String get reviews => 'Reviews';
+  String get reviews => 'পর্যালোচনা';
 
   @override
   String get noReviews => 'No reviews yet';
@@ -1122,7 +1123,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get location => 'Location';
+  String get location => 'অবস্থান';
 
   @override
   String get cityOrAddress => 'City or Address';
@@ -1134,7 +1135,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimumRating => 'Minimum Rating';
 
   @override
-  String get sortBy => 'Sort By';
+  String get sortBy => 'অনুসারে সাজান';
 
   @override
   String get searchProperties => 'Search Properties';
@@ -1146,25 +1147,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get otpVerification => 'OTP Verification';
 
   @override
-  String get preferences => 'Preferences';
+  String get preferences => 'পছন্দ';
 
   @override
   String get privacy => 'Privacy';
 
   @override
-  String get helpSupport => 'Help & Support';
+  String get helpSupport => 'সাহায্য এবং সহায়তা';
 
   @override
-  String get about => 'About';
+  String get about => 'সম্পর্কে';
 
   @override
-  String get darkMode => 'Dark Mode';
+  String get darkMode => 'ডার্ক মোড';
 
   @override
-  String get language => 'Language';
+  String get language => 'ভাষা';
 
   @override
-  String get currency => 'Currency';
+  String get currency => 'মুদ্রা';
 
   @override
   String maxImagesExceeded(Object count) {
@@ -1172,43 +1173,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'স্বাগতম';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'পছন্দের';
 
   @override
-  String get bookings => 'Bookings';
+  String get bookings => 'বুকিংস';
 
   @override
-  String get help => 'Help';
+  String get help => 'সাহায্য';
 
   @override
-  String get save => 'Save';
+  String get save => 'সংরক্ষণ';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'সম্পাদনা';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'মুছুন';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'নিশ্চিত করুন';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'হ্যাঁ';
 
   @override
-  String get no => 'No';
+  String get no => 'না';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'লোড হচ্ছে...';
 
   @override
-  String get error => 'Error';
+  String get error => 'ত্রুটি';
 
   @override
-  String get success => 'Success';
+  String get success => 'সফলতা';
 
   @override
   String get warning => 'Warning';
@@ -1223,16 +1224,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeFromWishlist => 'Remove from Wishlist';
 
   @override
-  String get shareProperty => 'Share Property';
+  String get shareProperty => 'সম্পত্তি শেয়ার করুন';
 
   @override
   String get contactOwner => 'Contact Owner';
 
   @override
-  String get reportProperty => 'Report Property';
+  String get reportProperty => 'সম্পত্তি রিপোর্ট করুন';
 
   @override
-  String get rating => 'Rating';
+  String get rating => 'রেটিং';
 
   @override
   String get readAllReviews => 'Read All Reviews';
@@ -1253,7 +1254,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fees => 'Fees';
 
   @override
-  String get discount => 'Discount';
+  String get discount => 'ছাড়';
 
   @override
   String get adminDashboard => 'Admin Dashboard';
@@ -1488,5 +1489,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goBack => 'Go Back';
 
   @override
-  String get checkAvailability => 'Check availability';
+  String get checkAvailability => 'উপলব্ধতা পরীক্ষা করুন';
 }

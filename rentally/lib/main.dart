@@ -179,7 +179,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           foregroundColor: EnterpriseLightTheme.primaryText,
           surfaceTintColor: Colors.transparent,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           color: EnterpriseLightTheme.cardBackground,
           shadowColor: EnterpriseLightTheme.cardShadow.withOpacity(0.1),
@@ -244,7 +244,7 @@ class _MyAppState extends ConsumerState<MyApp> {
           foregroundColor: EnterpriseDarkTheme.primaryText,
           surfaceTintColor: Colors.transparent,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           color: EnterpriseDarkTheme.surfaceBackground,
           shadowColor: EnterpriseDarkTheme.primaryShadow.withOpacity(0.18),

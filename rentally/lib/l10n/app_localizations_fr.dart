@@ -4,9 +4,9 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for French (`fr`).
+class AppLocalizationsFr extends AppLocalizations {
+  AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
   String get appTitle => 'Rentaly';
@@ -21,16 +21,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get country => 'Select Country';
 
   @override
-  String get login => 'Login';
+  String get login => 'Se connecter';
 
   @override
   String get role => 'Choose Role';
 
   @override
-  String get home => 'Home';
+  String get home => 'Accueil';
 
   @override
-  String get search => 'Search';
+  String get search => 'Rechercher';
 
   @override
   String get listing => 'Listing';
@@ -54,7 +54,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingRequests => 'Booking Requests';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Paramètres';
 
   @override
   String get next => 'Next';
@@ -118,43 +118,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getStarted => 'Get Started';
 
   @override
-  String get register => 'Register';
+  String get register => 'S\'inscrire';
 
   @override
-  String get email => 'Email';
+  String get email => 'E-mail';
 
   @override
-  String get password => 'Password';
+  String get password => 'Mot de passe';
 
   @override
-  String get name => 'Name';
+  String get name => 'Nom';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'Téléphone';
 
   @override
-  String get confirmPassword => 'Confirm Password';
+  String get confirmPassword => 'Confirmer le mot de passe';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => 'Mot de passe oublié ?';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account?';
+  String get dontHaveAccount => 'Vous n\'avez pas de compte ?';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account?';
+  String get alreadyHaveAccount => 'Vous avez déjà un compte ?';
 
   @override
-  String get signUp => 'Sign Up';
+  String get signUp => 'S\'inscrire';
 
   @override
-  String get signIn => 'Sign In';
+  String get signIn => 'Se connecter';
 
   @override
   String get searchHint => 'Search location, property, or vehicle...';
 
   @override
-  String get filters => 'Filters';
+  String get filters => 'Filtres';
 
   @override
   String get categories => 'Categories';
@@ -240,7 +240,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start referring friends to see your transaction history';
 
   @override
-  String get rooms => 'Rooms';
+  String get rooms => 'Chambres';
 
   @override
   String get apartments => 'Apartments';
@@ -255,10 +255,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bikes => 'Bikes';
 
   @override
-  String get priceRange => 'Price Range';
+  String get priceRange => 'Gamme de prix';
 
   @override
-  String get amenities => 'Amenities';
+  String get amenities => 'Équipements';
 
   @override
   String get wifi => 'Wi-Fi';
@@ -294,10 +294,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get popular => 'Popular';
 
   @override
-  String get bookNow => 'Book Now';
+  String get bookNow => 'Réserver maintenant';
 
   @override
-  String get viewDetails => 'View Details';
+  String get viewDetails => 'Voir les détails';
 
   @override
   String get perNight => 'per night';
@@ -315,10 +315,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectDates => 'Select Dates';
 
   @override
-  String get checkIn => 'Check In';
+  String get checkIn => 'Arrivée';
 
   @override
-  String get checkOut => 'Check Out';
+  String get checkOut => 'Départ';
 
   @override
   String get checkInTime => 'Check-in time';
@@ -327,7 +327,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkOutTime => 'Check-out time';
 
   @override
-  String get guests => 'Guests';
+  String get guests => 'Invités';
 
   @override
   String get duration => 'Duration';
@@ -360,10 +360,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get total => 'Total';
 
   @override
-  String get paymentMethod => 'Payment Method';
+  String get paymentMethod => 'Méthode de paiement';
 
   @override
-  String get creditCard => 'Credit Card';
+  String get creditCard => 'Carte de crédit';
 
   @override
   String get paypal => 'PayPal';
@@ -515,10 +515,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueAction => 'Continue';
 
   @override
-  String get adults => 'Adults';
+  String get adults => 'Adultes';
 
   @override
-  String get children => 'Children';
+  String get children => 'Enfants';
 
   @override
   String get infants => 'Infants';
@@ -617,7 +617,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmBooking => 'Confirm Booking';
 
   @override
-  String get bookingConfirmed => 'Booking Confirmed';
+  String get bookingConfirmed => 'Réservation confirmée';
 
   @override
   String get bookingId => 'Booking ID';
@@ -647,7 +647,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get description => 'Description';
 
   @override
-  String get propertyType => 'Property Type';
+  String get propertyType => 'Type de propriété';
 
   @override
   String get room => 'Room';
@@ -692,10 +692,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get zipCode => 'ZIP Code';
 
   @override
-  String get bedrooms => 'Bedrooms';
+  String get bedrooms => 'Chambres';
 
   @override
-  String get bathrooms => 'Bathrooms';
+  String get bathrooms => 'Salles de bain';
 
   @override
   String get maxGuests => 'Max Guests';
@@ -749,7 +749,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestDate => 'Request Date';
 
   @override
-  String get totalAmount => 'Total Amount';
+  String get totalAmount => 'Montant total';
 
   @override
   String get noListings => 'No listings yet';
@@ -867,10 +867,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportIssue => 'Report Issue';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => 'Conditions d\'utilisation';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Politique de confidentialité';
 
   @override
   String get aboutUs => 'About Us';
@@ -879,7 +879,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Profil';
 
   @override
   String get editProfile => 'Edit Profile';
@@ -930,13 +930,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePassword => 'Update Password';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'Se déconnecter';
 
   @override
   String get deleteAccount => 'Delete Account';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Annuler';
 
   @override
   String get upcoming => 'Upcoming';
@@ -1002,7 +1002,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getDirections => 'Get Directions';
 
   @override
-  String get writeReview => 'Write Review';
+  String get writeReview => 'Écrire un avis';
 
   @override
   String get wishlist => 'Wishlist';
@@ -1031,29 +1031,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wishlistCleared => 'Wishlist cleared';
 
   @override
-  String get titleRequired => 'Please enter a title';
+  String get titleRequired => 'Veuillez saisir un titre';
 
   @override
-  String get titleTooShort => 'Title is too short';
+  String get titleTooShort => 'Le titre est trop court';
 
   @override
-  String get titleTooLong => 'Title is too long';
+  String get titleTooLong => 'Le titre est trop long';
 
   @override
-  String get descriptionRequired => 'Please enter a description';
+  String get descriptionRequired => 'Veuillez saisir une description';
 
   @override
   String get descriptionTooShort =>
-      'Description must be at least 10 characters';
+      'La description doit contenir au moins 10 caractères';
 
   @override
-  String get priceRequired => 'Please enter a price';
+  String get priceRequired => 'Veuillez saisir un prix';
 
   @override
-  String get priceInvalid => 'Please enter a valid price';
+  String get priceInvalid => 'Veuillez saisir un prix valide';
 
   @override
-  String get addressRequired => 'Please enter an address';
+  String get addressRequired => 'Veuillez saisir une adresse';
 
   @override
   String get cityRequired => 'Please enter a city';
@@ -1068,192 +1068,194 @@ class AppLocalizationsEn extends AppLocalizations {
   String get zipInvalid => 'Please enter a valid ZIP code';
 
   @override
-  String get emailRequired => 'Please enter your email';
+  String get emailRequired => 'Veuillez saisir votre e-mail';
 
   @override
-  String get emailInvalid => 'Please enter a valid email';
+  String get emailInvalid => 'Veuillez saisir un e-mail valide';
 
   @override
-  String get passwordRequired => 'Please enter your password';
+  String get passwordRequired => 'Veuillez saisir votre mot de passe';
 
   @override
-  String get passwordTooShort => 'Password must be at least 8 characters';
+  String get passwordTooShort =>
+      'Le mot de passe doit contenir au moins 8 caractères';
 
   @override
-  String get passwordsDoNotMatch => 'Passwords do not match';
+  String get passwordsDoNotMatch => 'Les mots de passe ne correspondent pas';
 
   @override
-  String get phoneRequired => 'Please enter your phone number';
+  String get phoneRequired => 'Veuillez saisir votre numéro de téléphone';
 
   @override
-  String get phoneInvalid => 'Please enter a valid phone number';
+  String get phoneInvalid => 'Veuillez saisir un numéro de téléphone valide';
 
   @override
-  String get nameRequired => 'Please enter your name';
+  String get nameRequired => 'Veuillez saisir votre nom';
 
   @override
-  String get nameTooShort => 'Name must be at least 2 characters';
+  String get nameTooShort => 'Le nom doit contenir au moins 2 caractères';
 
   @override
-  String get fieldRequired => 'This field is required';
+  String get fieldRequired => 'Ce champ est obligatoire';
 
   @override
-  String get invalidInput => 'Invalid input';
+  String get invalidInput => 'Saisie invalide';
 
   @override
-  String get selectAtLeastOneImage => 'Please select at least one image';
+  String get selectAtLeastOneImage =>
+      'Veuillez sélectionner au moins une image';
 
   @override
-  String get reviews => 'Reviews';
+  String get reviews => 'Avis';
 
   @override
-  String get noReviews => 'No reviews yet';
+  String get noReviews => 'Aucun avis pour le moment';
 
   @override
-  String get comment => 'Comment';
+  String get comment => 'Commentaire';
 
   @override
-  String get submit => 'Submit';
+  String get submit => 'Soumettre';
 
   @override
-  String get advancedSearch => 'Advanced Search';
+  String get advancedSearch => 'Recherche avancée';
 
   @override
-  String get reset => 'Reset';
+  String get reset => 'Réinitialiser';
 
   @override
-  String get location => 'Location';
+  String get location => 'Emplacement';
 
   @override
-  String get cityOrAddress => 'City or Address';
+  String get cityOrAddress => 'Ville ou adresse';
 
   @override
-  String get keywords => 'Keywords';
+  String get keywords => 'Mots-clés';
 
   @override
-  String get minimumRating => 'Minimum Rating';
+  String get minimumRating => 'Note minimum';
 
   @override
-  String get sortBy => 'Sort By';
+  String get sortBy => 'Trier par';
 
   @override
-  String get searchProperties => 'Search Properties';
+  String get searchProperties => 'Rechercher des propriétés';
 
   @override
-  String get resetPassword => 'Reset Password';
+  String get resetPassword => 'Réinitialiser le mot de passe';
 
   @override
-  String get otpVerification => 'OTP Verification';
+  String get otpVerification => 'Vérification OTP';
 
   @override
-  String get preferences => 'Preferences';
+  String get preferences => 'Préférences';
 
   @override
-  String get privacy => 'Privacy';
+  String get privacy => 'Confidentialité';
 
   @override
-  String get helpSupport => 'Help & Support';
+  String get helpSupport => 'Aide et support';
 
   @override
-  String get about => 'About';
+  String get about => 'À propos';
 
   @override
-  String get darkMode => 'Dark Mode';
+  String get darkMode => 'Mode sombre';
 
   @override
-  String get language => 'Language';
+  String get language => 'Langue';
 
   @override
-  String get currency => 'Currency';
+  String get currency => 'Devise';
 
   @override
   String maxImagesExceeded(Object count) {
-    return 'Maximum $count images allowed';
+    return 'Maximum $count images autorisées';
   }
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'Bienvenue';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'Favoris';
 
   @override
-  String get bookings => 'Bookings';
+  String get bookings => 'Réservations';
 
   @override
-  String get help => 'Help';
+  String get help => 'Aide';
 
   @override
-  String get save => 'Save';
+  String get save => 'Enregistrer';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'Modifier';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Supprimer';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Confirmer';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'Oui';
 
   @override
-  String get no => 'No';
+  String get no => 'Non';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'Chargement...';
 
   @override
-  String get error => 'Error';
+  String get error => 'Erreur';
 
   @override
-  String get success => 'Success';
+  String get success => 'Succès';
 
   @override
-  String get warning => 'Warning';
+  String get warning => 'Avertissement';
 
   @override
   String get info => 'Information';
 
   @override
-  String get addToWishlist => 'Add to Wishlist';
+  String get addToWishlist => 'Ajouter aux favoris';
 
   @override
-  String get removeFromWishlist => 'Remove from Wishlist';
+  String get removeFromWishlist => 'Retirer des favoris';
 
   @override
-  String get shareProperty => 'Share Property';
+  String get shareProperty => 'Partager la propriété';
 
   @override
-  String get contactOwner => 'Contact Owner';
+  String get contactOwner => 'Contacter le propriétaire';
 
   @override
-  String get reportProperty => 'Report Property';
+  String get reportProperty => 'Signaler la propriété';
 
   @override
-  String get rating => 'Rating';
+  String get rating => 'Note';
 
   @override
-  String get readAllReviews => 'Read All Reviews';
+  String get readAllReviews => 'Lire tous les avis';
 
   @override
-  String get bookingPending => 'Booking Pending';
+  String get bookingPending => 'Réservation en attente';
 
   @override
-  String get bookingCancelled => 'Booking Cancelled';
+  String get bookingCancelled => 'Réservation annulée';
 
   @override
-  String get bookingCompleted => 'Booking Completed';
+  String get bookingCompleted => 'Réservation terminée';
 
   @override
-  String get subtotal => 'Subtotal';
+  String get subtotal => 'Sous-total';
 
   @override
-  String get fees => 'Fees';
+  String get fees => 'Frais';
 
   @override
-  String get discount => 'Discount';
+  String get discount => 'Remise';
 
   @override
   String get adminDashboard => 'Admin Dashboard';
@@ -1488,5 +1490,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goBack => 'Go Back';
 
   @override
-  String get checkAvailability => 'Check availability';
+  String get checkAvailability => 'Vérifier la disponibilité';
 }

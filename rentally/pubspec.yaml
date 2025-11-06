@@ -30,7 +30,7 @@ dependencies:
   # Connectivity (removed)
   
   # Utilities
-  intl: ^0.18.1
+  intl: ^0.20.2
   
   # Location Services
   geolocator: ^10.1.0

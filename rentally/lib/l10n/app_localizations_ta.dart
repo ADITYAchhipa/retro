@@ -4,157 +4,159 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Tamil (`ta`).
+class AppLocalizationsTa extends AppLocalizations {
+  AppLocalizationsTa([String locale = 'ta']) : super(locale);
 
   @override
-  String get appTitle => 'Rentaly';
+  String get appTitle => 'ரெண்டலி';
 
   @override
-  String get splashWelcome => 'Welcome to Rentally';
+  String get splashWelcome => 'ரெண்டலிக்கு வரவேற்கிறோம்';
 
   @override
-  String get onboarding => 'Onboarding';
+  String get onboarding => 'ஆன்போர்டிங்';
 
   @override
-  String get country => 'Select Country';
+  String get country => 'நாடு';
 
   @override
-  String get login => 'Login';
+  String get login => 'உள்நுழைவு / பதிவு';
 
   @override
-  String get role => 'Choose Role';
+  String get role => 'பாத்திரத்தைத் தேர்ந்தெடுக்கவும்';
 
   @override
-  String get home => 'Home';
+  String get home => 'முகப்பு';
 
   @override
-  String get search => 'Search';
+  String get search => 'தேடல்';
 
   @override
-  String get listing => 'Listing';
+  String get listing => 'பட்டியல்';
 
   @override
-  String get booking => 'Booking';
+  String get booking => 'முன்பதிவு';
 
   @override
-  String get payment => 'Payment';
+  String get payment => 'கட்டணம்';
 
   @override
-  String get confirmation => 'Confirmation';
+  String get confirmation => 'உறுதிப்படுத்தல்';
 
   @override
-  String get ownerDashboard => 'Owner Dashboard';
+  String get ownerDashboard => 'உரிமையாளர் டாஷ்போர்டு';
 
   @override
-  String get addListing => 'Add Listing';
+  String get addListing => 'பட்டியல் சேர்க்கவும்';
 
   @override
-  String get bookingRequests => 'Booking Requests';
+  String get bookingRequests => 'முன்பதிவு கோரிக்கைகள்';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'அமைப்புகள்';
 
   @override
-  String get next => 'Next';
+  String get next => 'அடுத்து';
 
   @override
-  String get skip => 'Skip';
+  String get skip => 'தவிர்க்கவும்';
 
   @override
-  String get continueLabel => 'Continue';
+  String get continueLabel => 'தொடரவும்';
 
   @override
-  String get seeker => 'Seeker';
+  String get seeker => 'தேடுபவர்';
 
   @override
-  String get owner => 'Owner';
+  String get owner => 'உரிமையாளர்';
 
   @override
-  String get themeMode => 'Theme Mode';
+  String get themeMode => 'தீம் முறை';
 
   @override
-  String get system => 'System';
+  String get system => 'அமைப்பு';
 
   @override
-  String get light => 'Light';
+  String get light => 'வெளிச்சம்';
 
   @override
-  String get dark => 'Dark';
+  String get dark => 'இருள்';
 
   @override
-  String get themePreview => 'Theme preview';
+  String get themePreview => 'தீம் முன்னோட்டம்';
 
   @override
-  String get current => 'Current';
+  String get current => 'தற்போதைய';
 
   @override
-  String get appTagline => 'Find Rooms, Vehicles, & More Anywhere in the World';
+  String get appTagline =>
+      'உலகில் எங்கும் அறைகள், வாகனங்கள் மற்றும் பலவற்றைக் கண்டறியுங்கள்';
 
   @override
-  String get onboardingSlide1Title => 'Find Rentals Across the Globe';
+  String get onboardingSlide1Title => 'உலகளவில் வாடகைகளைக் கண்டறியுங்கள்';
 
   @override
   String get onboardingSlide1Desc =>
-      'Discover rooms, apartments, and vehicles in any country';
+      'எந்த நாட்டிலும் அறைகள், அபார்ட்மெண்டுகள் மற்றும் வாகனங்களைக் கண்டறியுங்கள்';
 
   @override
-  String get onboardingSlide2Title => 'Pay in Your Currency, Stay Anywhere';
+  String get onboardingSlide2Title =>
+      'உங்கள் நாணயத்தில் பணம் செலுத்துங்கள், எங்கும் தங்குங்கள்';
 
   @override
   String get onboardingSlide2Desc =>
-      'Automatic currency conversion and local payment methods';
+      'தானியங்கு நாணய மாற்றம் மற்றும் உள்ளூர் கட்டண முறைகள்';
 
   @override
   String get onboardingSlide3Title =>
-      'Be a Seeker or Become an Owner Instantly';
+      'தேடுபவராக மாறுங்கள் அல்லது உடனடியாக உரிமையாளராக மாறுங்கள்';
 
   @override
   String get onboardingSlide3Desc =>
-      'Switch between finding rentals and listing your properties';
+      'வாடகைகளைத் தேடுவதற்கும் உங்கள் சொத்தைப் பட்டியலிடுவதற்கும் இடையில் மாறவும்';
 
   @override
-  String get getStarted => 'Get Started';
+  String get getStarted => 'தொடங்குங்கள்';
 
   @override
-  String get register => 'Register';
+  String get register => 'பதிவு செய்யவும்';
 
   @override
-  String get email => 'Email';
+  String get email => 'மின்னஞ்சல்';
 
   @override
-  String get password => 'Password';
+  String get password => 'கடவுச்சொல்';
 
   @override
-  String get name => 'Name';
+  String get name => 'பெயர்';
 
   @override
-  String get phone => 'Phone';
+  String get phone => 'தொலைபேசி';
 
   @override
-  String get confirmPassword => 'Confirm Password';
+  String get confirmPassword => 'கடவுச்சொல்லை உறுதிப்படுத்தவும்';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => 'கடவுச்சொல் மறந்துவிட்டதா?';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account?';
+  String get dontHaveAccount => 'கணக்கு இல்லையா?';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account?';
+  String get alreadyHaveAccount => 'ஏற்கனவே கணக்கு உள்ளதா?';
 
   @override
-  String get signUp => 'Sign Up';
+  String get signUp => 'பதிவு செய்யவும்';
 
   @override
-  String get signIn => 'Sign In';
+  String get signIn => 'உள்நுழைவு';
 
   @override
-  String get searchHint => 'Search location, property, or vehicle...';
+  String get searchHint => 'இடம், சொத்து அல்லது வாகனத்தைத் தேடுங்கள்...';
 
   @override
-  String get filters => 'Filters';
+  String get filters => 'வடிப்பான்கள்';
 
   @override
   String get categories => 'Categories';
@@ -163,7 +165,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralAndEarn => 'Referral & Earn';
 
   @override
-  String get dashboard => 'Dashboard';
+  String get dashboard => 'டாஷ்போர்டு';
 
   @override
   String get rewards => 'Rewards';
@@ -240,7 +242,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Start referring friends to see your transaction history';
 
   @override
-  String get rooms => 'Rooms';
+  String get rooms => 'அறைகள்';
 
   @override
   String get apartments => 'Apartments';
@@ -258,16 +260,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get priceRange => 'Price Range';
 
   @override
-  String get amenities => 'Amenities';
+  String get amenities => 'வசதிகள்';
 
   @override
-  String get wifi => 'Wi-Fi';
+  String get wifi => 'வை-ஃபை';
 
   @override
   String get ac => 'AC';
 
   @override
-  String get parking => 'Parking';
+  String get parking => 'பார்க்கிங்';
 
   @override
   String get insurance => 'Insurance';
@@ -294,10 +296,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get popular => 'Popular';
 
   @override
-  String get bookNow => 'Book Now';
+  String get bookNow => 'இப்போது முன்பதிவு செய்யுங்கள்';
 
   @override
-  String get viewDetails => 'View Details';
+  String get viewDetails => 'விவரங்களைப் பார்க்கவும்';
 
   @override
   String get perNight => 'per night';
@@ -315,19 +317,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectDates => 'Select Dates';
 
   @override
-  String get checkIn => 'Check In';
+  String get checkIn => 'செக் இன்';
 
   @override
-  String get checkOut => 'Check Out';
+  String get checkOut => 'செக் அவுட்';
 
   @override
-  String get checkInTime => 'Check-in time';
+  String get checkInTime => 'செக் இன் நேரம்';
 
   @override
-  String get checkOutTime => 'Check-out time';
+  String get checkOutTime => 'செக் அவுட் நேரம்';
 
   @override
-  String get guests => 'Guests';
+  String get guests => 'விருந்தினர்கள்';
 
   @override
   String get duration => 'Duration';
@@ -348,25 +350,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralCredits => 'Referral credits';
 
   @override
-  String get basePrice => 'Base Price';
+  String get basePrice => 'அடிப்படை விலை';
 
   @override
-  String get serviceFee => 'Service Fee';
+  String get serviceFee => 'சேவை கட்டணம்';
 
   @override
-  String get taxes => 'Taxes';
+  String get taxes => 'வரிகள்';
 
   @override
   String get total => 'Total';
 
   @override
-  String get paymentMethod => 'Payment Method';
+  String get paymentMethod => 'கட்டண முறை';
 
   @override
-  String get creditCard => 'Credit Card';
+  String get creditCard => 'கிரெடிட் கார்டு';
 
   @override
-  String get paypal => 'PayPal';
+  String get paypal => 'பேபால்';
 
   @override
   String get cashOnArrival => 'Cash on arrival';
@@ -515,10 +517,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueAction => 'Continue';
 
   @override
-  String get adults => 'Adults';
+  String get adults => 'பெரியவர்கள்';
 
   @override
-  String get children => 'Children';
+  String get children => 'குழந்தைகள்';
 
   @override
   String get infants => 'Infants';
@@ -548,7 +550,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingError => 'Booking Error';
 
   @override
-  String get retry => 'Retry';
+  String get retry => 'மீண்டும் முயற்சிக்கவும்';
 
   @override
   String get requestSubmitted => 'Request Submitted';
@@ -558,7 +560,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your booking request has been sent to the host.';
 
   @override
-  String get ok => 'OK';
+  String get ok => 'சரி';
 
   @override
   String get couponApplied10 => 'Coupon applied: 10% off base';
@@ -620,7 +622,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingConfirmed => 'Booking Confirmed';
 
   @override
-  String get bookingId => 'Booking ID';
+  String get bookingId => 'முன்பதிவு ஐடி';
 
   @override
   String get thankYou => 'Thank you for your booking';
@@ -644,28 +646,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listingTitle => 'Listing Title';
 
   @override
-  String get description => 'Description';
+  String get description => 'விளக்கம்';
 
   @override
-  String get propertyType => 'Property Type';
+  String get propertyType => 'சொத்து வகை';
 
   @override
-  String get room => 'Room';
+  String get room => 'அறை';
 
   @override
-  String get apartment => 'Apartment';
+  String get apartment => 'அபார்ட்மெண்ட்';
 
   @override
-  String get house => 'House';
+  String get house => 'வீடு';
 
   @override
-  String get vehicle => 'Vehicle';
+  String get vehicle => 'வாகனம்';
 
   @override
-  String get car => 'Car';
+  String get car => 'கார்';
 
   @override
-  String get bike => 'Bike';
+  String get bike => 'பைக்';
 
   @override
   String get pricePerNight => 'Price per Night';
@@ -680,31 +682,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pricePerHour => 'Price per Hour';
 
   @override
-  String get address => 'Address';
+  String get address => 'முகவரி';
 
   @override
-  String get city => 'City';
+  String get city => 'நகரம்';
 
   @override
-  String get state => 'State';
+  String get state => 'மாநிலம்';
 
   @override
-  String get zipCode => 'ZIP Code';
+  String get zipCode => 'அஞ்சல் குறியீடு';
 
   @override
-  String get bedrooms => 'Bedrooms';
+  String get bedrooms => 'படுக்கையறைகள்';
 
   @override
-  String get bathrooms => 'Bathrooms';
+  String get bathrooms => 'குளியலறைகள்';
 
   @override
-  String get maxGuests => 'Max Guests';
+  String get maxGuests => 'அதிகபட்ச விருந்தினர்கள்';
 
   @override
   String get selectAmenities => 'Select Amenities';
 
   @override
-  String get photos => 'Photos';
+  String get photos => 'புகைப்படங்கள்';
 
   @override
   String get addPhotos => 'Add Photos';
@@ -728,7 +730,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inactive => 'Inactive';
 
   @override
-  String get pending => 'Pending';
+  String get pending => 'நிலுவையில்';
 
   @override
   String get approved => 'Approved';
@@ -749,7 +751,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestDate => 'Request Date';
 
   @override
-  String get totalAmount => 'Total Amount';
+  String get totalAmount => 'மொத்த தொகை';
 
   @override
   String get noListings => 'No listings yet';
@@ -786,10 +788,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chat => 'Chat';
 
   @override
-  String get messages => 'Messages';
+  String get messages => 'செய்திகள்';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'அறிவிப்புகள்';
 
   @override
   String get typeMessage => 'Type a message...';
@@ -798,13 +800,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get send => 'Send';
 
   @override
-  String get online => 'Online';
+  String get online => 'ஆன்லைன்';
 
   @override
-  String get offline => 'Offline';
+  String get offline => 'ஆஃப்லைன்';
 
   @override
-  String get lastSeen => 'Last seen';
+  String get lastSeen => 'கடைசியாக பார்த்தது';
 
   @override
   String get noMessages => 'No messages yet';
@@ -855,37 +857,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get support => 'Support';
 
   @override
-  String get helpCenter => 'Help Center';
+  String get helpCenter => 'உதவி மையம்';
 
   @override
   String get contactUs => 'Contact Us';
 
   @override
-  String get faq => 'FAQ';
+  String get faq => 'அடிக்கடி கேட்கப்படும் கேள்விகள்';
 
   @override
-  String get reportIssue => 'Report Issue';
+  String get reportIssue => 'சிக்கலைப் புகாரளிக்கவும்';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => 'சேவை விதிமுறைகள்';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'தனியுரிமைக் கொள்கை';
 
   @override
   String get aboutUs => 'About Us';
 
   @override
-  String get version => 'Version';
+  String get version => 'பதிப்பு';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'சுயவிவரம்';
 
   @override
   String get editProfile => 'Edit Profile';
 
   @override
-  String get personalInfo => 'Personal Information';
+  String get personalInfo => 'தனிப்பட்ட தகவல்';
 
   @override
   String get firstName => 'First Name';
@@ -915,7 +917,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveChanges => 'Save Changes';
 
   @override
-  String get changePassword => 'Change Password';
+  String get changePassword => 'கடவுச்சொல்லை மாற்றவும்';
 
   @override
   String get currentPassword => 'Current Password';
@@ -930,22 +932,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePassword => 'Update Password';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'வெளியேறு';
 
   @override
-  String get deleteAccount => 'Delete Account';
+  String get deleteAccount => 'கணக்கை நீக்கவும்';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'ரத்து செய்யவும்';
 
   @override
   String get upcoming => 'Upcoming';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'முடிக்கப்பட்டது';
 
   @override
-  String get cancelled => 'Cancelled';
+  String get cancelled => 'ரத்து செய்யப்பட்டது';
 
   @override
   String get noUpcomingBookings => 'No Upcoming Bookings';
@@ -969,7 +971,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You don\'t have any cancelled bookings.';
 
   @override
-  String get bookingDetails => 'Booking Details';
+  String get bookingDetails => 'முன்பதிவு விவரங்கள்';
 
   @override
   String get modify => 'Modify';
@@ -987,7 +989,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nights => 'nights';
 
   @override
-  String get bookingDate => 'Booking Date';
+  String get bookingDate => 'முன்பதிவு தேதி';
 
   @override
   String get totalPrice => 'Total Price';
@@ -1002,7 +1004,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getDirections => 'Get Directions';
 
   @override
-  String get writeReview => 'Write Review';
+  String get writeReview => 'மதிப்புரை எழுதவும்';
 
   @override
   String get wishlist => 'Wishlist';
@@ -1104,7 +1106,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAtLeastOneImage => 'Please select at least one image';
 
   @override
-  String get reviews => 'Reviews';
+  String get reviews => 'மதிப்புரைகள்';
 
   @override
   String get noReviews => 'No reviews yet';
@@ -1122,7 +1124,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get location => 'Location';
+  String get location => 'இடம்';
 
   @override
   String get cityOrAddress => 'City or Address';
@@ -1134,7 +1136,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimumRating => 'Minimum Rating';
 
   @override
-  String get sortBy => 'Sort By';
+  String get sortBy => 'இதன் மூலம் வரிசைப்படுத்தவும்';
 
   @override
   String get searchProperties => 'Search Properties';
@@ -1146,25 +1148,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get otpVerification => 'OTP Verification';
 
   @override
-  String get preferences => 'Preferences';
+  String get preferences => 'விருப்பத்தேர்வுகள்';
 
   @override
   String get privacy => 'Privacy';
 
   @override
-  String get helpSupport => 'Help & Support';
+  String get helpSupport => 'உதவி மற்றும் ஆதரவு';
 
   @override
-  String get about => 'About';
+  String get about => 'பற்றி';
 
   @override
-  String get darkMode => 'Dark Mode';
+  String get darkMode => 'இருண்ட முறை';
 
   @override
-  String get language => 'Language';
+  String get language => 'மொழி';
 
   @override
-  String get currency => 'Currency';
+  String get currency => 'நாணயம்';
 
   @override
   String maxImagesExceeded(Object count) {
@@ -1172,43 +1174,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'வரவேற்கிறோம்';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'பிடித்தவை';
 
   @override
-  String get bookings => 'Bookings';
+  String get bookings => 'முன்பதிவுகள்';
 
   @override
-  String get help => 'Help';
+  String get help => 'உதவி';
 
   @override
-  String get save => 'Save';
+  String get save => 'சேமிக்கவும்';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'திருத்தவும்';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'நீக்கவும்';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'உறுதிப்படுத்தவும்';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'ஆம்';
 
   @override
-  String get no => 'No';
+  String get no => 'இல்லை';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'ஏற்றுகிறது...';
 
   @override
-  String get error => 'Error';
+  String get error => 'பிழை';
 
   @override
-  String get success => 'Success';
+  String get success => 'வெற்றி';
 
   @override
   String get warning => 'Warning';
@@ -1223,16 +1225,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeFromWishlist => 'Remove from Wishlist';
 
   @override
-  String get shareProperty => 'Share Property';
+  String get shareProperty => 'சொத்தைப் பகிரவும்';
 
   @override
   String get contactOwner => 'Contact Owner';
 
   @override
-  String get reportProperty => 'Report Property';
+  String get reportProperty => 'சொத்தைப் புகாரளிக்கவும்';
 
   @override
-  String get rating => 'Rating';
+  String get rating => 'மதிப்பீடு';
 
   @override
   String get readAllReviews => 'Read All Reviews';
@@ -1253,7 +1255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fees => 'Fees';
 
   @override
-  String get discount => 'Discount';
+  String get discount => 'தள்ளுபடி';
 
   @override
   String get adminDashboard => 'Admin Dashboard';

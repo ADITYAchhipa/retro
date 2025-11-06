@@ -4,12 +4,12 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Russian (`ru`).
+class AppLocalizationsRu extends AppLocalizations {
+  AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appTitle => 'Rentaly';
+  String get appTitle => 'Rentally';
 
   @override
   String get splashWelcome => 'Welcome to Rentally';
@@ -21,16 +21,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get country => 'Select Country';
 
   @override
-  String get login => 'Login';
+  String get login => 'Войти';
 
   @override
   String get role => 'Choose Role';
 
   @override
-  String get home => 'Home';
+  String get home => 'Главная';
 
   @override
-  String get search => 'Search';
+  String get search => 'Поиск';
 
   @override
   String get listing => 'Listing';
@@ -54,7 +54,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingRequests => 'Booking Requests';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Настройки';
 
   @override
   String get next => 'Next';
@@ -121,10 +121,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get register => 'Register';
 
   @override
-  String get email => 'Email';
+  String get email => 'Электронная почта';
 
   @override
-  String get password => 'Password';
+  String get password => 'Пароль';
 
   @override
   String get name => 'Name';
@@ -133,25 +133,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phone => 'Phone';
 
   @override
-  String get confirmPassword => 'Confirm Password';
+  String get confirmPassword => 'Подтвердить пароль';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => 'Забыли пароль?';
 
   @override
-  String get dontHaveAccount => 'Don\'t have an account?';
+  String get dontHaveAccount => 'Нет аккаунта?';
 
   @override
-  String get alreadyHaveAccount => 'Already have an account?';
+  String get alreadyHaveAccount => 'Уже есть аккаунт?';
 
   @override
   String get signUp => 'Sign Up';
 
   @override
-  String get signIn => 'Sign In';
+  String get signIn => 'Войти';
 
   @override
-  String get searchHint => 'Search location, property, or vehicle...';
+  String get searchHint => 'Поиск недвижимости...';
 
   @override
   String get filters => 'Filters';
@@ -166,22 +166,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboard => 'Dashboard';
 
   @override
-  String get rewards => 'Rewards';
+  String get rewards => 'Награды';
 
   @override
   String get history => 'History';
 
   @override
-  String get totalTokens => 'Total Tokens';
+  String get totalTokens => 'Всего токенов';
 
   @override
-  String get totalReferrals => 'Total Referrals';
+  String get totalReferrals => 'Всего рефералов';
 
   @override
   String get yourReferralCode => 'Your Referral Code';
 
   @override
-  String get copyCode => 'Copy Code';
+  String get copyCode => 'Скопировать код';
 
   @override
   String get shareCodeToEarnTokens =>
@@ -194,10 +194,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareCode => 'Share Code';
 
   @override
-  String get inviteFriends => 'Invite Friends';
+  String get inviteFriends => 'Пригласить друзей';
 
   @override
-  String get recentActivity => 'Recent Activity';
+  String get recentActivity => 'Недавняя активность';
 
   @override
   String get availableBalance => 'Available Balance';
@@ -221,7 +221,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get firstReview => 'First Review';
 
   @override
-  String get redeemTokens => 'Redeem Tokens';
+  String get redeemTokens => 'Обменять токены';
 
   @override
   String get tokensToRedeem => 'Tokens to Redeem';
@@ -258,7 +258,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get priceRange => 'Price Range';
 
   @override
-  String get amenities => 'Amenities';
+  String get amenities => 'Удобства';
 
   @override
   String get wifi => 'Wi-Fi';
@@ -294,13 +294,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get popular => 'Popular';
 
   @override
-  String get bookNow => 'Book Now';
+  String get bookNow => 'Забронировать';
 
   @override
-  String get viewDetails => 'View Details';
+  String get viewDetails => 'Подробнее';
 
   @override
-  String get perNight => 'per night';
+  String get perNight => 'за ночь';
 
   @override
   String get perDay => 'per day';
@@ -315,10 +315,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectDates => 'Select Dates';
 
   @override
-  String get checkIn => 'Check In';
+  String get checkIn => 'Заезд';
 
   @override
-  String get checkOut => 'Check Out';
+  String get checkOut => 'Выезд';
 
   @override
   String get checkInTime => 'Check-in time';
@@ -327,7 +327,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkOutTime => 'Check-out time';
 
   @override
-  String get guests => 'Guests';
+  String get guests => 'Гости';
 
   @override
   String get duration => 'Duration';
@@ -354,7 +354,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serviceFee => 'Service Fee';
 
   @override
-  String get taxes => 'Taxes';
+  String get taxes => 'Налоги';
 
   @override
   String get total => 'Total';
@@ -515,13 +515,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueAction => 'Continue';
 
   @override
-  String get adults => 'Adults';
+  String get adults => 'Взрослые';
 
   @override
-  String get children => 'Children';
+  String get children => 'Дети';
 
   @override
-  String get infants => 'Infants';
+  String get infants => 'Младенцы';
 
   @override
   String get ages13OrAbove => 'Ages 13 or above';
@@ -548,7 +548,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingError => 'Booking Error';
 
   @override
-  String get retry => 'Retry';
+  String get retry => 'Повторить';
 
   @override
   String get requestSubmitted => 'Request Submitted';
@@ -558,7 +558,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your booking request has been sent to the host.';
 
   @override
-  String get ok => 'OK';
+  String get ok => 'ОК';
 
   @override
   String get couponApplied10 => 'Coupon applied: 10% off base';
@@ -617,13 +617,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmBooking => 'Confirm Booking';
 
   @override
-  String get bookingConfirmed => 'Booking Confirmed';
+  String get bookingConfirmed => 'Бронирование подтверждено';
 
   @override
   String get bookingId => 'Booking ID';
 
   @override
-  String get thankYou => 'Thank you for your booking';
+  String get thankYou => 'Спасибо';
 
   @override
   String get viewBooking => 'View Booking';
@@ -644,10 +644,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listingTitle => 'Listing Title';
 
   @override
-  String get description => 'Description';
+  String get description => 'Описание';
 
   @override
-  String get propertyType => 'Property Type';
+  String get propertyType => 'Тип недвижимости';
 
   @override
   String get room => 'Room';
@@ -692,10 +692,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get zipCode => 'ZIP Code';
 
   @override
-  String get bedrooms => 'Bedrooms';
+  String get bedrooms => 'Спальни';
 
   @override
-  String get bathrooms => 'Bathrooms';
+  String get bathrooms => 'Ванные комнаты';
 
   @override
   String get maxGuests => 'Max Guests';
@@ -704,7 +704,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAmenities => 'Select Amenities';
 
   @override
-  String get photos => 'Photos';
+  String get photos => 'Фотографии';
 
   @override
   String get addPhotos => 'Add Photos';
@@ -728,7 +728,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inactive => 'Inactive';
 
   @override
-  String get pending => 'Pending';
+  String get pending => 'Ожидает';
 
   @override
   String get approved => 'Approved';
@@ -789,7 +789,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messages => 'Messages';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'Уведомления';
 
   @override
   String get typeMessage => 'Type a message...';
@@ -858,7 +858,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpCenter => 'Help Center';
 
   @override
-  String get contactUs => 'Contact Us';
+  String get contactUs => 'Связаться с нами';
 
   @override
   String get faq => 'FAQ';
@@ -867,10 +867,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportIssue => 'Report Issue';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => 'Условия использования';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Политика конфиденциальности';
 
   @override
   String get aboutUs => 'About Us';
@@ -879,7 +879,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Профиль';
 
   @override
   String get editProfile => 'Edit Profile';
@@ -930,19 +930,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatePassword => 'Update Password';
 
   @override
-  String get logout => 'Logout';
+  String get logout => 'Выйти';
 
   @override
   String get deleteAccount => 'Delete Account';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Отмена';
 
   @override
   String get upcoming => 'Upcoming';
 
   @override
-  String get completed => 'Completed';
+  String get completed => 'Завершено';
 
   @override
   String get cancelled => 'Cancelled';
@@ -990,7 +990,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingDate => 'Booking Date';
 
   @override
-  String get totalPrice => 'Total Price';
+  String get totalPrice => 'Общая стоимость';
 
   @override
   String get message => 'Message';
@@ -1002,7 +1002,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get getDirections => 'Get Directions';
 
   @override
-  String get writeReview => 'Write Review';
+  String get writeReview => 'Написать отзыв';
 
   @override
   String get wishlist => 'Wishlist';
@@ -1104,7 +1104,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAtLeastOneImage => 'Please select at least one image';
 
   @override
-  String get reviews => 'Reviews';
+  String get reviews => 'Отзывы';
 
   @override
   String get noReviews => 'No reviews yet';
@@ -1122,7 +1122,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get location => 'Location';
+  String get location => 'Местоположение';
 
   @override
   String get cityOrAddress => 'City or Address';
@@ -1134,7 +1134,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimumRating => 'Minimum Rating';
 
   @override
-  String get sortBy => 'Sort By';
+  String get sortBy => 'Сортировать по';
 
   @override
   String get searchProperties => 'Search Properties';
@@ -1155,16 +1155,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpSupport => 'Help & Support';
 
   @override
-  String get about => 'About';
+  String get about => 'О приложении';
 
   @override
-  String get darkMode => 'Dark Mode';
+  String get darkMode => 'Темная тема';
 
   @override
-  String get language => 'Language';
+  String get language => 'Язык';
 
   @override
-  String get currency => 'Currency';
+  String get currency => 'Валюта';
 
   @override
   String maxImagesExceeded(Object count) {
@@ -1172,43 +1172,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get welcome => 'Welcome';
+  String get welcome => 'Добро пожаловать';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'Избранное';
 
   @override
-  String get bookings => 'Bookings';
+  String get bookings => 'Бронирования';
 
   @override
-  String get help => 'Help';
+  String get help => 'Помощь';
 
   @override
-  String get save => 'Save';
+  String get save => 'Сохранить';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'Редактировать';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Удалить';
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Подтвердить';
 
   @override
-  String get yes => 'Yes';
+  String get yes => 'Да';
 
   @override
-  String get no => 'No';
+  String get no => 'Нет';
 
   @override
-  String get loading => 'Loading...';
+  String get loading => 'Загрузка...';
 
   @override
-  String get error => 'Error';
+  String get error => 'Ошибка';
 
   @override
-  String get success => 'Success';
+  String get success => 'Успех';
 
   @override
   String get warning => 'Warning';
@@ -1232,16 +1232,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportProperty => 'Report Property';
 
   @override
-  String get rating => 'Rating';
+  String get rating => 'Рейтинг';
 
   @override
   String get readAllReviews => 'Read All Reviews';
 
   @override
-  String get bookingPending => 'Booking Pending';
+  String get bookingPending => 'Бронирование ожидает';
 
   @override
-  String get bookingCancelled => 'Booking Cancelled';
+  String get bookingCancelled => 'Бронирование отменено';
 
   @override
   String get bookingCompleted => 'Booking Completed';
@@ -1250,7 +1250,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subtotal => 'Subtotal';
 
   @override
-  String get fees => 'Fees';
+  String get fees => 'Сборы';
 
   @override
   String get discount => 'Discount';
@@ -1482,7 +1482,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get linkCopied => 'Link copied to clipboard';
 
   @override
-  String get share => 'Share';
+  String get share => 'Поделиться';
 
   @override
   String get goBack => 'Go Back';
