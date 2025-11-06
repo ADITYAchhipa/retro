@@ -686,7 +686,7 @@ class _DynamicPricingScreenState extends ConsumerState<DynamicPricingScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Apply Suggested Pricing'),
         content: Text(
-          'Are you sure you want to update your price to \$${_currentRecommendation.suggestedPrice.toStringAsFixed(0)} per night?',
+          'Are you sure you want to update your price to \$${_currentRecommendation.suggestedPrice.toStringAsFixed(0)} per month?',
         ),
         actions: [
           TextButton(
@@ -726,7 +726,7 @@ class _DynamicPricingScreenState extends ConsumerState<DynamicPricingScreen> {
               controller: controller,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Price per night',
+                labelText: 'Monthly price',
                 prefixText: '\$',
                 border: OutlineInputBorder(),
               ),

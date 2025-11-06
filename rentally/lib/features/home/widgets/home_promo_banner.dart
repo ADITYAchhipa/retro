@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/enterprise_dark_theme.dart';
 import '../../../core/theme/enterprise_light_theme.dart';
+import '../../../core/neo/neo.dart';
 
 /// Promotional banner widget for the home screen
 class HomePromoBanner extends StatelessWidget {
@@ -15,90 +16,133 @@ class HomePromoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: isDark 
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  EnterpriseDarkTheme.primaryAccent.withOpacity(0.8),
-                  EnterpriseDarkTheme.secondaryAccent.withOpacity(0.6),
-                ],
-              )
-            : const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  EnterpriseLightTheme.primaryAccent,
-                  EnterpriseLightTheme.secondaryAccent,
-                ],
-              ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark 
-              ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.4)
-              : EnterpriseLightTheme.primaryAccent.withOpacity(0.3),
-          width: 1.5,
+    final accent = isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent;
+    return NeoGlass(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      borderRadius: BorderRadius.circular(16),
+      backgroundColor: isDark
+          ? Colors.white.withOpacity(0.06)
+          : EnterpriseLightTheme.primaryAccent.withOpacity(0.08),
+      borderColor: isDark
+          ? Colors.white.withOpacity(0.12)
+          : EnterpriseLightTheme.secondaryBorder,
+      boxShadow: [
+        // Dual soft shadows (green-marked style)
+        BoxShadow(
+          color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+          blurRadius: 10,
+          offset: const Offset(-5, -5),
+          spreadRadius: 0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark 
-                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.3)
-                : EnterpriseLightTheme.primaryAccent.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+        BoxShadow(
+          color: (isDark
+                  ? EnterpriseDarkTheme.primaryAccent
+                  : EnterpriseLightTheme.primaryAccent)
+              .withOpacity(isDark ? 0.18 : 0.12),
+          blurRadius: 10,
+          offset: const Offset(5, 5),
+          spreadRadius: 0,
+        ),
+      ],
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '🎉 Special Offer!',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: isDark ? Colors.white : Colors.black87,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Get 20% off on your first rental',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [accent.withOpacity(0.95), accent.withOpacity(0.75)],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      // Dual soft shadows for the CTA
+                      BoxShadow(
+                        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                        blurRadius: 10,
+                        offset: const Offset(-5, -5),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: (isDark
+                                ? EnterpriseDarkTheme.primaryAccent
+                                : EnterpriseLightTheme.primaryAccent)
+                            .withOpacity(isDark ? 0.18 : 0.15),
+                        blurRadius: 10,
+                        offset: const Offset(5, 5),
+                        spreadRadius: 0,
+                      ),
+                    ],
                   ),
                   child: const Text(
                     'Claim Now',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
-                      fontSize: 10,
+                      fontSize: 12,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(
-            Icons.local_offer,
-            color: Colors.white,
-            size: 28,
-          ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.12)
+                    : EnterpriseLightTheme.secondaryBorder,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                  blurRadius: 10,
+                  offset: const Offset(-5, -5),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: (isDark
+                          ? EnterpriseDarkTheme.primaryAccent
+                          : EnterpriseLightTheme.primaryAccent)
+                      .withOpacity(isDark ? 0.18 : 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(5, 5),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.local_offer,
+              color: accent,
+              size: 24,
+            ),
+          )
         ],
       ),
     );

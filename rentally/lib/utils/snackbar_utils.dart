@@ -214,15 +214,15 @@ class _ProfessionalSnackBarState extends State<_ProfessionalSnackBar>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.backgroundColor.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: widget.backgroundColor.withOpacity(0.22),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                     spreadRadius: 0,
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(widget.isDark ? 0.4 : 0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(widget.isDark ? 0.30 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),

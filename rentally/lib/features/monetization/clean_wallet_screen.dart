@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/coupon_service.dart';
 
 import '../../widgets/responsive_layout.dart';
 import '../../widgets/error_boundary.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
 import '../../core/widgets/tab_back_handler.dart';
+import '../../app/auth_router.dart';
 
 /// **CleanWalletScreen**
 /// 
@@ -32,6 +36,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
   
   bool _isLoading = false;
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
+  String _txFilter = 'all';
   
   // Mock wallet data
   final Map<String, dynamic> _walletData = {
@@ -42,7 +47,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       {
         'id': '1',
         'type': 'earning',
-        'amount': 150.0,
+        'amount': 100.0,
         'description': 'Booking commission',
         'date': '2024-01-15',
         'status': 'completed',
@@ -72,6 +77,291 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     _tabController = TabController(length: 3, vsync: this);
     _scrollController = ScrollController();
     _loadWalletData();
+  }
+
+  Widget _buildEarningsSummary(ThemeData theme, bool isDark) {
+    final txs = List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
+    final now = DateTime.now();
+    final isPhone = MediaQuery.of(context).size.width < 600;
+
+    double totalAll = (_walletData['totalEarned'] is num)
+        ? (_walletData['totalEarned'] as num).toDouble()
+        : txs.where((t) => t['type'] == 'earning').fold<double>(0, (s, t) => s + (t['amount'] as num).toDouble());
+
+    double thisMonth = 0;
+    for (final t in txs.where((t) => t['type'] == 'earning')) {
+      final d = DateTime.tryParse((t['date'] ?? '').toString());
+      if (d != null && d.year == now.year && d.month == now.month) {
+        thisMonth += (t['amount'] as num).toDouble();
+      }
+    }
+
+    double payouts = 0;
+    for (final t in txs.where((t) => t['type'] == 'withdrawal')) {
+      payouts += (t['amount'] as num).abs().toDouble();
+    }
+
+    Widget pill(String label, String value, IconData icon, Color base) {
+      final bg = isDark ? base.withOpacity(0.18) : base.withOpacity(0.12);
+      final border = base.withOpacity(0.35);
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: isPhone ? 8 : 10, horizontal: isPhone ? 10 : 12),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: border, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: isPhone ? 14 : 16, color: base.withOpacity(0.9)),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: isPhone ? 13 : 14,
+                    color: isDark ? Colors.white : Colors.black87,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: isPhone ? 10 : 11,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        pill('Total Earned', '\$${totalAll.toStringAsFixed(2)}', Icons.trending_up_rounded, theme.colorScheme.primary),
+        pill('This Month', '\$${thisMonth.toStringAsFixed(2)}', Icons.calendar_month_rounded, Colors.indigo),
+        pill('Payouts', '\$${payouts.toStringAsFixed(2)}', Icons.payments_rounded, Colors.teal),
+      ],
+    );
+  }
+
+  Widget _buildAvailableCoupons(ThemeData theme, bool isDark) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final now = DateTime.now();
+        final coupons = ref.watch(couponServiceProvider)
+            .where((c) => c.isValidNow(now))
+            .toList();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Available Coupons',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (coupons.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: isDark ? theme.colorScheme.surface : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+                  boxShadow: _homeStyleShadows(theme, isDark),
+                ),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.card_giftcard_rounded,
+                        size: 48,
+                        color: theme.colorScheme.primary.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No coupons available',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              for (int i = 0; i < coupons.length; i++)
+                _buildCouponItem(
+                  context,
+                  coupons[i].title,
+                  coupons[i].code,
+                  theme,
+                  isDark,
+                  description: coupons[i].description,
+                  validUntil: coupons[i].validUntil,
+                  isLast: i == coupons.length - 1,
+                ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCouponItem(
+    BuildContext context,
+    String title,
+    String code,
+    ThemeData theme,
+    bool isDark, {
+    String? description,
+    DateTime? validUntil,
+    bool isLast = false,
+  }) {
+    final int? daysLeft = (validUntil?.difference(DateTime.now()))?.inDays;
+    final String? expiryText = daysLeft != null
+        ? (() {
+            final int left = daysLeft <= 0 ? 0 : daysLeft;
+            final String unit = left == 1 ? 'day' : 'days';
+            return '$left $unit left';
+          })()
+        : null;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? theme.colorScheme.surface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        boxShadow: _homeStyleShadows(theme, isDark),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.local_offer_rounded, color: Colors.amber.shade700, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (description != null && description.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.confirmation_number_rounded, size: 16, color: theme.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        code,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace',
+                          color: theme.colorScheme.primary,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: code));
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Copied "$code"')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.content_copy_rounded, size: 18),
+                label: const Text('Copy'),
+              ),
+            ],
+          ),
+          if (expiryText != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.access_time_rounded, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Text(
+                  expiryText,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                Consumer(
+                  builder: (context, ref, _) => FilledButton.icon(
+                    onPressed: () {
+                      ref.read(selectedCouponCodeProvider.notifier).state = code;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Coupon "$code" applied!')),
+                      );
+                      context.go(Routes.search);
+                    },
+                    icon: const Icon(Icons.check_circle_rounded, size: 18),
+                    label: const Text('Apply'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -104,6 +394,27 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     await _loadWalletData();
   }
 
+  // Home screen style neumorphic shadows
+  List<BoxShadow> _homeStyleShadows(ThemeData theme, bool isDark) {
+    return [
+      BoxShadow(
+        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+        blurRadius: 10,
+        offset: const Offset(-5, -5),
+        spreadRadius: 0,
+      ),
+      BoxShadow(
+        color: (isDark
+            ? EnterpriseDarkTheme.primaryAccent
+            : EnterpriseLightTheme.primaryAccent)
+            .withOpacity(isDark ? 0.18 : 0.12),
+        blurRadius: 10,
+        offset: const Offset(5, 5),
+        spreadRadius: 0,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -113,37 +424,39 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       onError: (details) {
         debugPrint('Wallet screen error: ${details.exception}');
       },
-      child: ResponsiveLayout(
-        child: TabBackHandler(
-          tabController: _tabController,
-          child: Scaffold(
-          backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : EnterpriseLightTheme.primaryBackground,
-          appBar: _buildAppBar(theme),
-          body: _buildBody(theme, isDark),
-          ),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useResponsive = constraints.maxWidth < 1000;
+          final page = TabBackHandler(
+            tabController: _tabController,
+            child: Scaffold(
+              backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+              appBar: _buildAppBar(theme, isDark),
+              body: _buildBody(theme, isDark),
+            ),
+          );
+          return useResponsive ? page : ResponsiveLayout(child: page);
+        },
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(ThemeData theme) {
+  PreferredSizeWidget _buildAppBar(ThemeData theme, bool isDark) {
     return AppBar(
       title: const Text('Wallet & Rewards'),
       elevation: 0,
-      backgroundColor: Colors.transparent,
-      actions: [
-        IconButton(
-          onPressed: () => context.push('/notifications'),
-          icon: const Icon(Icons.notifications),
-          tooltip: 'Notifications',
-        ),
-      ],
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+      foregroundColor: theme.colorScheme.onSurface,
       bottom: TabBar(
         controller: _tabController,
+        indicatorColor: theme.colorScheme.primary,
+        labelColor: theme.colorScheme.primary,
+        unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+        indicatorWeight: 3,
         tabs: const [
-          Tab(text: 'Overview', icon: Icon(Icons.account_balance_wallet)),
-          Tab(text: 'Transactions', icon: Icon(Icons.history)),
-          Tab(text: 'Rewards', icon: Icon(Icons.card_giftcard)),
+          Tab(text: 'Overview', icon: Icon(Icons.account_balance_wallet_outlined)),
+          Tab(text: 'Transactions', icon: Icon(Icons.history_outlined)),
+          Tab(text: 'Rewards', icon: Icon(Icons.card_giftcard_outlined)),
         ],
       ),
     );
@@ -171,187 +484,401 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
+    final isPhone = MediaQuery.of(context).size.width < 600;
     return SingleChildScrollView(
       dragStartBehavior: DragStartBehavior.down,
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isPhone ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildBalanceCard(theme, isDark),
-          const SizedBox(height: 24),
+          SizedBox(height: isPhone ? 20 : 28),
           _buildQuickActions(theme, isDark),
-          const SizedBox(height: 24),
-          _buildRecentTransactions(theme, isDark),
         ],
       ),
     );
   }
 
   Widget _buildBalanceCard(ThemeData theme, bool isDark) {
-    return Card(
-      elevation: 4,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [
-              theme.primaryColor,
-              theme.primaryColor.withOpacity(0.8),
-            ],
-          ),
+    final isPhone = MediaQuery.of(context).size.width < 600;
+    final totalBalance = _walletData['balance'] + _walletData['pendingRewards'];
+    
+    return Container(
+      padding: EdgeInsets.all(isPhone ? 28 : 36),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withOpacity(0.9),
+            theme.colorScheme.secondary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Available Balance',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '\$${_walletData['balance'].toStringAsFixed(2)}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pending Rewards',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.5),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+            spreadRadius: -8,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with icon and label
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.3),
+                      Colors.white.withOpacity(0.15),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: Colors.white,
+                  size: isPhone ? 28 : 32,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.trending_up_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    SizedBox(width: 6),
                     Text(
-                      '\$${_walletData['pendingRewards'].toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      'Active',
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Total Earned',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                    Text(
-                      '\$${_walletData['totalEarned'].toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          
+          // Total Balance Label
+          Text(
+            'Total Balance',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: isPhone ? 14 : 16,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          // Total Balance Amount
+          Text(
+            '\$${totalBalance.toStringAsFixed(2)}',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isPhone ? 44 : 56,
+              fontWeight: FontWeight.bold,
+              height: 1.1,
+              letterSpacing: -1.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.2),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 28),
+          
+          // Breakdown Cards
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.25),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildBalanceBreakdownItem(
+                    title: 'Available',
+                    value: '\$${_walletData['balance'].toStringAsFixed(2)}',
+                    icon: Icons.check_circle_rounded,
+                    isPhone: isPhone,
+                  ),
+                ),
+                Container(
+                  width: 1.5,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.1),
+                        Colors.white.withOpacity(0.3),
+                        Colors.white.withOpacity(0.1),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _buildBalanceBreakdownItem(
+                    title: 'Pending',
+                    value: '\$${_walletData['pendingRewards'].toStringAsFixed(2)}',
+                    icon: Icons.schedule_rounded,
+                    isPhone: isPhone,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+  
+  Widget _buildBalanceBreakdownItem({
+    required String title,
+    required String value,
+    required IconData icon,
+    required bool isPhone,
+  }) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Colors.white.withOpacity(0.9),
+          size: 20,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isPhone ? 18 : 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildQuickActions(ThemeData theme, bool isDark) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final isPhone = MediaQuery.of(context).size.width < 600;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: isPhone ? 10 : 16),
+        Row(
           children: [
-            Text(
-              'Quick Actions',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: _buildActionButton(
+                title: 'Add Money',
+                icon: Icons.add_circle_rounded,
+                color: Colors.green,
+                onTap: () => _showAddMoneyDialog(context),
+                theme: theme,
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildActionButton(
-                    'Add Money',
-                    Icons.add,
-                    () => _showAddMoneyDialog(context),
-                    theme,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildActionButton(
-                    'Withdraw',
-                    Icons.money,
-                    () => _showWithdrawDialog(context),
-                    theme,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildActionButton(
+                title: 'Withdraw',
+                icon: Icons.arrow_circle_down_rounded,
+                color: Colors.blue,
+                onTap: () => _showWithdrawDialog(context),
+                theme: theme,
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildActionButton(String title, IconData icon, VoidCallback onPressed, ThemeData theme) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(title),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  Widget _buildRecentTransactions(ThemeData theme, bool isDark) {
-    final recentTransactions = (_walletData['transactions'] as List).take(3).toList();
-    
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+  Widget _buildActionButton({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    required ThemeData theme,
+  }) {
+    final isPhone = MediaQuery.of(context).size.width < 600;
+    final isDark = theme.brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(isPhone ? 14 : 18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(isDark ? 0.15 : 0.1),
+              color.withOpacity(isDark ? 0.08 : 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.4),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Transactions',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [color, color.withOpacity(0.7)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                TextButton(
-                  onPressed: () => _tabController.animateTo(1),
-                  child: const Text('View All'),
-                ),
-              ],
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: isPhone ? 24 : 28),
             ),
-            const SizedBox(height: 16),
-            ...recentTransactions.map((transaction) => 
-              _buildTransactionItem(transaction, theme, isDark)
+            SizedBox(height: isPhone ? 8 : 10),
+            Text(
+              title,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark ? Colors.white : color.withOpacity(0.9),
+                fontWeight: FontWeight.bold,
+                fontSize: isPhone ? 13 : 14,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getFilteredTransactions() {
+    final txs = List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
+    switch (_txFilter) {
+      case 'earning':
+        return txs.where((t) => t['type'] == 'earning').toList();
+      case 'withdrawal':
+      case 'payout':
+        return txs.where((t) => t['type'] == 'withdrawal').toList();
+      case 'reward':
+        return txs.where((t) => t['type'] == 'reward').toList();
+      case 'all':
+      default:
+        return txs;
+    }
+  }
+
+  Widget _buildTransactionFilters(ThemeData theme, bool isDark) {
+    final items = [
+      {'key': 'all', 'label': 'All'},
+      {'key': 'earning', 'label': 'Earnings'},
+      {'key': 'withdrawal', 'label': 'Payouts'},
+      {'key': 'reward', 'label': 'Rewards'},
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: items.map((it) {
+        final selected = _txFilter == it['key'];
+        return ChoiceChip(
+          label: Text(it['label'] as String),
+          selected: selected,
+          onSelected: (_) => setState(() => _txFilter = it['key'] as String),
+          showCheckmark: false,
+          labelStyle: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          selectedColor: theme.colorScheme.primary.withOpacity(0.15),
+          backgroundColor: isDark ? theme.colorScheme.surface : theme.colorScheme.surfaceVariant.withOpacity(0.5),
+          shape: StadiumBorder(
+            side: BorderSide(
+              color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.4),
+              width: 1.2,
+            ),
+          ),
+          visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        );
+      }).toList(),
     );
   }
 
@@ -360,31 +887,53 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
+    final title = _txFilter == 'earning'
+        ? 'Earnings'
+        : (_txFilter == 'withdrawal' || _txFilter == 'payout')
+            ? 'Payout History'
+            : _txFilter == 'reward'
+                ? 'Rewards'
+                : 'All Transactions';
+
+    final filtered = _getFilteredTransactions();
+
     return SingleChildScrollView(
       dragStartBehavior: DragStartBehavior.down,
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'All Transactions',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...(_walletData['transactions'] as List).map((transaction) => 
-                    _buildTransactionItem(transaction, theme, isDark)
-                  ),
-                ],
-              ),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 12),
+          _buildTransactionFilters(theme, isDark),
+          if (_txFilter == 'earning') ...[
+            const SizedBox(height: 12),
+            _buildEarningsSummary(theme, isDark),
+          ],
+          const SizedBox(height: 12),
+          if (filtered.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? theme.colorScheme.surface : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200),
+              ),
+              child: Text(
+                'No transactions found',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            ...filtered.map((transaction) => _buildTransactionItem(transaction, theme, isDark)),
         ],
       ),
     );
@@ -392,16 +941,42 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
 
   Widget _buildTransactionItem(Map<String, dynamic> transaction, ThemeData theme, bool isDark) {
     final isPositive = transaction['amount'] > 0;
+    final isCompleted = transaction['status'] == 'completed';
     
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? theme.colorScheme.surface : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        boxShadow: _homeStyleShadows(theme, isDark),
+      ),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: isPositive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isPositive 
+                    ? [Colors.green, Colors.green.shade600]
+                    : [Colors.red, Colors.red.shade600],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: (isPositive ? Colors.green : Colors.red).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Icon(
-              isPositive ? Icons.add : Icons.remove,
-              color: isPositive ? Colors.green : Colors.red,
+              isPositive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+              color: Colors.white,
+              size: 22,
             ),
           ),
           const SizedBox(width: 12),
@@ -415,11 +990,18 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  transaction['date'],
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-                  ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 12, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Text(
+                      transaction['date'],
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -429,22 +1011,31 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
             children: [
               Text(
                 '${isPositive ? '+' : ''}\$${transaction['amount'].abs().toStringAsFixed(2)}',
-                style: theme.textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isPositive ? Colors.green : Colors.red,
+                  color: isPositive ? Colors.green.shade700 : Colors.red.shade700,
                 ),
               ),
+              const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: transaction['status'] == 'completed' ? Colors.green : Colors.orange,
-                  borderRadius: BorderRadius.circular(12),
+                  color: isCompleted 
+                      ? Colors.green.withOpacity(0.12) 
+                      : Colors.orange.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isCompleted 
+                        ? Colors.green.withOpacity(0.3) 
+                        : Colors.orange.withOpacity(0.3),
+                  ),
                 ),
                 child: Text(
                   transaction['status'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+                  style: TextStyle(
+                    color: isCompleted ? Colors.green.shade700 : Colors.orange.shade700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -460,75 +1051,390 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
+    final isPhone = MediaQuery.of(context).size.width < 600;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rewards Program',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Pending Rewards: \$${_walletData['pendingRewards'].toStringAsFixed(2)}'),
-                  Text('Total Earned: \$${_walletData['totalEarned'].toStringAsFixed(2)}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.push('/referral'),
-                    child: const Text('Refer Friends & Earn'),
-                  ),
+          // Refer Friends Button
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.secondary,
                 ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => context.push('/referral'),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: EdgeInsets.all(isPhone ? 16 : 18),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.card_giftcard_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Refer Friends & Earn More',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isPhone ? 15 : 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
+          const SizedBox(height: 24),
+          // Available Coupons
+          _buildAvailableCoupons(theme, isDark),
         ],
       ),
     );
   }
 
   void _showAddMoneyDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final amountController = TextEditingController();
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Money'),
-        content: const Text('Add money functionality will be implemented here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green.shade400, Colors.green.shade600],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add_circle_rounded,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Title
+              Text(
+                'Add Money',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter amount to add to your wallet',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Amount Input
+              TextField(
+                controller: amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  prefixIcon: const Icon(Icons.attach_money_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: isDark 
+                      ? theme.colorScheme.surface 
+                      : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Quick amount buttons
+              Wrap(
+                spacing: 8,
+                children: [
+                  _buildQuickAmountChip('\$10', () => amountController.text = '10', theme),
+                  _buildQuickAmountChip('\$25', () => amountController.text = '25', theme),
+                  _buildQuickAmountChip('\$50', () => amountController.text = '50', theme),
+                  _buildQuickAmountChip('\$100', () => amountController.text = '100', theme),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        // TODO: Implement add money logic
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Adding \$${amountController.text}...'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Add'),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAmountChip(String label, VoidCallback onTap, ThemeData theme) {
+    return ActionChip(
+      label: Text(label),
+      onPressed: onTap,
+      backgroundColor: theme.colorScheme.primaryContainer,
+      labelStyle: TextStyle(
+        color: theme.colorScheme.onPrimaryContainer,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
 
   void _showWithdrawDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final amountController = TextEditingController();
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Withdraw Money'),
-        content: const Text('Withdraw functionality will be implemented here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.blue.shade600],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_circle_down_rounded,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Title
+              Text(
+                'Withdraw Money',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Available Balance: ',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    '\$${_walletData['balance'].toStringAsFixed(2)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Amount Input
+              TextField(
+                controller: amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  prefixIcon: const Icon(Icons.attach_money_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: isDark 
+                      ? theme.colorScheme.surface 
+                      : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  helperText: 'Minimum withdrawal: \$10',
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Bank Account Selection
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark 
+                      ? theme.colorScheme.surface 
+                      : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bank Account',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '****1234 (Primary)',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // TODO: Show bank account selection
+                      },
+                      child: const Text('Change'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        // TODO: Implement withdraw logic
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Withdrawing \$${amountController.text}...'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.send_rounded),
+                      label: const Text('Withdraw'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Withdraw'),
-          ),
-        ],
+        ),
       ),
     );
   }

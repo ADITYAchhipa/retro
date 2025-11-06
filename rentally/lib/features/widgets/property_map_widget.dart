@@ -60,7 +60,13 @@ class _PropertyMapWidgetState extends State<PropertyMapWidget> {
             position: const LatLng(37.7749, -122.4194), // Mock coordinates
             infoWindow: InfoWindow(
               title: listing.title,
-              snippet: CurrencyFormatter.formatPricePerUnit(listing.price, 'night'),
+              snippet: () {
+                final ru = (listing.rentalUnit ?? '').trim().toLowerCase();
+                final isVehicle = listing.type.toLowerCase() == 'vehicle';
+                final fallback = isVehicle ? 'hour' : 'day';
+                final unit = ru.isNotEmpty ? ru : fallback;
+                return CurrencyFormatter.formatPricePerUnit(listing.price, unit);
+              }(),
             ),
             icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           ),

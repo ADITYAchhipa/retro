@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../app/auth_router.dart';
 
 class BookingConfirmationScreen extends StatelessWidget {
@@ -41,6 +42,32 @@ class BookingConfirmationScreen extends StatelessWidget {
                   onPressed: () => context.go(Routes.bookingHistory),
                   icon: const Icon(Icons.history),
                   label: const Text('Go to My Bookings'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '/chat/$bookingId',
+                    extra: {
+                      'participantName': 'Host',
+                      'participantId': 'owner_demo',
+                      'context': 'booking',
+                      'bookingId': bookingId,
+                    },
+                  ),
+                  icon: const Icon(Icons.message),
+                  label: const Text('Message Host'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Share.share('Receipt for booking #$bookingId'),
+                  icon: const Icon(Icons.email_outlined),
+                  label: const Text('Email Receipt'),
                 ),
               ),
               const SizedBox(height: 12),

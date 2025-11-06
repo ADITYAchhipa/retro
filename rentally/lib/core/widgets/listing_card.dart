@@ -1,14 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as rp;
 import 'package:provider/provider.dart' as pv;
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../theme/enterprise_dark_theme.dart';
 import '../theme/enterprise_light_theme.dart';
+import '../theme/listing_card_theme.dart';
+import '../neo/neo.dart';
 import '../../services/view_history_service.dart';
 import '../../services/wishlist_service.dart';
+import '../../services/recently_viewed_service.dart';
 import 'listing_badges.dart';
 import '../../app/auth_router.dart';
 
@@ -23,6 +27,9 @@ class ListingViewModel {
   final String title;
   final String location;
   final String priceLabel;
+  final String? originalPriceLabel; // original price per unit, when discounted
+  final int? discountPercent; // percent off, when discounted
+  final String? rentalUnit; // e.g., 'hour', 'day', 'night', 'month'
   final String? imageUrl;
   final double rating;
   final int? reviewCount;
@@ -41,6 +48,9 @@ class ListingViewModel {
     required this.title,
     required this.location,
     required this.priceLabel,
+    this.originalPriceLabel,
+    this.discountPercent,
+    this.rentalUnit,
     required this.imageUrl,
     required this.rating,
     this.reviewCount,
@@ -71,6 +81,7 @@ class ListingCard extends rp.ConsumerWidget {
   final bool chipInRatingRowRight;
   final bool priceBottomLeft;
   final bool shareBottomRight;
+  final double? imageAspectRatio;
 
   const ListingCard({
     super.key,
@@ -88,11 +99,13 @@ class ListingCard extends rp.ConsumerWidget {
     this.chipInRatingRowRight = false,
     this.priceBottomLeft = false,
     this.shareBottomRight = false,
+    this.imageAspectRatio,
   });
 
   @override
   Widget build(BuildContext context, rp.WidgetRef ref) {
-    final bool isCompact = compact || width <= 280;
+    final bool isCompact = compact || width <= 140; // ultra compact threshold for smaller cards
+    final cardTheme = Theme.of(context).extension<ListingCardTheme>();
     return GestureDetector(
       onTap: () {
         // Track view when card is tapped
@@ -104,6 +117,15 @@ class ListingCard extends rp.ConsumerWidget {
           imageUrl: model.imageUrl,
           price: _extractPriceFromLabel(model.priceLabel),
           location: model.location,
+        );
+        // Also record for Recently Viewed section
+        final parsedPrice = _extractPriceFromLabel(model.priceLabel) ?? 0.0;
+        RecentlyViewedService.addFromFields(
+          id: model.id,
+          title: model.title,
+          location: model.location,
+          price: parsedPrice,
+          imageUrl: model.imageUrl,
         );
         
         // Call original onTap if provided
@@ -124,19 +146,29 @@ class ListingCard extends rp.ConsumerWidget {
             width: width,
             margin: margin,
             decoration: BoxDecoration(
-              color: isDark ? EnterpriseDarkTheme.cardBackground : EnterpriseLightTheme.cardBackground,
-              borderRadius: BorderRadius.circular(12),
+              color: isDark ? EnterpriseDarkTheme.cardBackground : Colors.white,
+              borderRadius: BorderRadius.circular(cardTheme?.cardRadius ?? 12),
               border: Border.all(
-                color: isDark ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.8) : Colors.grey.withOpacity(0.4),
-                width: 1.5,
+                color: cardTheme?.cardBorderColor ?? (isDark
+                    ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                    : EnterpriseLightTheme.secondaryBorder),
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isDark
-                      ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.35)
-                      : EnterpriseLightTheme.cardShadow.withOpacity(0.12),
-                  blurRadius: isDark ? 10 : 8,
-                  offset: const Offset(0, 4),
+                  color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                  blurRadius: 10,
+                  offset: const Offset(-5, -5),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: (isDark
+                          ? EnterpriseDarkTheme.primaryAccent
+                          : EnterpriseLightTheme.primaryAccent)
+                      .withOpacity(isDark ? 0.18 : 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(5, 5),
+                  spreadRadius: 0,
                 ),
               ],
             ),
@@ -145,11 +177,11 @@ class ListingCard extends rp.ConsumerWidget {
               children: [
                 // Image + favorite icon
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(cardTheme?.cardRadius ?? 12)),
                   child: Stack(
                     children: [
                       AspectRatio(
-                        aspectRatio: 2.0, // 2:1 to reduce photo height and overall card height
+                        aspectRatio: imageAspectRatio ?? (isCompact ? 3.8 : 3.2), // allow override for contexts like Featured
                         child: Container(
                           color: isDark ? EnterpriseDarkTheme.surfaceBackground : EnterpriseLightTheme.surfaceBackground,
                           child: model.imageUrl != null
@@ -174,44 +206,39 @@ class ListingCard extends rp.ConsumerWidget {
                                     if (resolvedUrl.contains(' ')) {
                                       resolvedUrl = resolvedUrl.replaceAll(' ', '%20');
                                     }
-                                    return Image.network(
-                                      resolvedUrl,
+                                    return CachedNetworkImage(
+                                      imageUrl: resolvedUrl,
                                       fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Stack(
-                                          fit: StackFit.expand,
-                                          children: [
-                                            Container(
-                                              color: isDark ? EnterpriseDarkTheme.surfaceBackground : EnterpriseLightTheme.surfaceBackground,
-                                            ),
-                                            Center(
-                                              child: SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                                    isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent,
-                                                  ),
+                                      placeholder: (context, url) => Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Container(
+                                            color: isDark ? EnterpriseDarkTheme.surfaceBackground : EnterpriseLightTheme.surfaceBackground,
+                                          ),
+                                          Center(
+                                            child: SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(
+                                                  isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent,
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          color: isDark ? EnterpriseDarkTheme.surfaceBackground : EnterpriseLightTheme.surfaceBackground,
-                                          child: Center(
-                                            child: Icon(
-                                              Icons.image_not_supported_outlined,
-                                              size: 32,
-                                              color: isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText,
-                                            ),
                                           ),
-                                        );
-                                      },
+                                        ],
+                                      ),
+                                      errorWidget: (context, url, error) => Container(
+                                        color: isDark ? EnterpriseDarkTheme.surfaceBackground : EnterpriseLightTheme.surfaceBackground,
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.image_not_supported_outlined,
+                                            size: 32,
+                                            color: isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText,
+                                          ),
+                                        ),
+                                      ),
                                     );
                                   } else {
                                     final path = url.startsWith('file://') ? url.substring(7) : url;
@@ -249,26 +276,29 @@ class ListingCard extends rp.ConsumerWidget {
                         Positioned(
                           top: 10,
                           left: 10,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: isDark
-                                    ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                                    : Colors.grey.withOpacity(0.4),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              model.chips.first,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText,
-                              ),
-                            ),
+                          child: Row(
+                            children: model.chips.take(2).map((chip) => Container(
+                                  margin: const EdgeInsets.only(right: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: cardTheme?.chipBackgroundColor ?? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04)),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: cardTheme?.chipBorderColor ?? (isDark
+                                          ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
+                                          : Colors.grey.withOpacity(0.4)),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    chip,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: cardTheme?.chipTextColor ?? (isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText),
+                                    ),
+                                  ),
+                                )).toList(),
                           ),
                         ),
                       // Heart icon for wishlist (functional)
@@ -278,43 +308,35 @@ class ListingCard extends rp.ConsumerWidget {
                           right: 10,
                           child: rp.Consumer(builder: (context, ref, _) {
                             final isLiked = ref.watch(wishlistProvider).isInWishlist(model.id);
-                            return GestureDetector(
-                              onTap: () {
-                                final wasLiked = isLiked;
-                                ref.read(wishlistProvider.notifier).toggleWishlist(model.id);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(wasLiked ? 'Removed from wishlist' : 'Added to wishlist'),
-                                    duration: const Duration(milliseconds: 900),
-                                  ),
-                                );
-                              },
-                              child: AnimatedScale(
-                                scale: isLiked ? 1.12 : 1.0,
-                                duration: const Duration(milliseconds: 150),
-                                curve: Curves.easeOutBack,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  curve: Curves.easeOutCubic,
+                            return AnimatedScale(
+                              scale: isLiked ? 1.12 : 1.0,
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeOutBack,
+                              child: GestureDetector(
+                                onTap: () {
+                                  final wasLiked = isLiked;
+                                  ref.read(wishlistProvider.notifier).toggleWishlist(model.id);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(wasLiked ? 'Removed from wishlist' : 'Added to wishlist'),
+                                      duration: const Duration(milliseconds: 900),
+                                    ),
+                                  );
+                                },
+                                child: Container(
                                   width: 32,
                                   height: 32,
-                                  decoration: BoxDecoration(
-                                    color: isLiked
-                                        ? Colors.red.withOpacity(0.15)
-                                        : Colors.white.withOpacity(0.9),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
+                                  decoration: isLiked
+                                      ? null
+                                      : BoxDecoration(
+                                          color: Colors.black.withOpacity(0.3),
+                                          shape: BoxShape.circle,
+                                        ),
+                                  alignment: Alignment.center,
                                   child: Icon(
                                     isLiked ? Icons.favorite : Icons.favorite_border,
                                     size: 18,
-                                    color: isLiked ? Colors.red : Colors.grey.shade600,
+                                    color: isLiked ? Colors.red : Colors.white,
                                   ),
                                 ),
                               ),
@@ -328,32 +350,38 @@ class ListingCard extends rp.ConsumerWidget {
                 ),
                 // Compact details section (auto height)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    // Category label (first chip)
+                    // Category and mode labels (up to 2 chips)
                     if (showInfoChip && model.chips.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isDark ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5) : Colors.grey.withOpacity(0.4),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          model.chips.first,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText,
-                          ),
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ...model.chips.take(2).map((chip) => Container(
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: cardTheme?.chipBackgroundColor ?? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04)),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: cardTheme?.chipBorderColor ?? (isDark ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5) : Colors.grey.withOpacity(0.4)),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  chip,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: cardTheme?.chipTextColor ?? (isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText),
+                                  ),
+                                ),
+                              )),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 1),
                     ],
                       // Header: Title, Price and Share
                       Row(
@@ -365,8 +393,8 @@ class ListingCard extends rp.ConsumerWidget {
                               style: TextStyle(
                                 fontSize: isCompact ? 13 : 14,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? EnterpriseDarkTheme.primaryText : EnterpriseLightTheme.primaryText,
-                                height: 1.2,
+                                color: cardTheme?.titleColor ?? (isDark ? EnterpriseDarkTheme.primaryText : EnterpriseLightTheme.primaryText),
+                                height: 1.1,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -374,43 +402,76 @@ class ListingCard extends rp.ConsumerWidget {
                           ),
                           if (!priceBottomLeft) ...[
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isDark ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.1) : const Color(0xFF1E3A8A).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isDark ? EnterpriseDarkTheme.primaryAccent : const Color(0xFF1E3A8A),
-                                  width: 1,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  child: Text(
+                                    model.priceLabel,
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 13 : 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: cardTheme?.priceColor ?? Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                model.priceLabel,
-                                style: TextStyle(
-                                  fontSize: isCompact ? 13 : 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? EnterpriseDarkTheme.primaryAccent : const Color(0xFF1E3A8A),
-                                ),
-                              ),
+                                if (model.originalPriceLabel != null) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    model.originalPriceLabel!,
+                                    style: TextStyle(
+                                      fontSize: isCompact ? 11 : 12,
+                                      color: (isDark
+                                              ? EnterpriseDarkTheme.secondaryText
+                                              : EnterpriseLightTheme.secondaryText)
+                                          .withOpacity(0.9),
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                  if (model.discountPercent != null) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: cardTheme?.discountBadgeBackgroundColor ?? (isDark ? const Color(0xFFE11D48).withOpacity(0.22) : const Color(0xFFE11D48).withOpacity(0.12)),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: cardTheme?.discountBadgeBorderColor ?? (isDark ? const Color(0xFFE11D48).withOpacity(0.35) : const Color(0xFFE11D48).withOpacity(0.35))),
+                                      ),
+                                      child: Text(
+                                        '-${model.discountPercent}%',
+                                        style: TextStyle(
+                                          fontSize: isCompact ? 11 : 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: cardTheme?.discountBadgeTextColor ?? const Color(0xFFBE123C),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ],
                             ),
                           ],
                           if (!shareBottomRight && showShareButton) ...[
                             const SizedBox(width: 8),
-                            GestureDetector(
+                            NeoIconButton(
+                              icon: Icons.share,
+                              size: isCompact ? 28 : 30,
+                              iconSize: isCompact ? 16 : 18,
+                              iconColor: cardTheme?.actionIconColor ?? (isDark ? EnterpriseDarkTheme.primaryText : Colors.black87),
+                              spread: cardTheme?.actionSpread ?? 0.0,
+                              tooltip: 'Share',
+                              backgroundColor: cardTheme?.actionBackgroundColor ?? Colors.transparent,
+                              borderColor: cardTheme?.actionBorderColor ?? Colors.transparent,
                               onTap: () {
                                 final shareText = 'Check out ${model.title} in ${model.location} — ${model.priceLabel}\nvia Rentally';
                                 Share.share(shareText, subject: 'Rentally: ${model.title}');
                               },
-                              child: Icon(
-                                Icons.share,
-                                size: isCompact ? 18 : 20,
-                                color: isDark ? EnterpriseDarkTheme.primaryText : EnterpriseLightTheme.primaryText,
-                              ),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 1),
                       // Rating row (with optional chip on the right)
                       if (model.rating > 0 || (chipInRatingRowRight && model.chips.isNotEmpty)) ...[
                         Row(
@@ -429,7 +490,8 @@ class ListingCard extends rp.ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: isCompact ? 11 : 12,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? EnterpriseDarkTheme.primaryText : EnterpriseLightTheme.primaryText,
+                                    color: cardTheme?.ratingColor ?? (isDark ? EnterpriseDarkTheme.primaryText : EnterpriseLightTheme.primaryText),
+                                    height: 1.1,
                                   ),
                                 ),
                                 if (model.reviewCount != null && model.rating > 0) ...[
@@ -439,6 +501,7 @@ class ListingCard extends rp.ConsumerWidget {
                                     style: TextStyle(
                                       fontSize: isCompact ? 10 : 11,
                                       color: isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText,
+                                      height: 1.1,
                                     ),
                                   ),
                                 ]
@@ -446,10 +509,18 @@ class ListingCard extends rp.ConsumerWidget {
                             ),
                             const Spacer(),
                             if (chipInRatingRowRight && model.chips.isNotEmpty)
-                              _chip(model.chips.first, isDark),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ...model.chips.take(2).map((c) => Padding(
+                                        padding: const EdgeInsets.only(left: 6),
+                                        child: _chip(c, isDark),
+                                      )),
+                                ],
+                              ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 1),
                       ],
                       // Location row
                       Row(
@@ -466,6 +537,7 @@ class ListingCard extends rp.ConsumerWidget {
                               style: TextStyle(
                                 fontSize: isCompact ? 11 : 12,
                                 color: isDark ? EnterpriseDarkTheme.secondaryText : EnterpriseLightTheme.secondaryText,
+                                height: 1.1,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -473,10 +545,10 @@ class ListingCard extends rp.ConsumerWidget {
                           ),
                         ],
                       ),
-                      SizedBox(height: width > 260 ? 6 : 4),
+                      SizedBox(height: width > 260 ? 3 : 1),
                       // Feature row (meta items)
                       SizedBox(
-                        height: isCompact ? 18 : 20,
+                        height: isCompact ? 14 : 16,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
@@ -515,29 +587,59 @@ class ListingCard extends rp.ConsumerWidget {
                       ),
                       // Bottom row: price (left) and share (right)
                               if (priceBottomLeft || (shareBottomRight && showShareButton)) ...[
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 2),
                                 Row(
                                   children: [
                                     if (priceBottomLeft)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            color: isDark ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.1) : const Color(0xFF1E3A8A).withOpacity(0.08),
-                                          borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: isDark ? EnterpriseDarkTheme.primaryAccent : const Color(0xFF1E3A8A),
-                                              width: 1,
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                            child: Text(
+                                              model.priceLabel,
+                                              style: TextStyle(
+                                                fontSize: isCompact ? 13 : 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: cardTheme?.priceColor ?? Theme.of(context).colorScheme.primary,
+                                              ),
                                             ),
                                           ),
-                                          child: Text(
-                                            model.priceLabel,
-                                            style: TextStyle(
-                                            fontSize: isCompact ? 13 : 14,
-                                              fontWeight: FontWeight.w700,
-                                              color: isDark ? EnterpriseDarkTheme.primaryAccent : const Color(0xFF1E3A8A),
+                                          if (model.originalPriceLabel != null) ...[
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              model.originalPriceLabel!,
+                                              style: TextStyle(
+                                                fontSize: isCompact ? 11 : 12,
+                                                color: (isDark
+                                                        ? EnterpriseDarkTheme.secondaryText
+                                                        : EnterpriseLightTheme.secondaryText)
+                                                    .withOpacity(0.9),
+                                                decoration: TextDecoration.lineThrough,
+                                              ),
                                             ),
-                                          ),
-                                        ),
+                                          ],
+                                          if (model.discountPercent != null) ...[
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: (cardTheme?.discountBadgeBackgroundColor ?? const Color(0xFFE11D48)).withOpacity(isDark ? 0.22 : 0.12),
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: (cardTheme?.discountBadgeBorderColor ?? const Color(0xFFE11D48)).withOpacity(0.35)),
+                                              ),
+                                              child: Text(
+                                                '-${model.discountPercent}%',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: cardTheme?.discountBadgeTextColor ?? const Color(0xFFBE123C),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     if (priceBottomLeft && model.badges.contains(ListingBadgeType.verified)) ...[
                                       const SizedBox(width: 8),
                                       Tooltip(
@@ -551,30 +653,19 @@ class ListingCard extends rp.ConsumerWidget {
                                     ],
                                     const Spacer(),
                                     if (shareBottomRight && showShareButton)
-                                      Tooltip(
-                                        message: 'Share',
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            final shareText = 'Check out ${model.title} in ${model.location} — ${model.priceLabel}\nvia Rentally';
-                                            Share.share(shareText, subject: 'Rentally: ${model.title}');
-                                          },
-                                          child: Container(
-                                            width: 34,
-                                            height: 34,
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(0.96),
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.12),
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Icon(Icons.share, size: isCompact ? 18 : 20, color: Colors.black87),
-                                          ),
-                                        ),
+                                      NeoIconButton(
+                                        tooltip: 'Share',
+                                        icon: Icons.share,
+                                        size: 32,
+                                        iconSize: isCompact ? 16 : 18,
+                                        iconColor: cardTheme?.actionIconColor ?? (isDark ? EnterpriseDarkTheme.primaryText : Colors.black87),
+                                        spread: cardTheme?.actionSpread ?? 0.0,
+                                        backgroundColor: cardTheme?.actionBackgroundColor ?? Colors.transparent,
+                                        borderColor: cardTheme?.actionBorderColor ?? Colors.transparent,
+                                        onTap: () {
+                                          final shareText = 'Check out ${model.title} in ${model.location} — ${model.priceLabel}\nvia Rentally';
+                                          Share.share(shareText, subject: 'Rentally: ${model.title}');
+                                        },
                                       ),
                                   ],
                                 ),

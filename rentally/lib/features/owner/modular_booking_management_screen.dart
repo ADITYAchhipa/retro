@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/ui_visibility_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../utils/snackbar_utils.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -249,24 +249,7 @@ class _ModularBookingManagementScreenState
   }
 
   Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          LoadingStates.propertyCardSkeleton(context),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: 6,
-              itemBuilder: (context, index) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: LoadingStates.propertyCardSkeleton(context),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return LoadingStates.listShimmer(context, itemCount: 7);
   }
 
   Widget _buildErrorState() {
@@ -366,9 +349,7 @@ class _ModularBookingManagementScreenState
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Card(
-                          child: LoadingStates.propertyCardSkeleton(context),
-                        ),
+                        placeholder: (context, url) => const SkeletonLoader(width: 40, height: 40, borderRadius: BorderRadius.all(Radius.circular(20))),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -402,9 +383,7 @@ class _ModularBookingManagementScreenState
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Card(
-                          child: LoadingStates.propertyCardSkeleton(context),
-                        ),
+                        placeholder: (context, url) => const SkeletonLoader(width: 60, height: 60, borderRadius: BorderRadius.all(Radius.circular(8))),
                       ),
                     ),
                     const SizedBox(width: 16),

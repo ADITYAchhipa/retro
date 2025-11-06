@@ -30,10 +30,45 @@ class CurrencyFormatter {
     return _formatters[key]!.format(amount);
   }
   
-  /// Format price per unit (night/day) with currency
+  /// Format price per unit with standardized unit labels
+  /// Supported units: hour/day/night/month (+ common aliases)
   static String formatPricePerUnit(double amount, String unit, {String? currency, String? locale}) {
     final formattedAmount = formatPrice(amount, currency: currency, locale: locale);
-    return '$formattedAmount/$unit';
+    final u = unit.trim().toLowerCase();
+    String normalized;
+    switch (u) {
+      case 'h':
+      case 'hr':
+      case 'hour':
+      case 'per_hour':
+        normalized = 'hour';
+        break;
+      case 'd':
+      case 'day':
+      case 'per_day':
+      case 'daily':
+        normalized = 'day';
+        break;
+      case 'night':
+      case 'per_night':
+        normalized = 'night';
+        break;
+      case 'm':
+      case 'mo':
+      case 'month':
+      case 'per_month':
+      case 'monthly':
+        normalized = 'month';
+        break;
+      case 'lease':
+      case 'per_lease':
+        // Map legacy 'lease' unit to monthly to remove lease-specific labeling
+        normalized = 'month';
+        break;
+      default:
+        normalized = u; // fallback to provided unit
+    }
+    return '$formattedAmount/$normalized';
   }
   
   /// Get currency symbol for common currencies

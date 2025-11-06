@@ -4,6 +4,8 @@ class VehicleModel {
   final String title;
   final String location;
   final double pricePerDay;
+  final double? pricePerHour;
+  final double? discountPercent;
   final List<String> images;
   final double rating;
   final int reviewCount;
@@ -20,6 +22,8 @@ class VehicleModel {
     required this.title,
     required this.location,
     required this.pricePerDay,
+    this.pricePerHour,
+    this.discountPercent,
     required this.images,
     required this.rating,
     required this.reviewCount,
@@ -58,7 +62,14 @@ class VehicleModel {
     final String id = (json['id'] ?? '').toString();
     final String title = (json['title'] ?? '').toString();
     final String location = (json['location'] ?? '').toString();
-    final double pricePerDay = toDouble(json['pricePerDay'] ?? json['price'] ?? json['dayPrice']);
+    // Treat 'price' as hourly for vehicles when explicit hourly fields are absent
+    final double pricePerDay = toDouble(json['pricePerDay'] ?? json['dayPrice']);
+    final double? pricePerHour = (json.containsKey('pricePerHour') || json.containsKey('hourPrice'))
+        ? toDouble(json['pricePerHour'] ?? json['hourPrice'])
+        : (json.containsKey('price') ? toDouble(json['price']) : null);
+    final double? discountPercent = (json.containsKey('discountPercent') || json.containsKey('discount'))
+        ? toDouble(json['discountPercent'] ?? json['discount'])
+        : null;
 
     // Images may come as 'image'/'imageUrl' or a list 'images'
     List<String> images = toStringList(json['images']);
@@ -84,6 +95,8 @@ class VehicleModel {
       title: title,
       location: location,
       pricePerDay: pricePerDay,
+      pricePerHour: pricePerHour,
+      discountPercent: discountPercent,
       images: images,
       rating: rating,
       reviewCount: reviewCount,
@@ -103,6 +116,8 @@ class VehicleModel {
       'title': title,
       'location': location,
       'pricePerDay': pricePerDay,
+      if (pricePerHour != null) 'pricePerHour': pricePerHour,
+      if (discountPercent != null) 'discountPercent': discountPercent,
       'images': images,
       'rating': rating,
       'reviewCount': reviewCount,
@@ -121,6 +136,8 @@ class VehicleModel {
     String? title,
     String? location,
     double? pricePerDay,
+    double? pricePerHour,
+    double? discountPercent,
     List<String>? images,
     double? rating,
     int? reviewCount,
@@ -137,6 +154,8 @@ class VehicleModel {
       title: title ?? this.title,
       location: location ?? this.location,
       pricePerDay: pricePerDay ?? this.pricePerDay,
+      pricePerHour: pricePerHour ?? this.pricePerHour,
+      discountPercent: discountPercent ?? this.discountPercent,
       images: images ?? this.images,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,

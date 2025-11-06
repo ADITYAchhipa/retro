@@ -10,6 +10,8 @@ import '../../services/referral_service.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/error_handling_service.dart';
 import '../../core/widgets/tab_back_handler.dart';
+import '../../core/theme/enterprise_dark_theme.dart';
+import '../../core/theme/enterprise_light_theme.dart';
 
 class ReferralDashboardScreen extends ConsumerStatefulWidget {
   const ReferralDashboardScreen({super.key});
@@ -19,20 +21,40 @@ class ReferralDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final TextEditingController _redeemController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
   }
+  
   @override
   void dispose() {
     _tabController.dispose();
-    _redeemController.dispose();
     super.dispose();
+  }
+
+  // Home screen style neumorphic shadows
+  List<BoxShadow> _homeStyleShadows(ThemeData theme, bool isDark) {
+    return [
+      BoxShadow(
+        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+        blurRadius: 10,
+        offset: const Offset(-5, -5),
+        spreadRadius: 0,
+      ),
+      BoxShadow(
+        color: (isDark
+            ? EnterpriseDarkTheme.primaryAccent
+            : EnterpriseLightTheme.primaryAccent)
+            .withOpacity(isDark ? 0.18 : 0.12),
+        blurRadius: 10,
+        offset: const Offset(5, 5),
+        spreadRadius: 0,
+      ),
+    ];
   }
 
   @override
@@ -42,21 +64,27 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     final referralStats = ref.watch(referralServiceProvider);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
 
+    final isDark = theme.brightness == Brightness.dark;
     return TabBackHandler(
       tabController: _tabController,
       child: Scaffold(
+      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
       appBar: AppBar(
         title: Text(t.referralAndEarn),
         elevation: 0,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        foregroundColor: theme.colorScheme.onSurface,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: theme.colorScheme.onPrimary,
-          labelColor: theme.colorScheme.onPrimary,
-          unselectedLabelColor: theme.colorScheme.onPrimary.withOpacity(0.7),
+          indicatorColor: theme.colorScheme.primary,
+          labelColor: theme.colorScheme.primary,
+          unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
           labelStyle: TextStyle(fontSize: isPhone ? 12 : 14, fontWeight: FontWeight.w600),
           unselectedLabelStyle: TextStyle(fontSize: isPhone ? 12 : 14),
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicatorWeight: 3,
+          splashBorderRadius: BorderRadius.circular(8),
+          overlayColor: MaterialStateProperty.all(theme.colorScheme.primary.withOpacity(0.1)),
           tabs: [
             Tab(text: t.dashboard),
             Tab(text: t.rewards),
@@ -80,45 +108,24 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
 
   Widget _buildDashboardTab(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
       dragStartBehavior: DragStartBehavior.down,
-      padding: EdgeInsets.all(isPhone ? 12 : 16),
+      padding: EdgeInsets.all(isPhone ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stats Cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  title: t.totalTokens,
-                  value: stats.totalTokens.toString(),
-                  icon: Icons.stars,
-                  color: Colors.amber,
-                  theme: theme,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  title: t.totalReferrals,
-                  value: stats.totalReferrals.toString(),
-                  icon: Icons.people,
-                  color: Colors.blue,
-                  theme: theme,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: isPhone ? 12 : 24),
+          // Hero Stats Section with gradient background
+          _buildHeroStatsCard(theme, t, stats, isPhone, isDark),
+          SizedBox(height: isPhone ? 20 : 28),
 
           // Referral Code Section
           _buildReferralCodeSection(theme, t, stats),
-          const SizedBox(height: 24),
+          SizedBox(height: isPhone ? 20 : 28),
 
           // Quick Actions
           _buildQuickActions(theme, t),
-          const SizedBox(height: 24),
+          SizedBox(height: isPhone ? 20 : 28),
 
           // Referral Level & Boost
           _buildReferralLevelCard(theme),
@@ -132,10 +139,6 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
           _buildHowItWorks(theme),
           const SizedBox(height: 24),
 
-          // Leaderboard (mock)
-          _buildLeaderboard(theme),
-          const SizedBox(height: 24),
-
           // Recent Activity
           _buildRecentActivity(theme, t, stats),
         ],
@@ -145,6 +148,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
 
   Widget _buildRewardsTab(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
       dragStartBehavior: DragStartBehavior.down,
       padding: EdgeInsets.all(isPhone ? 12 : 16),
@@ -162,6 +166,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
+              boxShadow: _homeStyleShadows(theme, isDark),
             ),
             child: Column(
               children: [
@@ -187,51 +192,6 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               ],
             ),
           ),
-          SizedBox(height: isPhone ? 10 : 16),
-          // Used vs Available summary
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(isPhone ? 10 : 12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Used Tokens', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      Text('${ref.read(referralServiceProvider.notifier).getUsedTokens()}',
-                          style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.all(isPhone ? 10 : 12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Available', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      Text('${stats.totalTokens}',
-                          style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
           SizedBox(height: isPhone ? 16 : 24),
 
           // Reward Structure
@@ -246,8 +206,8 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
           ..._buildRewardItems(theme, t),
           SizedBox(height: isPhone ? 16 : 24),
 
-          // Redeem Tokens
-          _buildRedeemSection(theme, t, stats),
+          // How to Use Tokens
+          _buildTokenUsageGuide(theme, t),
         ],
       ),
     );
@@ -257,30 +217,43 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     final transactions = stats.transactions;
 
     if (transactions.isEmpty) {
+      final isDark = theme.brightness == Brightness.dark;
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.history,
-              size: 64,
-              color: theme.colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              t.noTransactionsYet,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.outline,
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.history_rounded,
+                  size: 64,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t.startReferringToSeeHistory,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.outline,
+              const SizedBox(height: 24),
+              Text(
+                t.noTransactionsYet,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                t.startReferringToSeeHistory,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -296,141 +269,301 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required ThemeData theme,
-  }) {
-    final isPhone = MediaQuery.sizeOf(context).width < 600;
+  // Hero Stats Card - Combined stats with gradient
+  Widget _buildHeroStatsCard(ThemeData theme, AppLocalizations t, UserReferralStats stats, bool isPhone, bool isDark) {
     return Container(
-      padding: EdgeInsets.all(isPhone ? 12 : 20),
+      padding: EdgeInsets.all(isPhone ? 20 : 28),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withOpacity(0.8),
+            theme.colorScheme.secondary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: isPhone ? 24 : 32),
-          SizedBox(height: isPhone ? 8 : 12),
-          Text(
-            value,
-            style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineMedium)?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.wallet_giftcard_rounded,
+                  color: Colors.white,
+                  size: isPhone ? 28 : 36,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Rewards',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: isPhone ? 14 : 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Earn tokens by referring friends',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: isPhone ? 11 : 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Text(
-            title,
-            style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
+          SizedBox(height: isPhone ? 20 : 24),
+          Row(
+            children: [
+              Expanded(
+                child: _buildHeroStatItem(
+                  title: t.totalTokens,
+                  value: stats.totalTokens.toString(),
+                  icon: Icons.stars_rounded,
+                  iconColor: Colors.amber.shade300,
+                  isPhone: isPhone,
+                ),
+              ),
+              Container(
+                width: 1,
+                height: isPhone ? 60 : 70,
+                color: Colors.white.withOpacity(0.2),
+              ),
+              Expanded(
+                child: _buildHeroStatItem(
+                  title: t.totalReferrals,
+                  value: stats.totalReferrals.toString(),
+                  icon: Icons.people_rounded,
+                  iconColor: Colors.lightBlue.shade300,
+                  isPhone: isPhone,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+  Widget _buildHeroStatItem({
+    required String title,
+    required String value,
+    required IconData icon,
+    required bool isPhone,
+    Color? iconColor,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(isPhone ? 10 : 12),
+          decoration: BoxDecoration(
+            color: (iconColor ?? Colors.white).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor ?? Colors.white,
+            size: isPhone ? 24 : 28,
+          ),
+        ),
+        SizedBox(height: isPhone ? 8 : 12),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isPhone ? 28 : 36,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: isPhone ? 12 : 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildReferralCodeSection(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: EdgeInsets.all(isPhone ? 12 : 20),
+      padding: EdgeInsets.all(isPhone ? 16 : 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? theme.colorScheme.surface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            t.yourReferralCode,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onPrimaryContainer,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.card_giftcard_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.yourReferralCode,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Share with friends to earn rewards',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: isPhone ? 8 : 12),
+          SizedBox(height: isPhone ? 16 : 20),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: isPhone ? 10 : 16, vertical: isPhone ? 8 : 12),
+            padding: EdgeInsets.all(isPhone ? 16 : 20),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+              color: isDark 
+                  ? theme.colorScheme.surface.withOpacity(0.5)
+                  : theme.colorScheme.primaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.5),
+                width: 2,
+              ),
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    stats.referralCode,
-                    style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'monospace',
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CODE',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary.withOpacity(0.7),
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        stats.referralCode,
+                        style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                          fontFamily: 'monospace',
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () => _copyReferralCode(stats.referralCode),
-                  icon: const Icon(Icons.copy),
-                  tooltip: t.copyCode,
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    onPressed: () => _copyReferralCode(stats.referralCode),
+                    icon: const Icon(Icons.content_copy_rounded, color: Colors.white),
+                    iconSize: 20,
+                    tooltip: t.copyCode,
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  ),
                 ),
-                SizedBox(width: isPhone ? 2 : 4),
-                IconButton(
-                  onPressed: _shareReferralCode,
-                  icon: const Icon(Icons.share),
-                  tooltip: t.shareCode,
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    onPressed: _shareReferralCode,
+                    icon: const Icon(Icons.share_rounded, color: Colors.white),
+                    iconSize: 20,
+                    tooltip: t.shareCode,
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: isPhone ? 8 : 12),
+          SizedBox(height: isPhone ? 12 : 16),
           // Deep link + QR actions
           Builder(
             builder: (_) {
               final link = '${AppConstants.referralBaseUrl}/${stats.referralCode}';
-              return Container(
-                padding: EdgeInsets.all(isPhone ? 8 : 12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: theme.colorScheme.outline.withOpacity(0.25)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Your referral link', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                          const SizedBox(height: 2),
-                          Text(link, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-                        ],
+              return Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _copyText(link, 'Link copied'),
+                      icon: const Icon(Icons.link_rounded, size: 20),
+                      label: const Text('Copy Link'),
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 16, vertical: isPhone ? 10 : 12),
+                        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
                       ),
                     ),
-                    TextButton.icon(
-                      onPressed: () => _copyText(link, 'Link copied'),
-                      icon: const Icon(Icons.link),
-                      label: const Text('Copy link'),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _showQrDialog(link),
+                    icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+                    label: const Text('QR'),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 16, vertical: isPhone ? 10 : 12),
+                      side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
                     ),
-                    SizedBox(width: isPhone ? 4 : 6),
-                    OutlinedButton.icon(
-                      onPressed: () => _showQrDialog(link),
-                      icon: const Icon(Icons.qr_code),
-                      label: const Text('QR'),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
-          ),
-          SizedBox(height: isPhone ? 4 : 8),
-          Text(
-            t.shareCodeToEarnTokens,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
-            ),
           ),
         ],
       ),
@@ -439,14 +572,16 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
 
   Widget _buildTransactionItem(ThemeData theme, AppLocalizations t, ReferralTransaction transaction, {bool isCompact = false}) {
     final isEarning = transaction.tokensEarned > 0;
+    final isDark = theme.brightness == Brightness.dark;
     
     return Container(
       margin: EdgeInsets.only(bottom: isCompact ? 4 : 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Row(
         children: [
@@ -594,19 +729,21 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   Widget _buildReferralLevelCard(ThemeData theme) {
     final level = ref.read(referralServiceProvider.notifier).getReferralLevel();
     final active = ref.read(referralServiceProvider.notifier).getActiveReferralCount(days: 30);
+    final isPhone = MediaQuery.sizeOf(context).width < 600;
     String label;
     Color color;
     double boost;
+    IconData levelIcon;
     switch (level) {
       case ReferralLevel.elite:
-        label = 'Elite'; color = Colors.purple; boost = 0.50; break;
+        label = 'Elite'; color = Colors.purple; boost = 0.50; levelIcon = Icons.workspace_premium_rounded; break;
       case ReferralLevel.gold:
-        label = 'Gold'; color = Colors.amber; boost = 0.25; break;
+        label = 'Gold'; color = Colors.amber; boost = 0.25; levelIcon = Icons.military_tech_rounded; break;
       case ReferralLevel.silver:
-        label = 'Silver'; color = Colors.blueGrey; boost = 0.10; break;
+        label = 'Silver'; color = Colors.blueGrey; boost = 0.10; levelIcon = Icons.shield_rounded; break;
       case ReferralLevel.bronze:
       default:
-        label = 'Bronze'; color = Colors.brown; boost = 0.0; break;
+        label = 'Bronze'; color = Colors.brown; boost = 0.0; levelIcon = Icons.badge_rounded; break;
     }
     int nextTarget;
     switch (level) {
@@ -620,44 +757,135 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         nextTarget = 3; break;
     }
     final toNext = nextTarget > 0 ? (nextTarget - active).clamp(0, 1 << 31) : 0;
+    final progress = nextTarget > 0 ? (active / nextTarget).clamp(0.0, 1.0) : 1.0;
 
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isPhone ? 16 : 20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: color.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.emoji_events, color: color, size: 18),
-                const SizedBox(width: 6),
-                Text('Level: $label', style: TextStyle(color: color, fontWeight: FontWeight.w700)),
-              ],
-            ),
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withOpacity(0.7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(levelIcon, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          label,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            '+${(boost * 100).round()}% Boost',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$active active referrals (30 days)',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (toNext > 0) ...[
+            const SizedBox(height: 16),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Active referrals (30d): $active', style: theme.textTheme.bodyMedium),
-                const SizedBox(height: 4),
-                Text('Reward boost: +${(boost * 100).round()}%', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                if (toNext > 0)
-                  Text('To next level: $toNext more in 30 days', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Progress to next level',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      '$toNext more needed',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation(color),
+                  ),
+                ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -708,13 +936,15 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     if (last6.isEmpty) return const SizedBox.shrink();
     final maxValue = (last6.map((e) => e.value).fold<int>(0, (m, v) => v > m ? v : m)).clamp(1, 1 << 31);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: EdgeInsets.all(isPhone ? 12 : 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,111 +1008,137 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  // How it works section
+  // How it works section - Compact horizontal design
   Widget _buildHowItWorks(ThemeData theme) {
-    Widget step(IconData icon, String title, String desc, Color color) {
-      return Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
-                child: Icon(icon, color: color, size: 18),
-              ),
-              const SizedBox(height: 10),
-              Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Text(desc, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.info_outline, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text('How it works', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            step(Icons.person_add_alt, 'Invite friends', 'Share your link or code with friends and family.', Colors.indigo),
-            const SizedBox(width: 12),
-            step(Icons.how_to_reg, 'They sign up', 'They create an account using your referral.', Colors.green),
-            const SizedBox(width: 12),
-            step(Icons.stars, 'Earn tokens', 'Earn rewards for each successful action.', Colors.amber),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Leaderboard
-  Widget _buildLeaderboard(ThemeData theme) {
-    final mock = [
-      {'name': 'Sarah J.', 'tokens': 540},
-      {'name': 'Mike C.', 'tokens': 420},
-      {'name': 'Emma W.', 'tokens': 310},
-      {'name': 'David B.', 'tokens': 260},
-      {'name': 'Lisa G.', 'tokens': 180},
-    ];
+    final isDark = theme.brightness == Brightness.dark;
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-
+    
     return Container(
-      padding: EdgeInsets.all(isPhone ? 12 : 16),
+      padding: EdgeInsets.all(isPhone ? 16 : 20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        color: isDark ? theme.colorScheme.surface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.leaderboard, color: theme.colorScheme.primary),
+              Icon(Icons.lightbulb_rounded, color: theme.colorScheme.primary, size: 22),
               const SizedBox(width: 8),
-              Text('Top referrers (demo)', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'How it Works',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: isPhone ? 8 : 12),
-          ...mock.asMap().entries.map((e) {
-            final idx = e.key + 1;
-            final item = e.value;
-            return Padding(
-              padding: EdgeInsets.symmetric(vertical: isPhone ? 4 : 6),
-              child: Row(
-                children: [
-                  Container(
-                    width: isPhone ? 24 : 28,
-                    height: isPhone ? 24 : 28,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.12), shape: BoxShape.circle),
-                    child: Text('$idx', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w700)),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(item['name'] as String, style: theme.textTheme.bodyMedium)),
-                  Text('+${item['tokens']} tokens', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                ],
-              ),
-            );
-          }),
+          const SizedBox(height: 16),
+          
+          // Compact step items
+          _buildCompactStep(
+            theme,
+            isDark,
+            '1',
+            Icons.share_rounded,
+            'Share Your Code',
+            'Send referral link to friends',
+            Colors.indigo,
+          ),
+          const SizedBox(height: 12),
+          _buildCompactStep(
+            theme,
+            isDark,
+            '2',
+            Icons.person_add_alt_1_rounded,
+            'Friend Signs Up',
+            'They create account using your link',
+            Colors.green,
+          ),
+          const SizedBox(height: 12),
+          _buildCompactStep(
+            theme,
+            isDark,
+            '3',
+            Icons.stars_rounded,
+            'Earn Rewards',
+            'Get tokens for each successful referral',
+            Colors.amber,
+          ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildCompactStep(
+    ThemeData theme,
+    bool isDark,
+    String stepNumber,
+    IconData icon,
+    String title,
+    String subtitle,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        // Step number badge
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withOpacity(0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            stepNumber,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Icon
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        // Text content
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -916,14 +1172,15 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     ];
     final isPhone = MediaQuery.sizeOf(context).width < 600;
 
+    final isDark = theme.brightness == Brightness.dark;
     return rewardItems
         .map((item) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: EdgeInsets.all(isPhone ? 12 : 16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+                color: isDark ? theme.colorScheme.surface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
               ),
               child: Row(
                 children: [
@@ -956,38 +1213,239 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         .toList();
   }
 
-  // Redeem section (compact)
-  Widget _buildRedeemSection(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
+  // Token Usage Guide - Modern design with gradient cards
+  Widget _buildTokenUsageGuide(ThemeData theme, AppLocalizations t) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Container(
-      padding: EdgeInsets.all(isPhone ? 14 : 20),
+      padding: EdgeInsets.all(isPhone ? 18 : 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        color: isDark ? theme.colorScheme.surface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+          width: 1,
+        ),
+        boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t.redeemTokens, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          SizedBox(height: isPhone ? 10 : 16),
-          TextField(
-            controller: _redeemController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: t.tokensToRedeem,
-              hintText: '${t.available}: ${stats.totalTokens}',
-              border: const OutlineInputBorder(),
-              suffixText: 'tokens',
+          // Header with gradient background
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.primary.withOpacity(0.7),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.redeem_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'How to Use Tokens',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Get instant discounts on bookings',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: isPhone ? 10 : 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: stats.totalTokens > 0 ? _redeemTokens : null,
-              child: Text(t.redeemNow, style: TextStyle(fontSize: isPhone ? 13 : null, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 20),
+          
+          // Modern step cards
+          _buildModernStep(
+            theme,
+            isDark,
+            Colors.blue,
+            Icons.search_rounded,
+            'Browse Properties',
+            'Explore and find your perfect rental',
+            isPhone,
+          ),
+          const SizedBox(height: 12),
+          _buildModernStep(
+            theme,
+            isDark,
+            Colors.green,
+            Icons.check_circle_rounded,
+            'Checkout Process',
+            'Tokens auto-apply for maximum savings',
+            isPhone,
+          ),
+          const SizedBox(height: 12),
+          _buildModernStep(
+            theme,
+            isDark,
+            Colors.orange,
+            Icons.celebration_rounded,
+            'Enjoy Discounts',
+            'Save money on every booking!',
+            isPhone,
+          ),
+          const SizedBox(height: 20),
+          
+          // Modern info card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.amber.withOpacity(isDark ? 0.15 : 0.1),
+                  Colors.orange.withOpacity(isDark ? 0.1 : 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.amber.withOpacity(0.3),
+                width: 1.5,
+              ),
             ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.amber.shade700,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Tokens automatically apply at checkout for best value',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDark ? Colors.amber.shade100 : Colors.amber.shade900,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildModernStep(
+    ThemeData theme,
+    bool isDark,
+    Color accentColor,
+    IconData icon,
+    String title,
+    String subtitle,
+    bool isPhone,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(isPhone ? 14 : 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor.withOpacity(isDark ? 0.15 : 0.08),
+            accentColor.withOpacity(isDark ? 0.08 : 0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: accentColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [accentColor, accentColor.withOpacity(0.7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 16,
+            color: accentColor.withOpacity(0.5),
           ),
         ],
       ),
@@ -1099,30 +1557,6 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     final stats = ref.read(referralServiceProvider);
     final link = '${AppConstants.referralBaseUrl}/${stats.referralCode}';
     _copyText(link, 'Link copied');
-  }
-
-  void _redeemTokens() async {
-    final amount = int.tryParse(_redeemController.text);
-    if (amount == null || amount <= 0) {
-      context.showError('Please enter a valid token amount', type: ErrorType.validation);
-      return;
-    }
-
-    final success = await ref.read(referralServiceProvider.notifier).redeemTokens(
-      amount,
-      'Discount redemption',
-    );
-
-    if (success) {
-      _redeemController.clear();
-      if (mounted) {
-        context.showSuccess('Successfully redeemed $amount tokens!');
-      }
-    } else {
-      if (mounted) {
-        context.showError('Insufficient tokens for redemption');
-      }
-    }
   }
 
 }

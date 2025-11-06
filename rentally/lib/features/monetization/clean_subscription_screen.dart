@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+          import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../widgets/responsive_layout.dart';
@@ -38,7 +38,7 @@ class _CleanSubscriptionScreenState extends State<CleanSubscriptionScreen> {
       'price': 0.0,
       'period': 'month',
       'features': [
-        'List up to 2 properties',
+        'List up to 3 properties',
         'Basic analytics',
         'Email support',
         'Standard visibility',
@@ -169,13 +169,6 @@ class _CleanSubscriptionScreenState extends State<CleanSubscriptionScreen> {
       title: const Text('Subscription Plans'),
       elevation: 0,
       backgroundColor: Colors.transparent,
-      actions: [
-        IconButton(
-          onPressed: () => context.push('/help'),
-          icon: const Icon(Icons.help_outline),
-          tooltip: 'Help',
-        ),
-      ],
     );
   }
 

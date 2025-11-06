@@ -119,5 +119,12 @@
   "redeemedFor": "مستبدل لـ",
   "pending": "قيد الانتظار",
   "completed": "مكتمل",
-  "failed": "فشل"
+  "failed": "فشل",
+  "verifiedHost": "سيرفر المضيف",
+  "superhost": "سوبرهوست",
+  "bookingDetails": "تفاصيل الحجز",
+  "bookingId": "معرف الحجز",
+  "bookingDate": "تاريخ الحجز",
+  "bookingStatus": "حالة الحجز",
+  "checkAvailability": "تحقق من التوفر"
 }

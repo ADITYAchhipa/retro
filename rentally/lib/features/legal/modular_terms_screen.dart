@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
-import '../../widgets/loading_states.dart';
-import '../../widgets/responsive_layout.dart';
+import '../../core/widgets/loading_states.dart';
+import '../../core/neo/neo.dart';
 
 /// Industrial-Grade Modular Terms of Service Screen
 /// 
@@ -34,8 +33,6 @@ class _ModularTermsScreenState extends ConsumerState<ModularTermsScreen>
   
   bool _isLoading = true;
   String? _error;
-  String _searchQuery = '';
-  double _fontSize = 16.0;
   bool _showTableOfContents = false;
   
   final List<TermsSection> _sections = [];
@@ -302,19 +299,20 @@ Account Termination:
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveLayout(
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _isLoading ? _buildLoadingState() : _buildContent(),
-        floatingActionButton: _buildFloatingActions(),
-      ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Scaffold(
+      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      appBar: _buildAppBar(theme, isDark),
+      body: _isLoading ? _buildLoadingState() : _buildContent(theme, isDark),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(ThemeData theme, bool isDark) {
     return AppBar(
       title: const Text('Terms of Service'),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -325,42 +323,22 @@ Account Termination:
           onSelected: _handleMenuAction,
           itemBuilder: (context) => [
             const PopupMenuItem(
-              value: 'toc',
+              value: 'expand_all',
               child: Row(
                 children: [
-                  Icon(Icons.list),
+                  Icon(Icons.unfold_more),
                   SizedBox(width: 8),
-                  Text('Table of Contents'),
+                  Text('Expand All Sections'),
                 ],
               ),
             ),
             const PopupMenuItem(
-              value: 'search',
+              value: 'collapse_all',
               child: Row(
                 children: [
-                  Icon(Icons.search),
+                  Icon(Icons.unfold_less),
                   SizedBox(width: 8),
-                  Text('Search'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'font',
-              child: Row(
-                children: [
-                  Icon(Icons.format_size),
-                  SizedBox(width: 8),
-                  Text('Font Size'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'share',
-              child: Row(
-                children: [
-                  Icon(Icons.share),
-                  SizedBox(width: 8),
-                  Text('Share Terms'),
+                  Text('Collapse All Sections'),
                 ],
               ),
             ),
@@ -374,19 +352,19 @@ Account Termination:
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
-        LoadingStates.textSkeleton(context),
+        LoadingStates.textShimmer(context),
         const SizedBox(height: 16),
-        LoadingStates.textSkeleton(context),
+        LoadingStates.textShimmer(context),
         const SizedBox(height: 24),
         for (int i = 0; i < 5; i++) ...[
-          LoadingStates.propertyCardSkeleton(context),
+          LoadingStates.propertyCardShimmer(context),
           const SizedBox(height: 16),
         ],
       ],
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(ThemeData theme, bool isDark) {
     if (_error != null) {
       return _buildErrorState();
     }
@@ -397,16 +375,16 @@ Account Termination:
         controller: _scrollController,
         padding: EdgeInsets.zero,
         children: [
-          _buildHeader(),
-          if (_showTableOfContents) _buildTableOfContents(),
+          _buildHeader(theme, isDark),
+          if (_showTableOfContents) _buildTableOfContents(theme, isDark),
           ...List.generate(
             _sections.length,
             (index) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: _buildSectionCard(index),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: _buildSectionCard(index, theme, isDark),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -443,40 +421,65 @@ Account Termination:
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-      ),
+  Widget _buildHeader(ThemeData theme, bool isDark) {
+    return NeoGlass(
+      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(16),
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
+      blur: isDark ? 10 : 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Rentaly Terms of Service',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: _fontSize + 8,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.2),
+                      theme.colorScheme.primary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.description_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Terms of Service',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Last updated: ${DateTime.now().toString().substring(0, 10)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Last updated: ${DateTime.now().toString().substring(0, 10)}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: _fontSize - 2,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'These terms govern your use of the Rentaly platform and services. Please read them carefully.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: _fontSize,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.white70 : Colors.grey[700],
+              height: 1.5,
             ),
           ),
         ],
@@ -484,17 +487,13 @@ Account Termination:
     );
   }
 
-  Widget _buildTableOfContents() {
-    return Container(
+  Widget _buildTableOfContents(ThemeData theme, bool isDark) {
+    return NeoGlass(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -531,9 +530,7 @@ Account Termination:
                     Expanded(
                       child: Text(
                         '${i + 1}. ${_sections[i].title}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: _fontSize - 1,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                   ],
@@ -545,54 +542,60 @@ Account Termination:
     );
   }
 
-  Widget _buildSectionCard(int index) {
+  Widget _buildSectionCard(int index, ThemeData theme, bool isDark) {
     final section = _sections[index];
     final isExpanded = _expandedSections.contains(index);
-    final isHighlighted = _searchQuery.isNotEmpty && 
-        (section.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-         section.content.toLowerCase().contains(_searchQuery.toLowerCase()));
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: isHighlighted ? 4 : 1,
-      color: isHighlighted 
-          ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-          : null,
+    return NeoGlass(
+      padding: EdgeInsets.zero,
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
+      blur: isDark ? 8 : 0,
       child: Column(
         children: [
-          InkWell(
-            onTap: () => _toggleSection(index),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      section.icon,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      '${index + 1}. ${section.title}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: _fontSize + 2,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _toggleSection(index),
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withOpacity(0.2),
+                            theme.colorScheme.primary.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        section.icon,
+                        color: theme.colorScheme.primary,
+                        size: 22,
                       ),
                     ),
-                  ),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ],
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        '${index + 1}. ${section.title}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -602,13 +605,15 @@ Account Termination:
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Divider(),
+                  Divider(
+                    color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     section.content,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.6,
-                      fontSize: _fontSize,
+                      color: isDark ? Colors.white70 : Colors.grey[700],
                     ),
                   ),
                 ],
@@ -619,27 +624,6 @@ Account Termination:
     );
   }
 
-  Widget _buildFloatingActions() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FloatingActionButton(
-          heroTag: 'scroll_top',
-          mini: true,
-          onPressed: _scrollToTop,
-          child: const Icon(Icons.keyboard_arrow_up),
-        ),
-        const SizedBox(height: 8),
-        FloatingActionButton(
-          heroTag: 'expand_all',
-          mini: true,
-          onPressed: _toggleAllSections,
-          child: Icon(_expandedSections.length == _sections.length 
-              ? Icons.unfold_less : Icons.unfold_more),
-        ),
-      ],
-    );
-  }
 
   void _toggleSection(int index) {
     setState(() {
@@ -676,109 +660,17 @@ Account Termination:
     );
   }
 
-  void _scrollToTop() {
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _showSearchDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Search Terms'),
-        content: TextField(
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Enter search terms...',
-            prefixIcon: Icon(Icons.search),
-          ),
-          onChanged: (value) {
-            setState(() => _searchQuery = value);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() => _searchQuery = '');
-              Navigator.pop(context);
-            },
-            child: const Text('Clear'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showFontSizeDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Adjust Font Size'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Font Size: ${_fontSize.toInt()}px'),
-            Slider(
-              value: _fontSize,
-              min: 12.0,
-              max: 24.0,
-              divisions: 12,
-              onChanged: (value) {
-                setState(() => _fontSize = value);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _handleMenuAction(String action) {
     switch (action) {
-      case 'toc':
-        setState(() => _showTableOfContents = !_showTableOfContents);
+      case 'expand_all':
+        setState(() {
+          _expandedSections.addAll(List.generate(_sections.length, (i) => i));
+        });
         break;
-      case 'search':
-        _showSearchDialog();
+      case 'collapse_all':
+        setState(() => _expandedSections.clear());
         break;
-      case 'font':
-        _showFontSizeDialog();
-        break;
-      case 'share':
-        _shareTerms();
-        break;
-    }
-  }
-
-  void _shareTerms() async {
-    try {
-      await Share.share(
-        'Check out Rentaly\'s Terms of Service: '
-        'https://rentaly.com/terms-of-service',
-        subject: 'Rentaly Terms of Service',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to share: ${e.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
     }
   }
 

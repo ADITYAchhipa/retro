@@ -5,10 +5,10 @@ import '../../../core/theme/enterprise_dark_theme.dart';
 import '../../../core/theme/enterprise_light_theme.dart';
 import '../../../core/widgets/loading_states.dart';
 import '../../../core/widgets/listing_card.dart';
-import '../../../core/widgets/listing_badges.dart';
+import '../../../core/widgets/listing_vm_factory.dart';
 import '../../../core/providers/property_provider.dart';
 import '../../../core/providers/vehicle_provider.dart';
-import '../../../core/utils/currency_formatter.dart';
+// import '../../../core/utils/price_unit_helper.dart';
 import '../../../core/widgets/hover_scale.dart';
 
 /// Recommended section widget showing personalized property/vehicle recommendations
@@ -32,7 +32,6 @@ class HomeRecommendedSection extends StatefulWidget {
 
 class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
   late PageController _recPageController;
-  int _currentRecIndex = 0;
 
   @override
   void initState() {
@@ -103,27 +102,35 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
     // Compute dynamically from the ACTUAL page item width (viewportFraction),
     // not the heuristic _getCardWidth. This keeps image + info fully visible.
     final vp = _recPageController.viewportFraction;
-    const horizontalPadding = 4.0; // reduced padding for tighter spacing
-    final cardWidth = (screenWidth * vp) - (horizontalPadding * 2);
-    final imageHeight = cardWidth * 0.5; // 2:1 => height = width / 2
+    // Use same per-item padding as build() for consistency
+    final perItemPadding = screenWidth <= 600 ? 4.0 : 2.0;
+    final cardWidth = (screenWidth * vp) - (perItemPadding * 2);
+    // Taller images: reduce aspect ratio (width:height)
+    final isCompactWidth = cardWidth <= 280;
+    final imageAspect = isCompactWidth ? 2.7 : 2.6; // keep in sync with build()
+    final imageHeight = cardWidth / imageAspect; // height = width / aspect
 
     // Account for ListingCard's title + rating row + location + meta paddings
     double infoBase;
     if (cardWidth >= 260) {
-      infoBase = 72.0;
+      infoBase = 66.0; // compact a touch more
     } else if (cardWidth >= 220) {
-      infoBase = 68.0;
+      infoBase = 60.0;
     } else {
-      infoBase = 64.0;
+      infoBase = 54.0;
     }
 
-    // Allowances: rating row, content spacing, borders/rounding, pager dots, and mobile safety boost
-    const ratingAllowance = 15.0;    // star + number row
-    const contentAllowance = 18.0;   // chip/meta spacing + small variability
-    const extra = 2.0;              // borders + rounding
-    const indicatorAllowance = 18.0; // dots + padding at bottom of the pager
-    const mobileBoost = 20.0;        // extra headroom for small phones
-    return imageHeight + infoBase + ratingAllowance + contentAllowance + extra + indicatorAllowance + mobileBoost;
+    // Allowances: rating row, content spacing, borders/rounding,  and mobile safety boost
+    const ratingAllowance = 12.0;     // star + number row (tighter)
+    const contentAllowance = 10.0;    // chip/meta spacing (tighter)
+    const extra = 6.0;                // borders + rounding
+    const mobileBoost = 6.0;          // extra headroom for small phones
+    final textScaler = MediaQuery.textScalerOf(context);
+    final scaleFactor = textScaler.scale(16.0) / 16.0; // normalized against 16px baseline
+    final textScalePad = scaleFactor > 1.0 ? (scaleFactor - 1.0) * 18.0 : 0.0;
+    // Add a small safety pad to avoid occasional overflows
+    const safetyPad = 22.0;
+    return imageHeight + infoBase + ratingAllowance + contentAllowance + extra + mobileBoost + textScalePad + safetyPad;
   }
 
   void _onTabChanged() {
@@ -145,6 +152,8 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
     final perItemPadding = screenWidth <= 600 ? 4.0 : 2.0;
     final cardWidth = (screenWidth * vp) - (perItemPadding * 2);
     final sectionHeight = _getSectionHeight(screenWidth);
+    final isCompactWidth = cardWidth <= 280;
+    final recImageAspect = isCompactWidth ? 2.7 : 2.6; // keep in sync with _getSectionHeight
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +206,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Builder(builder: (context) {
           final isPropertyTab = widget.tabController.index == 0;
           return SizedBox(
@@ -219,28 +228,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final p = items[index];
-                            String typeLabel(String name) => name.isEmpty ? name : name[0].toUpperCase() + name.substring(1);
-                            final vm = ListingViewModel(
-                              id: p.id,
-                              title: p.title,
-                              location: p.location,
-                              priceLabel: CurrencyFormatter.formatPricePerUnit(p.pricePerNight, 'night'),
-                              imageUrl: p.images.isNotEmpty ? p.images.first : null,
-                              rating: p.rating,
-                              reviewCount: p.reviewCount,
-                              chips: [typeLabel(p.type.name), if (p.amenities.isNotEmpty) p.amenities.first].where((chip) => chip != 'New').toList(),
-                              metaItems: [
-                                ListingMetaItem(icon: Icons.bed, text: '${p.bedrooms} bd'),
-                                ListingMetaItem(icon: Icons.bathtub, text: '${p.bathrooms} ba'),
-                                ListingMetaItem(icon: Icons.person, text: '${p.maxGuests} guests'),
-                              ],
-                              fallbackIcon: Icons.home,
-                              badges: [
-                                if (p.isFeatured) ListingBadgeType.featured,
-                                if (p.rating >= 4.7 && p.reviewCount > 25) ListingBadgeType.topRated,
-                                if (DateTime.now().difference(p.createdAt).inDays <= 30) ListingBadgeType.newListing,
-                              ],
-                            );
+                            final vm = ListingViewModelFactory.fromProperty(p);
                             return ListingCard(
                               model: vm, 
                               isDark: widget.isDark, 
@@ -251,6 +239,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                               chipInRatingRowRight: true,
                               priceBottomLeft: true,
                               shareBottomRight: true,
+                              imageAspectRatio: recImageAspect,
                             );
                           },
                         );
@@ -277,27 +266,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final v = items[index];
-                            final vm = ListingViewModel(
-                              id: v.id,
-                              title: v.title,
-                              location: v.location,
-                              priceLabel: CurrencyFormatter.formatPricePerUnit(v.pricePerDay, 'day'),
-                              imageUrl: v.images.isNotEmpty ? v.images.first : null,
-                              rating: v.rating,
-                              reviewCount: v.reviewCount,
-                              chips: ['${v.category} • ${v.seats} seats'],
-                              metaItems: [
-                                ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '${v.seats}'),
-                                ListingMetaItem(icon: Icons.settings, text: v.transmission),
-                                ListingMetaItem(icon: v.fuel.toLowerCase() == 'electric' ? Icons.electric_bolt : Icons.local_gas_station, text: v.fuel),
-                              ],
-                              fallbackIcon: Icons.directions_car,
-                              isVehicle: true,
-                              badges: [
-                                if (v.isFeatured) ListingBadgeType.featured,
-                                if (v.rating >= 4.7 && v.reviewCount > 25) ListingBadgeType.topRated,
-                              ],
-                            );
+                            final vm = ListingViewModelFactory.fromVehicle(v);
                             return ListingCard(
                               model: vm, 
                               isDark: widget.isDark, 
@@ -308,6 +277,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                               chipInRatingRowRight: true,
                               priceBottomLeft: true,
                               shareBottomRight: true,
+                              imageAspectRatio: recImageAspect,
                             );
                           },
                         );
@@ -332,6 +302,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
       return ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
+        clipBehavior: Clip.none,
         padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
         itemCount: itemCount,
         itemBuilder: (context, index) {
@@ -353,14 +324,15 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
     // Phones: keep PageView but remove end padding and left-align the items
     final startPadding = screenWidth > 400 ? 16.0 : 12.0;
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: startPadding),
+          padding: EdgeInsets.only(left: startPadding, bottom: 6),
           child: PageView.builder(
             controller: _recPageController,
             physics: const BouncingScrollPhysics(),
             padEnds: false,
-            onPageChanged: (i) => setState(() => _currentRecIndex = i),
+            clipBehavior: Clip.none,
             itemCount: itemCount,
             itemBuilder: (context, index) {
               final card = itemBuilder(context, index);
@@ -381,29 +353,6 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
             },
           ),
         ),
-        Positioned(
-          bottom: 8,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(itemCount, (i) {
-              final active = i == _currentRecIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: active ? 16 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: active
-                      ? (widget.isDark ? EnterpriseDarkTheme.primaryAccent : const Color(0xFF1E3A8A))
-                      : Colors.grey.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              );
-            }),
-          ),
-        ),
       ],
     );
   }
@@ -413,6 +362,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
   Widget _buildShimmerList() {
     return ListView.builder(
       scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: 3,
       itemBuilder: (context, index) {

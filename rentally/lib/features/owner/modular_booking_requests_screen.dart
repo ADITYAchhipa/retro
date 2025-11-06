@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/widgets/tab_back_handler.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/providers/ui_visibility_provider.dart';
+import '../../services/booking_service.dart' as bs;
+import '../../services/notification_service.dart';
 
 /// Modular Booking Requests Screen with Industrial-Grade Features
 class ModularBookingRequestsScreen extends ConsumerStatefulWidget {
@@ -34,7 +35,7 @@ class _ModularBookingRequestsScreenState
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
   
-  List<Map<String, dynamic>> _requests = [];
+  // We use provider-backed bookings; no local mock list
 
   @override
   void initState() {
@@ -60,54 +61,32 @@ class _ModularBookingRequestsScreenState
         _isLoading = true;
         _error = null;
       });
-
-      await Future.delayed(const Duration(seconds: 2));
-      
-      final mockRequests = List.generate(12, (index) => {
-        'id': 'request_$index',
-        'guestName': 'Guest ${index + 1}',
-        // Stable placeholder images to avoid 404s
-        'guestImage': 'https://picsum.photos/seed/guest_$index/200/200',
-        'propertyTitle': 'Property ${(index % 3) + 1}',
-        'propertyImage': 'https://picsum.photos/seed/property_$index/400/300',
-        'checkIn': DateTime.now().add(Duration(days: index + 1)),
-        'checkOut': DateTime.now().add(Duration(days: index + 4)),
-        'guests': (index % 4) + 1,
-        'totalAmount': 300.0 + (index * 50),
-        'status': ['pending', 'approved', 'rejected'][index % 3],
-        'message': index % 2 == 0 ? 'Looking forward to staying at your place!' : null,
-        'requestedAt': DateTime.now().subtract(Duration(hours: index)),
-        'responseTime': '${2 + (index % 6)} hours',
-        'guestRating': 4.0 + (index % 10) * 0.1,
-        'guestReviews': index * 2 + 5,
-        'isInstantBook': index % 4 == 0,
-      });
-      
-      if (mounted) {
-        setState(() {
-          _requests = mockRequests;
-          _isLoading = false;
-        });
-      }
+      await ref.read(bs.bookingProvider.notifier).refreshBookings();
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
           _error = 'Failed to load requests: ${e.toString()}';
         });
+      }
+    } finally {
+      if (mounted) {
+        setState(() { _isLoading = false; });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bookingState = ref.watch(bs.bookingProvider);
+    final ownerBookings = bookingState.ownerBookings;
+    final isBusy = bookingState.isLoading || _isLoading;
     return ResponsiveLayout(
       maxWidth: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       child: TabBackHandler(
         child: Scaffold(
           appBar: _buildAppBar(),
-          body: _isLoading ? _buildLoadingState() : _buildContent(),
+          body: isBusy ? _buildLoadingState() : _buildContent(ownerBookings),
         ),
       ),
     );
@@ -116,6 +95,7 @@ class _ModularBookingRequestsScreenState
   PreferredSizeWidget _buildAppBar() {
     final theme = Theme.of(context);
     return AppBar(
+      automaticallyImplyLeading: false,
       title: Text(
         'Booking Requests',
         style: (theme.textTheme.titleLarge ?? theme.textTheme.titleMedium)?.copyWith(
@@ -136,10 +116,6 @@ class _ModularBookingRequestsScreenState
         statusBarBrightness: Brightness.light,
       ),
       flexibleSpace: null,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => context.pop(),
-      ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(105),
         child: Container(
@@ -187,10 +163,19 @@ class _ModularBookingRequestsScreenState
 
   Widget _buildFilterTabs() {
     final theme = Theme.of(context);
+    final bookings = ref.watch(bs.bookingProvider).ownerBookings;
+    final pendingCount = bookings.where((b) => b.status == bs.BookingStatus.pending).length;
+    final approvedCount = bookings.where((b) =>
+      b.status == bs.BookingStatus.confirmed ||
+      b.status == bs.BookingStatus.completed ||
+      b.status == bs.BookingStatus.checkedIn ||
+      b.status == bs.BookingStatus.checkedOut
+    ).length;
+    final rejectedCount = bookings.where((b) => b.status == bs.BookingStatus.cancelled).length;
     final filters = [
-      {'key': 'pending', 'label': 'Pending', 'count': _requests.where((r) => r['status'] == 'pending').length},
-      {'key': 'approved', 'label': 'Approved', 'count': _requests.where((r) => r['status'] == 'approved').length},
-      {'key': 'rejected', 'label': 'Rejected', 'count': _requests.where((r) => r['status'] == 'rejected').length},
+      {'key': 'pending', 'label': 'Pending', 'count': pendingCount},
+      {'key': 'approved', 'label': 'Approved', 'count': approvedCount},
+      {'key': 'rejected', 'label': 'Rejected', 'count': rejectedCount},
     ];
 
     return SizedBox(
@@ -222,12 +207,12 @@ class _ModularBookingRequestsScreenState
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(List<bs.Booking> ownerBookings) {
     if (_error != null) {
       return _buildErrorState();
     }
 
-    final filteredRequests = _getFilteredRequests();
+    final filteredRequests = _getFilteredRequests(ownerBookings);
 
     return RefreshIndicator(
       key: _refreshKey,
@@ -242,19 +227,7 @@ class _ModularBookingRequestsScreenState
   }
 
   Widget _buildLoadingState() {
-    final bottomPad = MediaQuery.of(context).padding.bottom + 88;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.only(bottom: bottomPad),
-        itemCount: 6,
-        itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: LoadingStates.propertyCardSkeleton(context),
-        ),
-      ),
-    );
+    return LoadingStates.listShimmer(context, itemCount: 6);
   }
 
   Widget _buildErrorState() {
@@ -312,7 +285,7 @@ class _ModularBookingRequestsScreenState
     );
   }
 
-  Widget _buildRequestsList(List<Map<String, dynamic>> requests) {
+  Widget _buildRequestsList(List<bs.Booking> requests) {
     final bottomPad = MediaQuery.of(context).padding.bottom + 88;
     return ListView.builder(
       controller: _scrollController,
@@ -320,13 +293,13 @@ class _ModularBookingRequestsScreenState
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: requests.length,
       itemBuilder: (context, index) {
-        final request = requests[index];
-        return _buildRequestCard(request);
+        final booking = requests[index];
+        return _buildRequestCard(booking);
       },
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> request) {
+  Widget _buildRequestCard(bs.Booking booking) {
     final theme = Theme.of(context);
     
     return Card(
@@ -343,75 +316,25 @@ class _ModularBookingRequestsScreenState
           children: [
             Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: CachedNetworkImage(
-                    imageUrl: request['guestImage'],
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      width: 40,
-                      height: 40,
-                      color: Colors.grey[300],
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      width: 40,
-                      height: 40,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
-                    ),
-                  ),
-                ),
+                const CircleAvatar(child: Icon(Icons.person)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              request['guestName'],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (request['isInstantBook'])
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text(
-                                'Instant Book',
-                                style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                        ],
+                      Text(
+                        'Guest: ${booking.userId}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      Row(
-                        children: [
-                          Icon(Icons.star, size: 14, color: Colors.amber[600]),
-                          Text(
-                            ' ${request['guestRating'].toStringAsFixed(1)} (${request['guestReviews']} reviews)',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+                      Text('Booking #${booking.id}', style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
-                _buildStatusChip(request['status']),
+                _buildStatusChip(_mapStatusLabel(booking.status)),
               ],
             ),
             const SizedBox(height: 12),
@@ -419,39 +342,13 @@ class _ModularBookingRequestsScreenState
             const SizedBox(height: 12),
             Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: CachedNetworkImage(
-                    imageUrl: request['propertyImage'],
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      width: 60,
-                      height: 60,
-                      color: Colors.grey[300],
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      width: 60,
-                      height: 60,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
+                const Icon(Icons.home_work_outlined, size: 28),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        request['propertyTitle'],
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      Text('Listing: ${booking.listingId}', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500)),
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -459,7 +356,7 @@ class _ModularBookingRequestsScreenState
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              '${_formatDate(request['checkIn'])} - ${_formatDate(request['checkOut'])}',
+                              '${_formatDate(booking.checkIn)} - ${_formatDate(booking.checkOut)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall,
@@ -468,76 +365,38 @@ class _ModularBookingRequestsScreenState
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.people, size: 16),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              '${request['guests']} guests',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall,
-                            ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          CurrencyFormatter.formatPrice(booking.totalPrice),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.green[600],
+                            fontWeight: FontWeight.bold,
                           ),
-                          Flexible(
-                            child: Text(
-                              CurrencyFormatter.formatPrice((request['totalAmount'] as num).toDouble()),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.right,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: Colors.green[600],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            if (request['message'] != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Message from guest:',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      request['message'],
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            // Optional: could show guest message if present in future
             const SizedBox(height: 12),
             Row(
               children: [
                 Text(
-                  'Requested ${_formatTimeAgo(request['requestedAt'])}',
+                  'Requested ${_formatTimeAgo(booking.createdAt)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.grey[600],
                   ),
                 ),
                 const Spacer(),
-                if (request['status'] == 'pending')
+                if (booking.status == bs.BookingStatus.pending)
                   Text(
-                    'Respond within ${request['responseTime']}',
+                    'Respond soon',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.orange[600],
                       fontWeight: FontWeight.w500,
@@ -545,13 +404,13 @@ class _ModularBookingRequestsScreenState
                   ),
               ],
             ),
-            if (request['status'] == 'pending') ...[
+            if (booking.status == bs.BookingStatus.pending) ...[
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _rejectRequest(request),
+                      onPressed: () => _rejectRequest(booking),
                       icon: const Icon(Icons.close, size: 16),
                       label: const Text('Decline'),
                       style: OutlinedButton.styleFrom(
@@ -562,7 +421,7 @@ class _ModularBookingRequestsScreenState
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _approveRequest(request),
+                      onPressed: () => _approveRequest(booking),
                       icon: const Icon(Icons.check, size: 16),
                       label: const Text('Accept'),
                     ),
@@ -570,24 +429,22 @@ class _ModularBookingRequestsScreenState
                 ],
               ),
             ],
-            if (request['status'] != 'pending') ...[
-              const SizedBox(height: 8),
-            ],
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 TextButton.icon(
-                  onPressed: () => _viewGuestProfile(request),
+                  onPressed: () => _viewGuestProfile(booking),
                   icon: const Icon(Icons.person, size: 16),
                   label: const Text('Profile'),
                 ),
                 TextButton.icon(
-                  onPressed: () => _contactGuest(request),
+                  onPressed: () => _contactGuest(booking),
                   icon: const Icon(Icons.message, size: 16),
                   label: const Text('Message'),
                 ),
                 TextButton.icon(
-                  onPressed: () => _viewRequestDetails(request),
+                  onPressed: () => _viewRequestDetails(booking),
                   icon: const Icon(Icons.info, size: 16),
                   label: const Text('Details'),
                 ),
@@ -597,6 +454,168 @@ class _ModularBookingRequestsScreenState
         ),
       ),
     );
+  }
+
+  // Map BookingStatus to display label used by _buildStatusChip
+  String _mapStatusLabel(bs.BookingStatus status) {
+    switch (status) {
+      case bs.BookingStatus.pending:
+        return 'pending';
+      case bs.BookingStatus.confirmed:
+      case bs.BookingStatus.checkedIn:
+      case bs.BookingStatus.checkedOut:
+      case bs.BookingStatus.completed:
+        return 'approved';
+      case bs.BookingStatus.cancelled:
+        return 'rejected';
+    }
+  }
+
+  // Filter owner bookings based on selected filter and search query
+  List<bs.Booking> _getFilteredRequests(List<bs.Booking> bookings) {
+    final filtered = bookings.where((b) {
+      final matchesFilter = () {
+        switch (_selectedFilter) {
+          case 'pending':
+            return b.status == bs.BookingStatus.pending;
+          case 'approved':
+            return b.status == bs.BookingStatus.confirmed ||
+                   b.status == bs.BookingStatus.completed ||
+                   b.status == bs.BookingStatus.checkedIn ||
+                   b.status == bs.BookingStatus.checkedOut;
+          case 'rejected':
+            return b.status == bs.BookingStatus.cancelled;
+          default:
+            return true;
+        }
+      }();
+      if (!matchesFilter) return false;
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      return b.userId.toLowerCase().contains(q) || b.listingId.toLowerCase().contains(q) || b.id.toLowerCase().contains(q);
+    }).toList();
+    return filtered;
+  }
+
+  Future<void> _approveRequest(bs.Booking booking) async {
+    final noteCtrl = TextEditingController();
+    final submit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Approve Request'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Optionally include a note for the guest:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: noteCtrl,
+              minLines: 1,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'e.g., Looking forward to hosting you!',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => context.pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => context.pop(true), child: const Text('Approve')),
+        ],
+      ),
+    );
+    if (submit == true) {
+      await ref.read(bs.bookingProvider.notifier).updateBookingStatus(booking.id, bs.BookingStatus.confirmed);
+      final note = noteCtrl.text.trim();
+      // Notify guest
+      await ref.read(notificationProvider.notifier).addNotification(
+        AppNotification(
+          id: 'notif_approve_${booking.id}',
+          title: 'Request Approved',
+          body: 'Your booking request for listing ${booking.listingId} was approved.${note.isNotEmpty ? ' Note: $note' : ''}',
+          type: 'booking',
+          timestamp: DateTime.now(),
+          data: {'bookingId': booking.id, 'status': 'confirmed'},
+        ),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request approved')),
+        );
+      }
+    }
+  }
+
+  Future<void> _rejectRequest(bs.Booking booking) async {
+    final reasonCtrl = TextEditingController();
+    final submit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Decline Request'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Optionally provide a reason for declining this request:'),
+            const SizedBox(height: 8),
+            TextField(
+              controller: reasonCtrl,
+              minLines: 1,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'e.g., Dates unavailable',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => context.pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => context.pop(true), child: const Text('Decline', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (submit == true) {
+      await ref.read(bs.bookingProvider.notifier).updateBookingStatus(booking.id, bs.BookingStatus.cancelled);
+      await ref.read(notificationProvider.notifier).addNotification(
+        AppNotification(
+          id: 'notif_decline_${booking.id}',
+          title: 'Request Declined',
+          body: 'Your booking request for listing ${booking.listingId} was declined.${reasonCtrl.text.trim().isNotEmpty ? ' Reason: ${reasonCtrl.text.trim()}' : ''}',
+          type: 'booking',
+          timestamp: DateTime.now(),
+          data: {'bookingId': booking.id, 'status': 'cancelled'},
+        ),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request declined')),
+        );
+      }
+    }
+  }
+
+  void _viewGuestProfile(bs.Booking booking) {
+    final guestId = booking.userId;
+    ref.read(immersiveRouteOpenProvider.notifier).state = true;
+    context.push('/guest-profile/$guestId').whenComplete(() {
+      ref.read(immersiveRouteOpenProvider.notifier).state = false;
+    });
+  }
+
+  void _contactGuest(bs.Booking booking) {
+    final chatId = booking.id;
+    context.push('/chat/$chatId', extra: {
+      'requestId': booking.id,
+      'guestName': booking.userId,
+    });
+  }
+
+  void _viewRequestDetails(bs.Booking booking) {
+    final id = booking.id;
+    context.push('/booking-history/$id');
   }
 
   Widget _buildStatusChip(String status) {
@@ -651,18 +670,6 @@ class _ModularBookingRequestsScreenState
     );
   }
 
-  List<Map<String, dynamic>> _getFilteredRequests() {
-    return _requests.where((request) {
-      final matchesFilter = request['status'] == _selectedFilter;
-      if (!matchesFilter) return false;
-      if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      final guest = (request['guestName'] as String).toLowerCase();
-      final prop = (request['propertyTitle'] as String).toLowerCase();
-      return guest.contains(q) || prop.contains(q);
-    }).toList();
-  }
-
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -680,73 +687,7 @@ class _ModularBookingRequestsScreenState
     }
   }
 
-  void _approveRequest(Map<String, dynamic> request) {
-    setState(() {
-      request['status'] = 'approved';
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Request approved for ${request['guestName']}'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _rejectRequest(Map<String, dynamic> request) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Decline Request'),
-        content: const Text('Are you sure you want to decline this booking request?'),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.pop();
-              setState(() {
-                request['status'] = 'rejected';
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Request declined for ${request['guestName']}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            },
-            child: const Text('Decline', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _viewGuestProfile(Map<String, dynamic> request) {
-    // Open guest profile with path parameter; pass name/avatar via extra
-    final guestId = request['id'];
-    ref.read(immersiveRouteOpenProvider.notifier).state = true;
-    context.push('/guest-profile/$guestId', extra: {
-      'guestName': request['guestName'],
-      'guestAvatar': request['guestImage'],
-    }).whenComplete(() {
-      ref.read(immersiveRouteOpenProvider.notifier).state = false;
-    });
-  }
-
-  void _contactGuest(Map<String, dynamic> request) {
-    final chatId = request['id'];
-    context.push('/chat/$chatId', extra: {
-      'requestId': request['id'],
-      'guestName': request['guestName'],
-    });
-  }
-
-  void _viewRequestDetails(Map<String, dynamic> request) {
-    final id = request['id'];
-    context.push('/booking-history/$id');
-  }
+  
 
   @override
   void dispose() {

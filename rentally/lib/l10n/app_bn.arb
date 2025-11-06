@@ -285,5 +285,6 @@
   "summary": "সারসংক্ষেপ",
   "details": "বিবরণ",
   "preferences": "পছন্দ",
-  "helpSupport": "সাহায্য এবং সহায়তা"
+  "helpSupport": "সাহায্য এবং সহায়তা",
+  "checkAvailability": "উপলব্ধতা পরীক্ষা করুন"
 }

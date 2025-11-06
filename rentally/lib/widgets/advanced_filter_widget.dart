@@ -72,8 +72,8 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
           color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -90,6 +90,8 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
                     _buildPriceRangeFilter(theme),
                     const SizedBox(height: 24),
                     _buildPropertyTypeFilter(theme),
+                    const SizedBox(height: 24),
+                    _buildVenueFilter(theme),
                     const SizedBox(height: 24),
                     _buildBedroomsBathroomsFilter(theme),
                     const SizedBox(height: 24),
@@ -177,9 +179,114 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
       ],
     );
   }
+
+  Widget _buildVenueFilter(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Venue Filters',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Minimum Seated Capacity: ${_filters.minSeatedCapacity == 0 ? 'Any' : _filters.minSeatedCapacity}',
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.primaryColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Slider(
+          value: _filters.minSeatedCapacity.toDouble(),
+          min: 0,
+          max: 1000,
+          divisions: 20,
+          label: _filters.minSeatedCapacity == 0 ? 'Any' : _filters.minSeatedCapacity.toString(),
+          onChanged: (value) {
+            setState(() {
+              _filters = _filters.copyWith(minSeatedCapacity: value.round());
+            });
+          },
+          onChangeEnd: (_) => _updateFilters(),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('In-house Catering'),
+          value: _filters.venueInHouseCatering,
+          onChanged: (v) {
+            setState(() {
+              _filters = _filters.copyWith(venueInHouseCatering: v);
+            });
+            _updateFilters();
+          },
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Outside Catering Allowed'),
+          value: _filters.venueOutsideCateringAllowed,
+          onChanged: (v) {
+            setState(() {
+              _filters = _filters.copyWith(venueOutsideCateringAllowed: v);
+            });
+            _updateFilters();
+          },
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Alcohol Allowed'),
+          value: _filters.venueAlcoholAllowed,
+          onChanged: (v) {
+            setState(() {
+              _filters = _filters.copyWith(venueAlcoholAllowed: v);
+            });
+            _updateFilters();
+          },
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('AC Required'),
+          subtitle: const Text('Also selects the AC amenity'),
+          value: _filters.amenities.contains('AC'),
+          onChanged: (v) {
+            setState(() {
+              final list = List<String>.from(_filters.amenities);
+              if (v) {
+                if (!list.contains('AC')) list.add('AC');
+              } else {
+                list.remove('AC');
+              }
+              _filters = _filters.copyWith(amenities: list);
+            });
+            _updateFilters();
+          },
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Open Air Allowed'),
+          value: _filters.venueOpenAirAllowed,
+          onChanged: (v) {
+            setState(() {
+              _filters = _filters.copyWith(venueOpenAirAllowed: v);
+            });
+            _updateFilters();
+          },
+        ),
+      ],
+    );
+  }
   
   Widget _buildPropertyTypeFilter(ThemeData theme) {
-    final types = ['All', 'Apartment', 'House', 'Villa', 'Studio', 'Room'];
+    final types = [
+      'All',
+      'Apartment', 'House', 'Villa', 'Studio', 'Room',
+      'Resort', 'Event Hall', 'Event Garden',
+    ];
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,6 +616,12 @@ class FilterOptions {
   final double maxDistance;
   final bool instantBookingOnly;
   final bool verifiedOnly;
+  // Venue-specific
+  final int minSeatedCapacity;
+  final bool venueInHouseCatering;
+  final bool venueOutsideCateringAllowed;
+  final bool venueAlcoholAllowed;
+  final bool venueOpenAirAllowed;
   final DateTime? checkIn;
   final DateTime? checkOut;
 
@@ -523,6 +636,11 @@ class FilterOptions {
     this.maxDistance = 25,
     this.instantBookingOnly = false,
     this.verifiedOnly = false,
+    this.minSeatedCapacity = 0,
+    this.venueInHouseCatering = false,
+    this.venueOutsideCateringAllowed = false,
+    this.venueAlcoholAllowed = false,
+    this.venueOpenAirAllowed = false,
     this.checkIn,
     this.checkOut,
   });
@@ -538,6 +656,12 @@ class FilterOptions {
     double? maxDistance,
     bool? instantBookingOnly,
     bool? verifiedOnly,
+    // Venue-specific
+    int? minSeatedCapacity,
+    bool? venueInHouseCatering,
+    bool? venueOutsideCateringAllowed,
+    bool? venueAlcoholAllowed,
+    bool? venueOpenAirAllowed,
     DateTime? checkIn,
     DateTime? checkOut,
   }) {
@@ -552,6 +676,12 @@ class FilterOptions {
       maxDistance: maxDistance ?? this.maxDistance,
       instantBookingOnly: instantBookingOnly ?? this.instantBookingOnly,
       verifiedOnly: verifiedOnly ?? this.verifiedOnly,
+      // Venue-specific
+      minSeatedCapacity: minSeatedCapacity ?? this.minSeatedCapacity,
+      venueInHouseCatering: venueInHouseCatering ?? this.venueInHouseCatering,
+      venueOutsideCateringAllowed: venueOutsideCateringAllowed ?? this.venueOutsideCateringAllowed,
+      venueAlcoholAllowed: venueAlcoholAllowed ?? this.venueAlcoholAllowed,
+      venueOpenAirAllowed: venueOpenAirAllowed ?? this.venueOpenAirAllowed,
       checkIn: checkIn ?? this.checkIn,
       checkOut: checkOut ?? this.checkOut,
     );
@@ -567,7 +697,13 @@ class FilterOptions {
            minRating > 0 ||
            maxDistance < 25 ||
            instantBookingOnly ||
-           verifiedOnly;
+           verifiedOnly ||
+           // Venue-specific
+           minSeatedCapacity > 0 ||
+           venueInHouseCatering ||
+           venueOutsideCateringAllowed ||
+           venueAlcoholAllowed ||
+           venueOpenAirAllowed;
   }
 
   int get activeFilterCount {
@@ -581,6 +717,12 @@ class FilterOptions {
     if (maxDistance < 25) count++;
     if (instantBookingOnly) count++;
     if (verifiedOnly) count++;
+    // Venue-specific
+    if (minSeatedCapacity > 0) count++;
+    if (venueInHouseCatering) count++;
+    if (venueOutsideCateringAllowed) count++;
+    if (venueAlcoholAllowed) count++;
+    if (venueOpenAirAllowed) count++;
     return count;
   }
 }

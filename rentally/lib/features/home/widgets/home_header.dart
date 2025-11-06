@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/enterprise_dark_theme.dart';
 import '../../../core/theme/enterprise_light_theme.dart';
+import '../../../core/neo/neo_text.dart';
 
 /// Header widget for the home screen containing greeting and notifications
 class HomeHeader extends StatelessWidget {
@@ -16,20 +17,18 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
       decoration: BoxDecoration(
         color: isDark ? EnterpriseDarkTheme.primaryBackground : EnterpriseLightTheme.primaryBackground,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
+          const Neo3DText(
             'Rentaly',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent,
-            ),
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
           ),
           Row(
             children: [
@@ -44,19 +43,29 @@ class HomeHeader extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? EnterpriseDarkTheme.cardBackground : EnterpriseLightTheme.cardBackground,
-                      borderRadius: BorderRadius.circular(12),
-                      border: isDark ? Border.all(
-                        color: EnterpriseDarkTheme.primaryBorder,
+                      color: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark
+                            ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                            : Colors.black.withOpacity(0.06),
                         width: 1,
-                      ) : null,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark 
-                              ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.3)
-                              : EnterpriseLightTheme.cardShadow.withOpacity(0.1),
-                          blurRadius: isDark ? 8 : 4,
-                          offset: const Offset(0, 2),
+                          color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                          blurRadius: 10,
+                          offset: const Offset(-5, -5),
+                          spreadRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: (isDark
+                                  ? EnterpriseDarkTheme.primaryAccent
+                                  : EnterpriseLightTheme.primaryAccent)
+                              .withOpacity(isDark ? 0.18 : 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(5, 5),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
@@ -81,25 +90,35 @@ class HomeHeader extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: isDark ? Border.all(
-                        color: EnterpriseDarkTheme.primaryBorder,
-                        width: 2,
-                      ) : null,
+                      color: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: isDark
+                            ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                            : Colors.black.withOpacity(0.06),
+                        width: 1,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark 
-                              ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.3)
-                              : EnterpriseLightTheme.cardShadow.withOpacity(0.1),
-                          blurRadius: isDark ? 8 : 4,
-                          offset: const Offset(0, 2),
+                          color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                          blurRadius: 10,
+                          offset: const Offset(-5, -5),
+                          spreadRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: (isDark
+                                  ? EnterpriseDarkTheme.primaryAccent
+                                  : EnterpriseLightTheme.primaryAccent)
+                              .withOpacity(isDark ? 0.18 : 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(5, 5),
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
-                      color: Colors.white,
+                      color: isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent,
                       size: 20,
                     ),
                   ),

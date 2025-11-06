@@ -11,9 +11,12 @@ class Listing {
   final String hostName;
   final String hostImage;
   final String category;
+  final String? rentalUnit; // e.g., 'day', 'night', 'month', 'hour'
   final bool isAvailable;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool requireSeekerId;
+  final double? discountPercent;
 
   Listing({
     required this.id,
@@ -28,7 +31,10 @@ class Listing {
     required this.hostName,
     required this.hostImage,
     this.category = 'Property',
+    this.rentalUnit,
     this.isAvailable = true,
+    this.requireSeekerId = false,
+    this.discountPercent,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : createdAt = createdAt ?? DateTime.now(),
@@ -48,7 +54,12 @@ class Listing {
       hostName: json['hostName'] ?? '',
       hostImage: json['hostImage'] ?? '',
       category: json['category'] ?? 'Property',
+      rentalUnit: json['rentalUnit'] ?? json['unit'],
       isAvailable: json['isAvailable'] ?? true,
+      requireSeekerId: json['requireSeekerId'] ?? false,
+      discountPercent: (json['discountPercent'] ?? json['discount']) == null
+          ? null
+          : (json['discountPercent'] ?? json['discount']).toDouble(),
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : DateTime.now(),
@@ -72,7 +83,10 @@ class Listing {
       'hostName': hostName,
       'hostImage': hostImage,
       'category': category,
+      if (rentalUnit != null) 'rentalUnit': rentalUnit,
       'isAvailable': isAvailable,
+      'requireSeekerId': requireSeekerId,
+      if (discountPercent != null) 'discountPercent': discountPercent,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -91,9 +105,12 @@ class Listing {
     String? hostName,
     String? hostImage,
     String? category,
+    String? rentalUnit,
     bool? isAvailable,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? requireSeekerId,
+    double? discountPercent,
   }) {
     return Listing(
       id: id ?? this.id,
@@ -108,7 +125,10 @@ class Listing {
       hostName: hostName ?? this.hostName,
       hostImage: hostImage ?? this.hostImage,
       category: category ?? this.category,
+      rentalUnit: rentalUnit ?? this.rentalUnit,
       isAvailable: isAvailable ?? this.isAvailable,
+      requireSeekerId: requireSeekerId ?? this.requireSeekerId,
+      discountPercent: discountPercent ?? this.discountPercent,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

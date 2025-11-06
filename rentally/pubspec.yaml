@@ -38,6 +38,8 @@ dependencies:
   
   # Image Handling
   image_picker: ^1.0.4
+  file_picker: ^6.1.1
+  open_filex: ^4.5.0
   
   # Charts and data visualization
   fl_chart: ^0.68.0
@@ -62,6 +64,9 @@ dependencies:
   crypto: ^3.0.3
   http: ^1.1.0
   pdf: ^3.10.7
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.2
+  flutter_timezone: ^1.0.7
   
   
   

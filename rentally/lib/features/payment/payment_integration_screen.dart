@@ -448,8 +448,8 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 3,
             offset: const Offset(0, -2),
           ),
         ],

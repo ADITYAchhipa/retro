@@ -114,14 +114,16 @@ class _HomeCategoryNavigationState extends State<HomeCategoryNavigation> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         SizedBox(
-          height: 88,
+          height: 84,
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
               ListView.builder(
                 controller: _scrollController,
                 scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: widget.categories.length,
                 itemBuilder: (context, index) => _buildCategoryItem(index),
@@ -134,7 +136,7 @@ class _HomeCategoryNavigationState extends State<HomeCategoryNavigation> {
                       isLeft: true,
                       onTap: () => _scrollBy(-120),
                       theme: theme,
-                      height: 56,
+                      height: 52,
                     ),
                   ),
                 ),
@@ -171,30 +173,38 @@ class _HomeCategoryNavigationState extends State<HomeCategoryNavigation> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 52,
-              height: 44,
+              height: 42,
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? (isDark ? EnterpriseDarkTheme.primaryAccent : theme.primaryColor)
-                    : (isDark ? EnterpriseDarkTheme.cardBackground : Colors.grey[100]),
+                color: isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: isDark && !isSelected ? Border.all(
-                  color: EnterpriseDarkTheme.primaryBorder,
+                border: Border.all(
+                  color: isDark
+                      ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                      : theme.colorScheme.outline.withOpacity(0.1),
                   width: 1,
-                ) : null,
-                boxShadow: isSelected ? [
+                ),
+                boxShadow: [
                   BoxShadow(
-                    color: isDark 
-                        ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.3)
-                        : theme.primaryColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                    blurRadius: 10,
+                    offset: const Offset(-5, -5),
+                    spreadRadius: 0,
                   ),
-                ] : null,
+                  BoxShadow(
+                    color: (isDark
+                            ? EnterpriseDarkTheme.primaryAccent
+                            : theme.primaryColor)
+                        .withOpacity(isDark ? 0.18 : 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(5, 5),
+                    spreadRadius: 0,
+                  ),
+                ],
               ),
               child: Icon(
                 widget.categoryIcons[index],
-                color: isSelected 
-                    ? Colors.white 
+                color: isSelected
+                    ? (isDark ? EnterpriseDarkTheme.primaryAccent : theme.primaryColor)
                     : (isDark ? EnterpriseDarkTheme.secondaryText : Colors.grey[600]),
                 size: 22,
               ),
@@ -247,17 +257,42 @@ class _GradientArrow extends StatelessWidget {
           decoration: const BoxDecoration(color: Colors.transparent),
           child: Center(
             child: Transform.translate(
-              offset: const Offset(0, -20), // move arrow slightly upward
+              offset: const Offset(0, -20),
               child: Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withOpacity(0.9),
-                  shape: BoxShape.circle,
+                  color: theme.brightness == Brightness.dark ? Colors.black.withOpacity(0.08) : Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: theme.brightness == Brightness.dark
+                        ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                        : theme.colorScheme.outline.withOpacity(0.12),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.06) : Colors.white,
+                      blurRadius: 10,
+                      offset: const Offset(-5, -5),
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: (theme.brightness == Brightness.dark
+                              ? EnterpriseDarkTheme.primaryAccent
+                              : theme.primaryColor)
+                          .withOpacity(theme.brightness == Brightness.dark ? 0.18 : 0.12),
+                      blurRadius: 10,
+                      offset: const Offset(5, 5),
+                      spreadRadius: 0,
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.all(4),
                 child: Icon(
                   isLeft ? Icons.chevron_left : Icons.chevron_right,
                   size: 18,
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  color: theme.colorScheme.onSurface.withOpacity(0.75),
                 ),
               ),
             ),

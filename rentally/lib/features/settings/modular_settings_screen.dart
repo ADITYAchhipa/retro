@@ -5,23 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart' as pv;
 import '../../widgets/responsive_layout.dart';
 import '../../widgets/error_boundary.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
-import '../../core/theme/enterprise_light_theme.dart';
 import '../../utils/snackbar_utils.dart';
 import '../../core/widgets/role_switcher.dart';
 import '../../core/providers/user_provider.dart';
-import '../../core/providers/listing_feed_provider.dart';
 import '../../app/app_state.dart' show AppNotifiers;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/database/models/user_model.dart';
 // Navigations now use GoRouter Routes; direct screen imports removed
 // (no direct screen imports; navigation via GoRouter routes)
-import '../../services/country_service.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../app/auth_router.dart';
 import '../../core/providers/ui_visibility_provider.dart';
+import '../../services/local_notifications_service.dart';
 
 /// **ModularSettingsScreen**
 /// 
@@ -75,42 +73,21 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
   }
 
   void _showFeedbackDialog() {
-    final TextEditingController feedbackController = TextEditingController();
-    showDialog(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Send Feedback'),
-        content: TextField(
-          controller: feedbackController,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            hintText: 'Tell us what you think...',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Send feedback to backend
-              SnackBarUtils.showSuccess(context, 'Feedback sent! Thank you.');
-            },
-            child: const Text('Send'),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FeedbackSheet(theme: theme, isDark: isDark),
     );
   }
 
   void _showDataExportSheet() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: false,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -119,12 +96,18 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         bool ready = false;
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   const Row(
                     children: [
                       Icon(Icons.download_outlined),
@@ -193,6 +176,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                   ],
                 ],
               ),
+            ),
             );
           },
         );
@@ -201,188 +185,188 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
   }
 
   void _showAboutAppDialog() {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Rentally',
-      applicationVersion: '1.0.0 (Build 1)',
-      children: const [
-        SizedBox(height: 8),
-        Text('A modern rental platform for properties and vehicles.'),
-        SizedBox(height: 8),
-        Text('© 2025 Rentally. All rights reserved.'),
-      ],
-    );
-  }
-
-  void _showCurrencyDialog() {
     final theme = Theme.of(context);
-    final isPhone = MediaQuery.sizeOf(context).width < 600;
-    final current = _userSettings?.currency ?? 'USD';
-
-    // Build unique currency list from CountryService
-    final countries = CountryService.getAllCountries();
-    final Map<String, Set<String>> currencyToCountries = {};
-    for (final c in countries) {
-      final code = (c['currency'] ?? '').toString();
-      final name = (c['name'] ?? '').toString();
-      if (code.isEmpty) continue;
-      currencyToCountries.putIfAbsent(code, () => <String>{}).add(name);
-    }
-    final List<String> currencies = currencyToCountries.keys.toList()..sort();
-
-    String query = '';
-
-    Widget buildCurrencyContent(void Function(VoidCallback fn) setModalState, BuildContext popCtx, {bool expanded = false}) {
-      final filtered = currencies.where((c) => c.toLowerCase().contains(query.toLowerCase())).toList();
-
-      final list = ListView.separated(
-        itemCount: filtered.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (_, i) {
-          final code = filtered[i];
-          final countriesStr = (currencyToCountries[code] ?? const <String>{}).take(3).join(', ');
-          final selected = code == current;
-          return ListTile(
-            leading: CircleAvatar(
-              radius: 16,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.10),
-              child: Text(
-                CurrencyFormatter.currencySymbolFor(code),
-                style: TextStyle(fontSize: 12, color: theme.colorScheme.primary, fontWeight: FontWeight.w700),
-              ),
-            ),
-            title: Text(
-              '$code — ${CurrencyFormatter.currencyNameFor(code)}',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-            ),
-            subtitle: Text(
-              countriesStr.isEmpty ? '—' : countriesStr + ((currencyToCountries[code]?.length ?? 0) > 3 ? '…' : ''),
-              style: const TextStyle(fontSize: 11),
-            ),
-            trailing: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: selected ? theme.colorScheme.primary : theme.colorScheme.outline, width: 1.6),
-                color: selected ? theme.colorScheme.primary : Colors.transparent,
-              ),
-              child: selected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
-            ),
-            onTap: () {
-              Navigator.of(popCtx).pop();
-              // Persist and apply globally
-              _updateSetting('currency', code);
-              CurrencyFormatter.setDefaultCurrency(code);
-              SharedPreferences.getInstance().then((p) => p.setString('currencyCode', code));
-              SnackBarUtils.showSuccess(context, 'Currency set to $code');
-              // Refresh feeds that precomputed price labels (e.g., recently viewed)
-              try {
-                pv.Provider.of<ListingFeedProvider>(context, listen: false).refresh();
-              } catch (_) {}
-            },
-          );
-        },
-      );
-
-      return Column(
-        mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.attach_money, color: theme.colorScheme.primary),
-              const SizedBox(width: 8),
-              Text('Select Currency', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
-              const Spacer(),
-              IconButton(
-                tooltip: 'Close',
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(popCtx).pop(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            autofocus: isPhone,
-            decoration: InputDecoration(
-              isDense: true,
-              prefixIcon: const Icon(Icons.search),
-              hintText: 'Search currency code (e.g. USD)…',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onChanged: (v) => setModalState(() => query = v.trim()),
-          ),
-          const SizedBox(height: 12),
-          expanded ? Expanded(child: list) : SizedBox(height: 360, child: list),
-        ],
-      );
-    }
-
-    if (isPhone) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        builder: (ctx) {
-          return StatefulBuilder(
-            builder: (ctx, setModalState) => SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 12,
-                ),
-                child: SizedBox(
-                  height: MediaQuery.of(ctx).size.height * 0.8,
-                  child: buildCurrencyContent(setModalState, ctx, expanded: true),
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    } else {
-      showGeneralDialog(
-        context: context,
-        barrierDismissible: true,
-        barrierLabel: 'Currency',
-        barrierColor: Colors.black.withOpacity(0.45),
-        transitionDuration: const Duration(milliseconds: 160),
-        pageBuilder: (dialogContext, anim1, anim2) {
-          return Center(
-            child: Material(
-              color: Colors.transparent,
-              child: StatefulBuilder(
-                builder: (ctx, setModalState) => Container(
-                  width: 560,
-                  height: 560,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+    final isDark = theme.brightness == Brightness.dark;
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with App Icon & Name
+                Container(
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primary.withOpacity(0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Icon(
+                          Icons.home_work,
+                          size: 48,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Rentally',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Version 1.0.0 (Build 1)',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),
-                  child: buildCurrencyContent(setModalState, ctx, expanded: true),
                 ),
+                
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Description
+                      Text(
+                        'A modern rental platform for properties and vehicles.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isDark ? Colors.white70 : Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // What's New
+                      _buildSectionTitle('What\'s New', Icons.new_releases, theme),
+                      const SizedBox(height: 12),
+                      _buildChangelogItem('✨', 'Modern UI with glass-morphism design', isDark),
+                      _buildChangelogItem('🚀', 'Enhanced booking experience', isDark),
+                      _buildChangelogItem('💳', 'Improved payment flow', isDark),
+                      _buildChangelogItem('🔔', 'Smart notifications system', isDark),
+                      _buildChangelogItem('🌙', 'Better dark mode support', isDark),
+                      const SizedBox(height: 20),
+                      
+                      // License & Copyright
+                      _buildSectionTitle('Legal', Icons.gavel, theme),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '© 2025 Rentally. All rights reserved.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'This app uses open source libraries and follows industry best practices for security and privacy.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDark ? Colors.white60 : Colors.grey[600],
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Close Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildSectionTitle(String title, IconData icon, ThemeData theme) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildChangelogItem(String emoji, String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white70 : Colors.grey[700],
               ),
             ),
-          );
-        },
-      );
-    }
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadUserSettings() async {
@@ -494,26 +478,101 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
   }
 
   void _showLogoutDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout from your account?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.logout_rounded, color: Colors.orange, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Logout',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.waving_hand_rounded,
+              size: 60,
+              color: theme.colorScheme.primary.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Are you sure you want to logout?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'You can always sign back in anytime.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white60 : Colors.grey[500],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
-          TextButton(
+          ElevatedButton.icon(
             onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement logout functionality
-              context.go('/auth');
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.waving_hand_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text('Goodbye! See you soon'),
+                    ],
+                  ),
+                  backgroundColor: theme.colorScheme.primary,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.logout_rounded, size: 20),
+            label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       ),
     );
   }
@@ -539,98 +598,238 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
       },
       child: ResponsiveLayout(
         maxWidth: 960,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
         child: Theme(
           data: theme.copyWith(
             dividerTheme: DividerThemeData(
-              color: Colors.grey.shade300,
+              color: Colors.grey.shade200,
               thickness: 0.6,
               space: 1,
             ),
           ),
           child: Scaffold(
-            backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : EnterpriseLightTheme.primaryBackground,
-            appBar: _buildAppBar(theme),
-            body: _buildBody(theme, isDark),
+            backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  _buildModernHeader(theme, isDark),
+                  Expanded(
+                    child: _buildBody(theme, isDark),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(ThemeData theme) {
-    return AppBar(
-      title: _isSearching
-          ? AnimatedContainer(
-              height: 40,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface, // solid surface for better contrast
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: theme.colorScheme.primary, width: 3.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.08),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+  Widget _buildModernHeader(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.12),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+        child: _isSearching
+            ? _buildSearchBar(theme, isDark)
+            : Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context)!.settings,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.search_rounded,
+                      size: 22,
+                      color: isDark ? Colors.white70 : theme.primaryColor,
+                    ),
+                    onPressed: () => setState(() => _isSearching = true),
+                    tooltip: 'Search settings',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                    splashRadius: 18,
                   ),
                 ],
               ),
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeInOut,
-              clipBehavior: Clip.antiAlias,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    autofocus: true,
-                    cursorHeight: 18,
-                    textAlignVertical: TextAlignVertical.center,
-                    style: const TextStyle(fontSize: 14, height: 1.25),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.transparent,
-                      hintText: 'Search settings...',
-                      contentPadding: EdgeInsets.fromLTRB(12, 8, 12, 8),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                    ),
-                    onChanged: (v) => setState(() => _searchQuery = v.trim()),
-                  ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: isDark ? theme.colorScheme.surface.withOpacity(0.5) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey[300]!,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+            blurRadius: 12,
+            offset: const Offset(-6, -6),
+          ),
+          BoxShadow(
+            color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                .withOpacity(isDark ? 0.2 : 0.15),
+            blurRadius: 12,
+            offset: const Offset(6, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 8),
+            child: Icon(Icons.search_rounded, size: 20, color: theme.colorScheme.primary),
+          ),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              autofocus: true,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.grey[900],
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search settings...',
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(Icons.close_rounded, size: 20, color: theme.colorScheme.primary),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchQuery = '';
+                  });
+                  _searchController.clear();
+                },
+                tooltip: 'Close search',
+                padding: EdgeInsets.zero,
+                iconSize: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRentRemindersSection(ThemeData theme) {
+    return _buildSection(
+      theme,
+      'Rent Reminders',
+      Icons.notifications_active_outlined,
+      [
+        ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.notifications_active_outlined, color: Colors.orange),
+          ),
+          title: const Text('Manage Rent Reminders'),
+          subtitle: const Text('Pause, resume, reschedule or cancel'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            ref.read(immersiveRouteOpenProvider.notifier).state = true;
+            await context.push(Routes.rentReminders);
+            if (mounted) {
+              ref.read(immersiveRouteOpenProvider.notifier).state = false;
+            }
+          },
+        ),
+        const Divider(height: 1),
+        FutureBuilder<bool>(
+          future: LocalNotificationsService.canScheduleExactAlarms(),
+          builder: (context, snapshot) {
+            final canExact = snapshot.data ?? true;
+            return ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: (canExact ? Colors.green : Colors.red).withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  canExact ? Icons.alarm_on : Icons.alarm_off,
+                  color: canExact ? Colors.green : Colors.red,
                 ),
               ),
-            )
-          : Text(AppLocalizations.of(context)!.settings),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      toolbarHeight: _isSearching ? 52 : kToolbarHeight,
-      actions: [
-        if (_isSearching)
-          IconButton(
-            tooltip: 'Clear',
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              setState(() {
-                _isSearching = false;
-                _searchQuery = '';
-              });
-              _searchController.clear();
-            },
-          )
-        else
-          IconButton(
-            tooltip: 'Search settings',
-            icon: const Icon(Icons.search),
-            onPressed: () => setState(() => _isSearching = true),
-          ),
+              title: const Text('Exact Alarm Permission'),
+              subtitle: Text(
+                canExact
+                    ? 'Exact alarms are enabled'
+                    : 'Grant exact alarm permission for precise reminders',
+              ),
+              trailing: canExact
+                  ? null
+                  : FilledButton(
+                      onPressed: () async {
+                        await LocalNotificationsService.openExactAlarmSettings();
+                      },
+                      child: const Text('Open Settings'),
+                    ),
+            );
+          },
+        ),
       ],
     );
   }
@@ -712,72 +911,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.payments, color: Colors.green),
-          ),
-          title: const Text('Payout History'),
-          subtitle: const Text('View withdrawals and status'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.payoutHistory);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.download_outlined, color: Colors.teal),
-          ),
-          title: const Text('Withdraw'),
-          subtitle: const Text('Request a new payout'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.withdrawal);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.deepPurple.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.receipt_long, color: Colors.deepPurple),
-          ),
-          title: const Text('Transaction History'),
-          subtitle: const Text('Payments and refunds'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.transactions);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
               color: Colors.blue.withOpacity(0.10),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -798,7 +931,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
     );
   }
 
-  Widget _buildHeaderSection(ThemeData theme) {
+  Widget _buildHeaderSection(ThemeData theme, bool isDark) {
     return pv.Consumer<UserProvider>(
       builder: (context, userProvider, child) {
         final currentUser = userProvider.currentUser;
@@ -811,10 +944,32 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         final email = currentUser?.email ?? 'user@example.com';
         final isPhone = MediaQuery.sizeOf(context).width < 600;
 
-        return Card(
-          elevation: 2,
+        return Container(
+          margin: const EdgeInsets.only(bottom: 4),
+          padding: EdgeInsets.all(isPhone ? 14 : 18),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                blurRadius: 12,
+                offset: const Offset(-6, -6),
+              ),
+              BoxShadow(
+                color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                    .withOpacity(isDark ? 0.15 : 0.08),
+                blurRadius: 12,
+                offset: const Offset(6, 6),
+              ),
+            ],
+          ),
           child: Padding(
-            padding: EdgeInsets.all(isPhone ? 10 : 14),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -964,22 +1119,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => context.push('/profile'),
-                          icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('Edit Profile'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            minimumSize: const Size(0, 40),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            side: BorderSide(color: theme.colorScheme.primary, width: 1.6),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       if (role == UserRole.seeker)
                         SizedBox(
                           width: double.infinity,
@@ -988,6 +1127,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                               final ok = await userProvider.switchRole(UserRole.owner);
                               if (mounted && ok) {
                                 SnackBarUtils.showSuccess(context, 'Switched to Owner mode');
+                                context.go('/');
                               }
                             },
                             icon: const Icon(Icons.swap_horiz, size: 16),
@@ -1006,9 +1146,15 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () => context.go('/owner-dashboard'),
-                            icon: const Icon(Icons.dashboard_outlined, size: 16),
-                            label: const Text('Owner Dashboard'),
+                            onPressed: () async {
+                              final ok = await userProvider.switchRole(UserRole.seeker);
+                              if (mounted && ok) {
+                                SnackBarUtils.showSuccess(context, 'Switched to Seeker mode');
+                                context.go('/');
+                              }
+                            },
+                            icon: const Icon(Icons.swap_horiz, size: 16),
+                            label: const Text('Seeker Mode'),
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               minimumSize: const Size(0, 40),
@@ -1026,24 +1172,13 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                     spacing: 12,
                     runSpacing: 8,
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: () => context.push('/profile'),
-                        icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text('Edit Profile'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          minimumSize: const Size(0, 40),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          side: BorderSide(color: theme.colorScheme.primary, width: 1.6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                      ),
                       if (role == UserRole.seeker)
                         ElevatedButton.icon(
                           onPressed: () async {
                             final ok = await userProvider.switchRole(UserRole.owner);
                             if (mounted && ok) {
                               SnackBarUtils.showSuccess(context, 'Switched to Owner mode');
+                              context.go('/');
                             }
                           },
                           icon: const Icon(Icons.swap_horiz, size: 16),
@@ -1059,9 +1194,15 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         )
                       else if (role == UserRole.owner)
                         ElevatedButton.icon(
-                          onPressed: () => context.go('/owner-dashboard'),
-                          icon: const Icon(Icons.dashboard_outlined, size: 16),
-                          label: const Text('Open Owner Dashboard'),
+                          onPressed: () async {
+                            final ok = await userProvider.switchRole(UserRole.seeker);
+                            if (mounted && ok) {
+                              SnackBarUtils.showSuccess(context, 'Switched to Seeker mode');
+                              context.go('/');
+                            }
+                          },
+                          icon: const Icon(Icons.swap_horiz, size: 16),
+                          label: const Text('Switch to Seeker'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             minimumSize: const Size(0, 40),
@@ -1088,8 +1229,8 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
 
     final media = MediaQuery.of(context);
     final bottomSafe = media.padding.bottom;
-    final isPhone = media.size.width < 600;
-    const bottomNavHeight = 76.0; // matches MainShell bottomNavigationBar height
+    // Note: The parent shell already reserves space for the bottom navigation
+    // bar, so we only need to account for the device safe area here.
 
     return SafeArea(
       top: false,
@@ -1103,7 +1244,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             16,
             16,
             16,
-            16 + bottomSafe + (isPhone ? bottomNavHeight : 0),
+            16 + bottomSafe,
           ),
           child: _isLoading ? _buildLoadingState() : _buildContent(theme),
         ),
@@ -1114,6 +1255,11 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
   Widget _buildContent(ThemeData theme) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final themed = theme.copyWith(
+      dividerTheme: theme.dividerTheme.copyWith(
+        color: Colors.grey.shade300,
+        thickness: 0.6,
+        space: 1,
+      ),
       listTileTheme: theme.listTileTheme.copyWith(
         dense: isPhone,
         minVerticalPadding: isPhone ? 6 : 10,
@@ -1180,20 +1326,23 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
     final sections = <Widget>[];
 
     if (!_isSearching) {
-      sections..add(_buildHeaderSection(theme))..add(const SizedBox(height: 20));
+      sections..add(_buildHeaderSection(theme, theme.brightness == Brightness.dark))..add(const SizedBox(height: 20));
     }
 
     if (!_isSearching || showAny(['Profile', 'Payment Methods'])) {
       sections..add(_buildAccountSection(theme))..add(const SizedBox(height: 16));
     }
-    if (!_isSearching || showAny(['Dark Mode', 'Language', 'Currency'])) {
+    if (!_isSearching || showAny(['Dark Mode', 'Language'])) {
       sections..add(_buildAppearanceSection(theme))..add(const SizedBox(height: 16));
     }
-    if (!_isSearching || showAny(['Referral & Earn', 'Wallet & Rewards', 'Subscription Plans'])) {
+    if (!_isSearching || showAny(['Referral & Earn', 'Wallet & Rewards', 'Payout Methods', 'Subscription Plans'])) {
       sections..add(_buildMonetizationSection(theme))..add(const SizedBox(height: 16));
     }
-    if (!_isSearching || showAny(['All Notifications', 'Push Notifications', 'Email Notifications', 'SMS Notifications'])) {
+    if (!_isSearching || showAny(['Notifications', 'Email Notifications', 'Push Notifications', 'SMS Notifications'])) {
       sections..add(_buildNotificationsSection(theme))..add(const SizedBox(height: 16));
+    }
+    if (!_isSearching || showAny(['Rent Reminders', 'Manage Rent Reminders', 'Exact Alarm Permission'])) {
+      sections..add(_buildRentRemindersSection(theme))..add(const SizedBox(height: 16));
     }
     if (!_isSearching || showAny(['Location Services', 'Analytics', 'Crash Reporting', 'Download My Data'])) {
       sections..add(_buildPrivacySection(theme))..add(const SizedBox(height: 16));
@@ -1201,11 +1350,11 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
     if (!_isSearching || showAny(['Change Password', 'Biometric Authentication', 'Two-Factor Authentication', 'Auto Logout'])) {
       sections..add(_buildSecuritySection(theme))..add(const SizedBox(height: 16));
     }
-    if (!_isSearching || showAny(['Help Center', 'Contact Support', 'Send Feedback'])) {
+    if (!_isSearching || showAny(['Contact Support', 'Send Feedback'])) {
       sections..add(_buildSupportSection(theme))..add(const SizedBox(height: 16));
     }
     if (!_isSearching || showAny(['App Version', 'Terms of Service', 'Privacy Policy', 'Logout'])) {
-      sections..add(_buildAboutSection(theme))..add(const SizedBox(height: 80));
+      sections..add(_buildAboutSection(theme))..add(const SizedBox(height: 16));
     }
 
     return Theme(
@@ -1374,30 +1523,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           trailing: const Icon(Icons.chevron_right),
           onTap: _showLanguageDialog,
         ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.attach_money, color: Colors.amber),
-          ),
-          title: const Text('Currency'),
-          subtitle: Builder(
-            builder: (context) {
-              final code = _userSettings?.currency ?? 'USD';
-              final name = CurrencyFormatter.currencyNameFor(code);
-              final sym = CurrencyFormatter.currencySymbolFor(code);
-              return Text('$code — $name ($sym)');
-            },
-          ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: _showCurrencyDialog,
-        ),
-        // Removed 'Follow country currency' option by request
       ],
     );
   }
@@ -1482,28 +1607,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
       'Privacy & Data',
       Icons.privacy_tip,
       [
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.privacy_tip, color: Colors.indigo),
-          ),
-          title: const Text('Privacy & Data'),
-          subtitle: const Text('Manage data rights and consent'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.compliance);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
         SwitchListTile(
           secondary: Container(
             width: 40,
@@ -1667,28 +1770,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.help_center, color: Colors.teal),
-          ),
-          title: const Text('Help Center'),
-          subtitle: const Text('FAQs and support articles'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.support);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
               color: Colors.blue.withOpacity(0.10),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -1720,50 +1801,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           subtitle: const Text('Share your thoughts'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _showFeedbackDialog(),
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.deepOrange.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.confirmation_number_outlined, color: Colors.deepOrange),
-          ),
-          title: const Text('Support Tickets'),
-          subtitle: const Text('View and track'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.tickets);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.gavel_outlined, color: Colors.red),
-          ),
-          title: const Text('Dispute Resolution'),
-          subtitle: const Text('Manage booking disputes'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.disputes);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
         ),
       ],
     );
@@ -1846,23 +1883,53 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
 
   Widget _buildSection(ThemeData theme, String title, IconData icon, List<Widget> children) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-    return Card(
-      elevation: 2,
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            blurRadius: 10,
+            offset: const Offset(-5, -5),
+          ),
+          BoxShadow(
+            color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                .withOpacity(isDark ? 0.12 : 0.06),
+            blurRadius: 10,
+            offset: const Offset(5, 5),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(isPhone ? 12 : 16),
+            padding: EdgeInsets.fromLTRB(isPhone ? 16 : 20, isPhone ? 14 : 16, isPhone ? 16 : 20, isPhone ? 8 : 10),
             child: Row(
               children: [
-                Icon(icon, color: theme.colorScheme.primary, size: isPhone ? 20 : 22),
-                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: theme.colorScheme.primary, size: isPhone ? 20 : 22),
+                ),
+                const SizedBox(width: 14),
                 Text(
                   title,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontSize: isPhone ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : theme.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -1934,68 +2001,135 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         return label.contains(q) || code.contains(q);
       }).toList();
 
+      final isDark = theme.brightness == Brightness.dark;
       final list = ListView.separated(
         padding: const EdgeInsets.only(bottom: 12),
         shrinkWrap: !expanded,
         itemCount: filtered.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        separatorBuilder: (_, __) => SizedBox(height: isPhone ? 8 : 12),
         itemBuilder: (_, i) {
           final item = filtered[i];
           final code = item['code']!;
           final label = item['label']!;
           final selected = tempSelectedCode == code;
+          final langColor = _colorForLang(code);
           return InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
             onTap: () => setModalState(() {
               tempSelectedCode = code;
               tempSelectedLabel = label;
             }),
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
-                color: selected ? theme.colorScheme.primary.withOpacity(0.06) : theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
+                gradient: selected
+                    ? LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary.withOpacity(0.12),
+                          theme.colorScheme.primary.withOpacity(0.06),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: selected ? null : theme.colorScheme.surface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
                 border: Border.all(
-                  color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.4),
-                  width: selected ? 1.6 : 1.0,
+                  color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.3),
+                  width: selected ? 2.0 : 1.0,
                 ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: EdgeInsets.all(isPhone ? 10 : 14),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: _colorForLang(code).withOpacity(0.12),
-                    child: Text(
-                      code.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: _colorForLang(code),
+                  Container(
+                    width: isPhone ? 36 : 48,
+                    height: isPhone ? 36 : 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          langColor,
+                          langColor.withOpacity(0.7),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(isPhone ? 10 : 12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: langColor.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        code == 'sys' ? '🌍' : code.substring(0, 2).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: isPhone ? 14 : 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: isPhone ? 12 : 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: theme.textTheme.titleMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 2),
-                        Text(code, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                        Text(
+                          label,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontSize: isPhone ? 14 : 15,
+                            fontWeight: FontWeight.bold,
+                            color: selected ? theme.colorScheme.primary : null,
+                          ),
+                        ),
+                        SizedBox(height: isPhone ? 2 : 4),
+                        Text(
+                          code.toUpperCase(),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                            fontSize: isPhone ? 10 : 11,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 22,
-                    height: 22,
+                    duration: const Duration(milliseconds: 200),
+                    width: isPhone ? 20 : 28,
+                    height: isPhone ? 20 : 28,
                     decoration: BoxDecoration(
+                      gradient: selected
+                          ? LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primary.withOpacity(0.8),
+                              ],
+                            )
+                          : null,
                       shape: BoxShape.circle,
-                      border: Border.all(color: selected ? theme.colorScheme.primary : theme.colorScheme.outline, width: 1.6),
-                      color: selected ? theme.colorScheme.primary : Colors.transparent,
+                      border: Border.all(
+                        color: selected ? Colors.transparent : theme.colorScheme.outline,
+                        width: 2,
+                      ),
+                      color: selected ? null : Colors.transparent,
                     ),
                     child: selected
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        ? Icon(Icons.check_rounded, size: isPhone ? 12 : 18, color: Colors.white)
                         : null,
                   ),
                 ],
@@ -2005,62 +2139,201 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         },
       );
 
-      final header = Row(
-        children: [
-          Icon(Icons.language, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Text('Select Language', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          const Spacer(),
-          IconButton(
-            tooltip: 'Close',
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(popCtx).pop(),
+      final header = Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.1),
+              theme.colorScheme.secondary.withOpacity(0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      );
-
-      final search = TextField(
-        autofocus: false,
-        decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.search),
-          hintText: 'Search languages',
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.2),
+            width: 1,
           ),
         ),
-        onChanged: (v) => setModalState(() => query = v),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.primary.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.language_rounded, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select Language',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Choose your preferred language',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Close',
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => Navigator.of(popCtx).pop(),
+              style: IconButton.styleFrom(
+                backgroundColor: theme.colorScheme.surface.withOpacity(0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final search = Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: isDark ? theme.colorScheme.surface.withOpacity(0.5) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey[300]!,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+              blurRadius: 12,
+              offset: const Offset(-6, -6),
+            ),
+            BoxShadow(
+              color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                  .withOpacity(isDark ? 0.2 : 0.15),
+              blurRadius: 12,
+              offset: const Offset(6, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 8),
+              child: Icon(Icons.search_rounded, size: 20, color: theme.colorScheme.primary),
+            ),
+            Expanded(
+              child: TextField(
+                autofocus: false,
+                decoration: InputDecoration(
+                  hintText: 'Search languages...',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
+                  isDense: true,
+                ),
+                onChanged: (v) => setModalState(() => query = v),
+              ),
+            ),
+          ],
+        ),
       );
 
       final actions = Row(
         children: [
-          TextButton(onPressed: () => Navigator.of(popCtx).pop(), child: const Text('Cancel')),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: () => onApply(popCtx),
-            icon: const Icon(Icons.check_circle_outline, size: 18),
-            label: const Text('Apply'),
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              elevation: 0,
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(popCtx).pop(),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                side: BorderSide(color: theme.colorScheme.outline),
+              ),
+              child: const Text('Cancel'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.secondary,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => onApply(popCtx),
+                icon: const Icon(Icons.check_circle_rounded, size: 20),
+                label: const Text('Apply Language'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       );
+
+      final dirty = tempSelectedCode != (currentLocale?.languageCode ?? 'sys');
 
       final content = Column(
         mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           header,
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
           search,
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           expanded ? Expanded(child: list) : Flexible(child: list),
-          const SizedBox(height: 8),
-          actions,
+          if (dirty) ...[
+            const SizedBox(height: 16),
+            actions,
+          ],
         ],
       );
 
@@ -2071,24 +2344,35 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+        backgroundColor: Colors.transparent,
         builder: (ctx) {
           debugPrint('[Settings] Showing bottom sheet language selector');
           return StatefulBuilder(
-            builder: (ctx, setModalState) => SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 12,
-                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-                ),
-                child: SizedBox(
-                  height: MediaQuery.of(ctx).size.height * 0.8,
-                  child: buildSheetContent(setModalState, ctx, expanded: true),
+            builder: (ctx, setModalState) => Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+                  ),
+                  child: SizedBox(
+                    height: MediaQuery.of(ctx).size.height * 0.8,
+                    child: buildSheetContent(setModalState, ctx, expanded: true),
+                  ),
                 ),
               ),
             ),
@@ -2101,26 +2385,30 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         context: context,
         barrierDismissible: true,
         barrierLabel: 'Language',
-        barrierColor: Colors.black.withOpacity(0.45),
-        transitionDuration: const Duration(milliseconds: 160),
+        barrierColor: Colors.black.withOpacity(0.5),
+        transitionDuration: const Duration(milliseconds: 200),
         pageBuilder: (dialogContext, anim1, anim2) {
           return Center(
             child: Material(
               color: Colors.transparent,
               child: StatefulBuilder(
                 builder: (ctx, setModalState) => Container(
-                  width: 560,
-                  height: 560,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  width: 600,
+                  height: 680,
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withOpacity(0.2),
+                      width: 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.15),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
+                        blurRadius: 32,
+                        offset: const Offset(0, 16),
+                        spreadRadius: -8,
                       ),
                     ],
                   ),
@@ -2135,17 +2423,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
   }
 
   Widget _buildLoadingState() {
-    return Column(
-      children: [
-        LoadingStates.propertyCardSkeleton(context),
-        const SizedBox(height: 16),
-        LoadingStates.propertyCardSkeleton(context),
-        const SizedBox(height: 16),
-        LoadingStates.propertyCardSkeleton(context),
-        const SizedBox(height: 16),
-        LoadingStates.propertyCardSkeleton(context),
-      ],
-    );
+    return LoadingStates.listShimmer(context, itemCount: 4);
   }
 
   Widget _buildErrorState(ThemeData theme) {
@@ -2435,5 +2713,369 @@ class UserSettings {
       default:
         return this;
     }
+  }
+}
+
+class _FeedbackSheet extends StatefulWidget {
+  final ThemeData theme;
+  final bool isDark;
+
+  const _FeedbackSheet({required this.theme, required this.isDark});
+
+  @override
+  State<_FeedbackSheet> createState() => _FeedbackSheetState();
+}
+
+class _FeedbackSheetState extends State<_FeedbackSheet> {
+  final TextEditingController _feedbackController = TextEditingController();
+  String _selectedCategory = 'General';
+  int _rating = 0;
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isPhone = media.size.width < 600;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: widget.isDark ? widget.theme.colorScheme.surface : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 8,
+            bottom: media.viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          widget.theme.colorScheme.primary,
+                          widget.theme.colorScheme.primary.withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.feedback_rounded, color: Colors.white, size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Send Feedback',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Help us improve your experience',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: widget.isDark ? Colors.white70 : Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Rating
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: widget.isDark 
+                      ? Colors.white.withOpacity(0.05) 
+                      : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: widget.isDark 
+                        ? Colors.white.withOpacity(0.1) 
+                        : Colors.grey.shade200,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          size: 20,
+                          color: widget.theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Rate your experience',
+                          style: widget.theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: List.generate(5, (index) {
+                        final starIndex = index + 1;
+                        return InkWell(
+                          onTap: () => setState(() => _rating = starIndex),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              _rating >= starIndex
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              size: isPhone ? 32 : 36,
+                              color: _rating >= starIndex
+                                  ? Colors.amber.shade600
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Category selection
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: widget.isDark 
+                      ? Colors.white.withOpacity(0.05) 
+                      : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: widget.isDark 
+                        ? Colors.white.withOpacity(0.1) 
+                        : Colors.grey.shade200,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.category_rounded,
+                          size: 20,
+                          color: widget.theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Category',
+                          style: widget.theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: ['General', 'Bug', 'Feature', 'Other']
+                          .map((category) => ChoiceChip(
+                                label: Text(category),
+                                selected: _selectedCategory == category,
+                                showCheckmark: false,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() => _selectedCategory = category);
+                                  }
+                                },
+                                selectedColor: widget.theme.colorScheme.primary.withOpacity(0.2),
+                                labelStyle: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: _selectedCategory == category 
+                                      ? FontWeight.bold 
+                                      : FontWeight.w500,
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                              ))
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Feedback text field
+              TextField(
+                controller: _feedbackController,
+                maxLines: 5,
+                maxLength: 500,
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Your feedback',
+                  hintText: 'Tell us what you think...',
+                  hintStyle: TextStyle(
+                    color: widget.isDark 
+                        ? Colors.white.withOpacity(0.4) 
+                        : Colors.grey[400],
+                  ),
+                  filled: true,
+                  fillColor: widget.isDark 
+                      ? Colors.white.withOpacity(0.05) 
+                      : Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: widget.isDark 
+                          ? Colors.white.withOpacity(0.1) 
+                          : Colors.grey[300]!,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: widget.isDark 
+                          ? Colors.white.withOpacity(0.1) 
+                          : Colors.grey[300]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: widget.theme.colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        if (_feedbackController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Row(
+                                children: [
+                                  Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Please enter your feedback'),
+                                ],
+                              ),
+                              backgroundColor: Colors.orange,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                SizedBox(width: 8),
+                                Text('Thank you for your feedback!'),
+                              ],
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.send_rounded, size: 20),
+                      label: const Text(
+                        'Submit Feedback',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

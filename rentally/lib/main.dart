@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart' as provider;
+import '../services/rent_reminder_service.dart';
 
 // App configuration and routing
 import 'app/auth_router.dart';
@@ -14,6 +15,7 @@ import 'app/app_state.dart';
 // Theme configuration
 import 'core/theme/enterprise_dark_theme.dart';
 import 'core/theme/enterprise_light_theme.dart';
+import 'core/theme/listing_card_theme.dart';
 
 // State management providers
 import 'core/providers/property_provider.dart';
@@ -98,10 +100,12 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
+  Timer? _rentReminderTimer;
   @override
   void initState() {
     super.initState();
     _loadInitialLocale();
+    _startRentReminderPolling();
   }
 
   Future<void> _loadInitialLocale() async {
@@ -126,6 +130,21 @@ class _MyAppState extends ConsumerState<MyApp> {
     } catch (_) {
       // ignore errors, default locale will be used
     } finally {}
+  }
+
+  void _startRentReminderPolling() {
+    // Fire once at startup, then hourly while app is in foreground.
+    RentReminderService.checkAndFireDue(ref);
+    _rentReminderTimer?.cancel();
+    _rentReminderTimer = Timer.periodic(const Duration(hours: 1), (_) {
+      RentReminderService.checkAndFireDue(ref);
+    });
+  }
+
+  @override
+  void dispose() {
+    _rentReminderTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -200,6 +219,9 @@ class _MyAppState extends ConsumerState<MyApp> {
           bodyColor: EnterpriseLightTheme.primaryText,
           displayColor: EnterpriseLightTheme.primaryText,
         ),
+        extensions: <ThemeExtension<dynamic>>[
+          ListingCardTheme.defaults(dark: false),
+        ],
       ),
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark(
@@ -263,6 +285,9 @@ class _MyAppState extends ConsumerState<MyApp> {
           bodyColor: EnterpriseDarkTheme.primaryText,
           displayColor: EnterpriseDarkTheme.primaryText,
         ),
+        extensions: <ThemeExtension<dynamic>>[
+          ListingCardTheme.defaults(dark: true),
+        ],
       ),
       themeMode: themeMode,
       locale: locale,

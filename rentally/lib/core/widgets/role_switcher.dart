@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../database/models/user_model.dart';
 import '../providers/user_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' as r;
@@ -57,23 +59,44 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
     _animationController.forward();
 
     try {
+      debugPrint('[RoleSwitcher] Starting switch to ${newRole.name}');
       final success = await userProvider.switchRole(newRole);
+      debugPrint('[RoleSwitcher] UserProvider switch result: $success');
+      
       if (success && mounted) {
         // Also sync Riverpod auth role so the rest of the app (e.g., shell/nav) updates consistently
         try {
           final container = r.ProviderScope.containerOf(context);
           final appRole = _mapToAppRole(newRole);
           container.read(app.authProvider.notifier).switchRole(appRole);
-        } catch (_) {
-          // no-op if container is not available; userProvider switch still applies
+          debugPrint('[RoleSwitcher] Synced authProvider to ${appRole.name}');
+        } catch (e) {
+          debugPrint('[RoleSwitcher] Failed to sync authProvider: $e');
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Switched to ${_getRoleDisplayName(newRole)} mode'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        
+        if (mounted) {
+          final target = newRole == UserRole.owner ? '/owner-dashboard' : '/home';
+          debugPrint('[RoleSwitcher] Navigating to $target');
+          
+          // Small delay to ensure authProvider state propagates before navigation
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (!mounted) return;
+            try {
+              context.go(target);
+              debugPrint('[RoleSwitcher] Navigation to $target completed');
+            } catch (e) {
+              debugPrint('[RoleSwitcher] Navigation failed: $e');
+            }
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Switched to ${_getRoleDisplayName(newRole)} mode'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -84,6 +107,7 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
         );
       }
     } catch (e) {
+      debugPrint('[RoleSwitcher] Exception during role switch: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -189,8 +213,8 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.primaryColor.withOpacity(0.3),
-                            blurRadius: 4,
+                            color: theme.primaryColor.withOpacity(0.16),
+                            blurRadius: 3,
                             offset: const Offset(0, 2),
                           ),
                         ],

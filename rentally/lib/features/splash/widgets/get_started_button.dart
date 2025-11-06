@@ -165,22 +165,22 @@ class _GetStartedButtonState extends State<GetStartedButton>
       boxShadow: [
         // Primary shadow
         BoxShadow(
-          color: const Color(0xFF1E40AF).withOpacity(0.4), // Navy blue shadow
-          blurRadius: 20,
+          color: const Color(0xFF1E40AF).withOpacity(0.30), // Navy blue shadow
+          blurRadius: 16,
           offset: const Offset(0, 8),
-          spreadRadius: 2,
+          spreadRadius: 1,
         ),
         // Inner glow
         BoxShadow(
-          color: const Color(0xFF60A5FA).withOpacity(0.2),
-          blurRadius: 10,
+          color: const Color(0xFF60A5FA).withOpacity(0.18),
+          blurRadius: 8,
           offset: const Offset(0, -2),
           spreadRadius: -5,
         ),
         // Depth shadow
         BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 15,
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 12,
           offset: const Offset(0, 4),
         ),
       ],

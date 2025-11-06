@@ -4,9 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../widgets/responsive_layout.dart';
 import '../../widgets/error_boundary.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
-import '../../core/theme/enterprise_light_theme.dart';
+import '../../core/neo/neo.dart';
 
 /// **CleanChatListScreen**
 /// 
@@ -28,8 +28,10 @@ class CleanChatListScreen extends StatefulWidget {
 class _CleanChatListScreenState extends State<CleanChatListScreen> {
   late ScrollController _scrollController;
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   
   bool _isLoading = false;
+  bool _isSearching = false;
   String _searchQuery = '';
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
   
@@ -74,10 +76,12 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
     _loadChats();
   }
 
+
   @override
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -93,7 +97,19 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading chats: $error')),
+          SnackBar(
+            content: Text(
+              'Error loading chats: $error',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(milliseconds: 1800),
+          ),
         );
       }
     }
@@ -107,11 +123,13 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
     if (_searchQuery.isEmpty) {
       return _chats;
     }
-    return _chats.where((chat) =>
-      chat['userName'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      chat['propertyTitle'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      chat['lastMessage'].toLowerCase().contains(_searchQuery.toLowerCase())
-    ).toList();
+    return _chats.where((chat) {
+      final userName = chat['userName'].toString().toLowerCase();
+      final lastMessage = chat['lastMessage'].toString().toLowerCase();
+      final propertyTitle = chat['propertyTitle'].toString().toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      return userName.contains(query) || lastMessage.contains(query) || propertyTitle.contains(query);
+    }).toList();
   }
 
   void _onChatTap(Map<String, dynamic> chat) {
@@ -132,7 +150,17 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
       _chats.removeWhere((chat) => chat['id'] == chatId);
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chat deleted')),
+      SnackBar(
+        content: Text(
+          'Chat deleted',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(milliseconds: 1400),
+      ),
     );
   }
 
@@ -146,40 +174,172 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
         debugPrint('Chat list screen error: ${details.exception}');
       },
       child: ResponsiveLayout(
+        padding: EdgeInsets.zero,
         child: Scaffold(
-          backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : EnterpriseLightTheme.primaryBackground,
-          appBar: _buildAppBar(theme),
-          body: _buildBody(theme, isDark),
+          backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _buildModernHeader(theme, isDark),
+                Expanded(
+                  child: _buildBody(theme, isDark),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(ThemeData theme) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      leading: IconButton(
-        tooltip: 'Back',
-        icon: const Icon(Icons.arrow_back),
-        onPressed: _handleBack,
+  Widget _buildModernHeader(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.12),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
-      title: const Text('Messages'),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      actions: [
-        IconButton(
-          onPressed: () => _showSearchDialog(context),
-          icon: const Icon(Icons.search),
-          tooltip: 'Search Chats',
-        ),
-        IconButton(
-          onPressed: () => context.push('/new-chat'),
-          icon: const Icon(Icons.add_comment),
-          tooltip: 'New Chat',
-        ),
-      ],
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+        child: _isSearching
+            ? _buildSearchBar(theme, isDark)
+            : Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: _handleBack,
+                    tooltip: 'Back',
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Messages',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  AnimatedScale(
+                    scale: 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.search_rounded,
+                        size: 22,
+                        color: isDark ? Colors.white70 : theme.primaryColor,
+                      ),
+                      onPressed: () => setState(() => _isSearching = true),
+                      tooltip: 'Search messages',
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
+
+  Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: isDark ? theme.colorScheme.surface.withOpacity(0.5) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey[300]!,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+            blurRadius: 12,
+            offset: const Offset(-6, -6),
+          ),
+          BoxShadow(
+            color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                .withOpacity(isDark ? 0.2 : 0.15),
+            blurRadius: 12,
+            offset: const Offset(6, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 8),
+            child: Icon(Icons.search_rounded, size: 20, color: theme.colorScheme.primary),
+          ),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              autofocus: true,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.grey[900],
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search messages...',
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v.trim()),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(Icons.close_rounded, size: 20, color: theme.colorScheme.primary),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchQuery = '';
+                  });
+                  _searchController.clear();
+                },
+                tooltip: 'Close search',
+                padding: EdgeInsets.zero,
+                iconSize: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildBody(ThemeData theme, bool isDark) {
     return RefreshIndicator(
@@ -187,7 +347,6 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
       onRefresh: _onRefresh,
       child: Column(
         children: [
-          if (_searchQuery.isNotEmpty) _buildSearchHeader(theme),
           Expanded(
             child: _isLoading
                 ? _buildLoadingState()
@@ -198,39 +357,9 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
     );
   }
 
-  Widget _buildSearchHeader(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Search results for "$_searchQuery"',
-              style: theme.textTheme.titleMedium,
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _searchQuery = '';
-                _searchController.clear();
-              });
-            },
-            icon: const Icon(Icons.clear),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildLoadingState() {
-    return ListView.builder(
-      itemCount: 5,
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Card(child: LoadingStates.propertyCardSkeleton(context)),
-      ),
-    );
+    return LoadingStates.listShimmer(context, itemCount: 6);
   }
 
   Widget _buildChatList(ThemeData theme, bool isDark) {
@@ -262,29 +391,25 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _searchQuery.isEmpty ? 'No messages yet' : 'No chats found',
+            'No messages yet',
             style: theme.textTheme.titleLarge?.copyWith(
               color: theme.textTheme.titleLarge?.color?.withOpacity(0.7),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _searchQuery.isEmpty 
-                ? 'Start a conversation with property owners or guests'
-                : 'Try adjusting your search terms',
+            'Start a conversation with property owners or guests',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
             ),
             textAlign: TextAlign.center,
           ),
-          if (_searchQuery.isEmpty) ...[
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/explore'),
-              icon: const Icon(Icons.explore),
-              label: const Text('Explore Properties'),
-            ),
-          ],
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => context.push('/explore'),
+            icon: const Icon(Icons.explore),
+            label: const Text('Explore Properties'),
+          ),
         ],
       ),
     );
@@ -292,7 +417,6 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
 
   Widget _buildChatItem(Map<String, dynamic> chat, ThemeData theme, bool isDark) {
     final hasUnread = chat['unreadCount'] > 0;
-    
     return Dismissible(
       key: Key(chat['id']),
       background: Container(
@@ -320,128 +444,148 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
           _deleteChat(chat['id']);
         }
       },
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: ListTile(
-          onTap: () => _onChatTap(chat),
-          leading: Stack(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundImage: CachedNetworkImageProvider(chat['userImage']),
-                onBackgroundImageError: (exception, stackTrace) {},
-                child: chat['userImage'].isEmpty 
-                    ? Text(chat['userName'][0].toUpperCase())
-                    : null,
-              ),
-              if (chat['isOnline'])
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
-            ],
+      child: NeoGlass(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        borderRadius: BorderRadius.circular(18),
+        backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+        borderWidth: 1,
+        blur: isDark ? 12 : 0,
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            blurRadius: 10,
+            offset: const Offset(-5, -5),
           ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  chat['userName'],
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ),
-              if (hasUnread)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: theme.primaryColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${chat['unreadCount']}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                chat['propertyTitle'],
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.primaryColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                chat['lastMessage'],
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          trailing: Text(
-            chat['timestamp'],
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
-              fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Search Chats'),
-        content: TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Search by name, property, or message...',
-            prefixIcon: Icon(Icons.search),
-          ),
-          onChanged: (value) {
-            setState(() => _searchQuery = value);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _searchQuery = '';
-                _searchController.clear();
-              });
-              Navigator.of(context).pop();
-            },
-            child: const Text('Clear'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Search'),
+          BoxShadow(
+            color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                .withOpacity(isDark ? 0.12 : 0.06),
+            blurRadius: 10,
+            offset: const Offset(5, 5),
           ),
         ],
+        child: InkWell(
+          onTap: () => _onChatTap(chat),
+          borderRadius: BorderRadius.circular(18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundImage: CachedNetworkImageProvider(chat['userImage']),
+                    onBackgroundImageError: (exception, stackTrace) {},
+                    child: chat['userImage'].isEmpty
+                        ? Text(chat['userName'][0].toUpperCase())
+                        : null,
+                  ),
+                  if (chat['isOnline'])
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isDark ? Colors.grey[850]! : Colors.white, width: 2.5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            chat['userName'],
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          chat['timestamp'],
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 1),
+                      ),
+                      child: Text(
+                        chat['propertyTitle'],
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            chat['lastMessage'],
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                              color: isDark ? Colors.white.withOpacity(0.8) : Colors.grey[700],
+                              fontSize: 14,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (hasUnread) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${chat['unreadCount']}',
+                              style: TextStyle(
+                                color: theme.colorScheme.onPrimary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

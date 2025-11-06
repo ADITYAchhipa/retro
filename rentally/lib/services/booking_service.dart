@@ -17,6 +17,7 @@ class Booking {
   final DateTime createdAt;
   final DateTime updatedAt;
   final PaymentInfo paymentInfo;
+  final String? seekerIdImage; // optional path/url to seeker-provided ID
 
   const Booking({
     required this.id,
@@ -31,6 +32,7 @@ class Booking {
     required this.createdAt,
     required this.updatedAt,
     required this.paymentInfo,
+    this.seekerIdImage,
   });
 
   Map<String, dynamic> toJson() => {
@@ -46,6 +48,7 @@ class Booking {
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
     'paymentInfo': paymentInfo.toJson(),
+    'seekerIdImage': seekerIdImage,
   };
 
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
@@ -61,12 +64,14 @@ class Booking {
     createdAt: DateTime.parse(json['createdAt']),
     updatedAt: DateTime.parse(json['updatedAt']),
     paymentInfo: PaymentInfo.fromJson(json['paymentInfo']),
+    seekerIdImage: json['seekerIdImage'],
   );
 
   Booking copyWith({
     BookingStatus? status,
     String? specialRequests,
     PaymentInfo? paymentInfo,
+    String? seekerIdImage,
   }) => Booking(
     id: id,
     listingId: listingId,
@@ -80,6 +85,7 @@ class Booking {
     createdAt: createdAt,
     updatedAt: DateTime.now(),
     paymentInfo: paymentInfo ?? this.paymentInfo,
+    seekerIdImage: seekerIdImage ?? this.seekerIdImage,
   );
 }
 

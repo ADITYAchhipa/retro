@@ -5,7 +5,7 @@ class AppTheme {
   static const Color primaryBlue = Color(0xFF1E40AF);
   static const Color primaryTeal = Color(0xFF059669);
   static const Color secondaryYellow = Color(0xFFF59E0B);
-  static const Color bgLight = Color(0xFFF9FAFB);
+  static const Color bgLight = Color(0xFFFFFFFF);
   static const Color bgDark = Color(0xFF111827);
 
   static ThemeData light() {
@@ -21,6 +21,14 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: bgLight,
       textTheme: base.textTheme,
+      cardTheme: CardTheme(
+        color: Colors.white,
+        elevation: 8,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shadowColor: Colors.black.withOpacity(0.08),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF0A0D12),
         foregroundColor: Color(0xFFF6F8FA),
@@ -113,8 +121,10 @@ class AppTheme {
       ),
       cardTheme: CardTheme(
         color: const Color(0xFF1C2128),
-        elevation: 12,
-        shadowColor: Colors.black.withOpacity(0.8),
+        elevation: 10,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shadowColor: Colors.black.withOpacity(0.6),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
