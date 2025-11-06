@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
+import '../../app/app_state.dart';
+import '../../services/listing_service.dart' as svc;
 
 /// Modular Add Vehicle Listing Screen with Industrial-Grade Features
 /// 
@@ -44,6 +46,7 @@ class _ModularAddVehicleListingScreenState
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+  final _discountPercentController = TextEditingController();
   final _makeController = TextEditingController();
   final _modelController = TextEditingController();
   final _yearController = TextEditingController();
@@ -60,6 +63,7 @@ class _ModularAddVehicleListingScreenState
     'delivery_available': false,
     'airport_pickup': false,
   };
+  bool _requireSeekerId = false;
 
   @override
   void initState() {
@@ -134,11 +138,11 @@ class _ModularAddVehicleListingScreenState
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          LoadingStates.propertyCardSkeleton(context),
+          LoadingStates.propertyCardShimmer(context),
           const SizedBox(height: 16),
-          LoadingStates.propertyCardSkeleton(context),
+          LoadingStates.propertyCardShimmer(context),
           const SizedBox(height: 16),
-          LoadingStates.propertyCardSkeleton(context),
+          LoadingStates.propertyCardShimmer(context),
         ],
       ),
     );
@@ -615,8 +619,32 @@ class _ModularAddVehicleListingScreenState
               return null;
             },
           ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _discountPercentController,
+            decoration: const InputDecoration(
+              labelText: 'Discount (%) (optional)',
+              hintText: '0-90',
+              prefixIcon: Icon(Icons.percent),
+            ),
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
+              final d = double.tryParse(value.trim());
+              if (d == null) return 'Enter a valid number';
+              if (d < 0 || d > 90) return 'Enter 0-90';
+              return null;
+            },
+          ),
           const SizedBox(height: 24),
           _buildAvailabilitySettings(),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: const Text('Require Seeker ID at booking'),
+            subtitle: const Text('Seeker must upload a government ID photo during booking'),
+            value: _requireSeekerId,
+            onChanged: (v) => setState(() => _requireSeekerId = v),
+          ),
         ],
       ),
     );
@@ -739,8 +767,8 @@ class _ModularAddVehicleListingScreenState
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 3,
             offset: const Offset(0, -2),
           ),
         ],
@@ -818,9 +846,74 @@ class _ModularAddVehicleListingScreenState
     });
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      
+      // Require owner role and KYC verification before creating a vehicle listing
+      final auth = ref.read(authProvider);
+      final user = auth.user;
+      if (user == null || user.role != UserRole.owner) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Only owners can create vehicle listings. Please switch to Owner role.')));
+          context.go('/role');
+        }
+        setState(() { _isSubmitting = false; });
+        return;
+      }
+      if (!user.isKycVerified) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete owner verification (KYC) before listing.')));
+          context.push('/kyc');
+        }
+        setState(() { _isSubmitting = false; });
+        return;
+      }
+      // Build Listing model (services/listing_service.dart)
+      final now = DateTime.now();
+      final id = 'veh_${now.millisecondsSinceEpoch}';
+      final pricePerDay = double.tryParse(_priceController.text.trim()) ?? 0.0;
+      final images = _uploadedImages.isNotEmpty
+          ? List<String>.from(_uploadedImages)
+          : <String>['https://picsum.photos/seed/vehicle/300/200'];
+
+      final amenities = <String, dynamic>{
+        'vehicle_type': _selectedVehicleType,
+        'transmission': _selectedTransmission,
+        'fuel_type': _selectedFuelType,
+        'features': _selectedFeatures,
+        'availability': _availabilitySettings,
+        'make': _makeController.text.trim(),
+        'model': _modelController.text.trim(),
+        'year': _yearController.text.trim(),
+        'license_plate': _licensePlateController.text.trim(),
+      };
+
+      final newListing = svc.Listing(
+        id: id,
+        title: _titleController.text.trim().isEmpty ? 'Untitled Vehicle' : _titleController.text.trim(),
+        description: _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : 'No description provided',
+        price: pricePerDay,
+        type: 'Vehicle',
+        address: _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Pickup Location',
+        city: 'Unknown',
+        state: 'Unknown',
+        zipCode: '00000',
+        images: images,
+        ownerId: user.id,
+        createdAt: now,
+        updatedAt: now,
+        isActive: true,
+        amenities: amenities,
+        rentalUnit: 'day',
+        requireSeekerId: _requireSeekerId,
+        discountPercent: () {
+          final d = double.tryParse(_discountPercentController.text.trim());
+          if (d == null) return null;
+          final clamped = d.clamp(0, 90).toDouble();
+          return clamped;
+        }(),
+      );
+
+      final listingNotifier = ref.read(svc.listingProvider.notifier);
+      await listingNotifier.addListing(newListing);
+
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -844,6 +937,7 @@ class _ModularAddVehicleListingScreenState
     _titleController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    _discountPercentController.dispose();
     _makeController.dispose();
     _modelController.dispose();
     _yearController.dispose();

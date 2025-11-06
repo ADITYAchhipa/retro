@@ -20,25 +20,32 @@ class HomeTabSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 46,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       decoration: BoxDecoration(
-        color: isDark ? EnterpriseDarkTheme.cardBackground : EnterpriseLightTheme.surfaceBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? Border.all(
-          color: EnterpriseDarkTheme.primaryBorder,
-          width: 1,
-        ) : Border.all(
-          color: EnterpriseLightTheme.secondaryBorder,
+        color: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+              : EnterpriseLightTheme.secondaryBorder,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark 
-                ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.3)
-                : EnterpriseLightTheme.cardShadow.withOpacity(0.1),
-            blurRadius: isDark ? 8 : 6,
-            offset: const Offset(0, 3),
+            color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+            blurRadius: 10,
+            offset: const Offset(-5, -5),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: (isDark
+                    ? EnterpriseDarkTheme.primaryAccent
+                    : EnterpriseLightTheme.primaryAccent)
+                .withOpacity(isDark ? 0.18 : 0.12),
+            blurRadius: 10,
+            offset: const Offset(5, 5),
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -48,7 +55,7 @@ class HomeTabSection extends StatelessWidget {
         // Remove any Material divider line that might render inside the control
         dividerColor: Colors.transparent,
         indicator: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(20),
           gradient: isDark 
               ? const LinearGradient(
                   colors: [
@@ -62,15 +69,30 @@ class HomeTabSection extends StatelessWidget {
                     EnterpriseLightTheme.secondaryAccent,
                   ],
                 ),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
           boxShadow: [
-            BoxShadow(
-              color: isDark 
-                  ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.3)
-                  : EnterpriseLightTheme.primaryAccent.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          // Dual soft shadows (green-marked style)
+          BoxShadow(
+            color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+            blurRadius: 10,
+            offset: const Offset(-5, -5),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: (isDark
+                    ? EnterpriseDarkTheme.primaryAccent
+                    : EnterpriseLightTheme.primaryAccent)
+                .withOpacity(isDark ? 0.18 : 0.12),
+            blurRadius: 10,
+            offset: const Offset(5, 5),
+            spreadRadius: 0,
+          ),
+        ],
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         indicatorPadding: EdgeInsets.zero,
@@ -84,7 +106,7 @@ class HomeTabSection extends StatelessWidget {
           fontWeight: FontWeight.w500,
           fontSize: 14,
         ),
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(2),
         labelPadding: EdgeInsets.zero,
         tabs: const [
           Tab(

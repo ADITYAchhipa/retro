@@ -216,9 +216,10 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= AppConstants.desktopBreakpoint;
+    final isDark = theme.brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
       body: _buildBody(isDesktop, theme),
     );
   }
@@ -241,30 +242,26 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
   BoxDecoration _buildBackgroundGradient(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
     
-    return BoxDecoration(
-      gradient: isDark ? const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF0F172A), // Deep navy
-          Color(0xFF1E293B), // Rich slate
-          Color(0xFF334155), // Medium slate
-          Color(0xFF475569), // Lighter slate
-          Color(0xFF1E293B), // Back to rich
-        ],
-        stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-      ) : const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFFFAFAFA), // Very light gray
-          Color(0xFFF5F5F5), // Light gray
-          Color(0xFFF0F0F0), // Soft gray
-          Color(0xFFEEEEEE), // Professional light gray
-          Color(0xFFF8F8F8), // Almost white
-        ],
-        stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-      ),
+    if (isDark) {
+      return const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0F172A), // Deep navy
+            Color(0xFF1E293B), // Rich slate
+            Color(0xFF334155), // Medium slate
+            Color(0xFF475569), // Lighter slate
+            Color(0xFF1E293B), // Back to rich
+          ],
+          stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+        ),
+      );
+    }
+
+    // Light theme: bright white background
+    return const BoxDecoration(
+      color: Colors.white,
     );
   }
 
@@ -435,13 +432,13 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
                   shape: BoxShape.circle,
                   boxShadow: isDark ? [
                     BoxShadow(
-                      color: const Color(0xFF000000).withOpacity(0.6),
-                      blurRadius: 30,
+                      color: const Color(0xFF000000).withOpacity(0.50),
+                      blurRadius: 24,
                       offset: const Offset(0, -10),
                     ),
                     BoxShadow(
-                      color: const Color(0xFF0969DA).withOpacity(0.1),
-                      blurRadius: 50,
+                      color: const Color(0xFF0969DA).withOpacity(0.08),
+                      blurRadius: 40,
                       offset: const Offset(0, -20),
                     ),
                   ] : [

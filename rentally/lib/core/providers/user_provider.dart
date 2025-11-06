@@ -198,8 +198,12 @@ class UserProvider with ChangeNotifier {
 
   /// Switch user role
   Future<bool> switchRole(UserRole newRole) async {
+    debugPrint('[UserProvider] switchRole called with newRole: ${newRole.name}');
+    debugPrint('[UserProvider] Current user role: ${_currentUser?.role.name}');
+    
     // Frontend-only fallback: if there's no user yet, create a lightweight guest user
     if (_currentUser == null) {
+      debugPrint('[UserProvider] No current user, creating guest user with role: ${newRole.name}');
       _currentUser = UserModel(
         id: 'guest',
         email: 'user@example.com',
@@ -228,6 +232,7 @@ class UserProvider with ChangeNotifier {
         ),
       );
       notifyListeners();
+      debugPrint('[UserProvider] Guest user created, notifyListeners called');
     }
 
     _isLoading = true;
@@ -237,20 +242,25 @@ class UserProvider with ChangeNotifier {
       // Simulate API call delay
       await Future.delayed(const Duration(milliseconds: 500));
       
+      debugPrint('[UserProvider] Updating role from ${_currentUser!.role.name} to ${newRole.name}');
       _currentUser = _currentUser!.copyWith(
         role: newRole,
         updatedAt: DateTime.now(),
       );
       
+      debugPrint('[UserProvider] Role updated to: ${_currentUser!.role.name}');
       await _storeUserData(_currentUser!, null);
       
+      debugPrint('[UserProvider] switchRole completed successfully');
       return true;
     } catch (e) {
+      debugPrint('[UserProvider] switchRole failed with error: $e');
       _error = 'Failed to switch role: $e';
       return false;
     } finally {
       _isLoading = false;
       notifyListeners();
+      debugPrint('[UserProvider] switchRole finally block, notifyListeners called');
     }
   }
 

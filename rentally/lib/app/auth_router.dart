@@ -11,7 +11,6 @@ import '../features/home/original_home_screen.dart';
 import '../features/search/advanced_search_screen.dart';
 import '../features/profile/modern_profile_screen.dart';
 import '../features/listing/modular_listing_detail_screen.dart';
-import '../features/video_tour/modular_video_tour_screen.dart';
 import '../features/owner/clean_owner_dashboard_screen.dart';
 import '../features/owner/property_analytics_dashboard.dart';
 import '../features/owner/modular_manage_listings_screen.dart';
@@ -37,29 +36,29 @@ import '../features/reviews/bidirectional_review_screen.dart';
 import '../features/reviews/guest_profile_screen.dart';
 import 'package:rentally/features/monetization/subscription_plans_screen.dart';
 import '../features/recommendations/smart_recommendations_engine.dart';
-import '../features/support/support_center_screen.dart';
 import 'main_shell.dart';
 import 'app_state.dart';
 import '../features/kyc/kyc_verification_screen.dart';
-import '../features/monetization/wallet_screen.dart';
+import '../features/monetization/clean_wallet_screen.dart';
 import '../features/referral/referral_dashboard_screen.dart';
 import '../features/payouts/payout_methods_screen.dart';
-import '../features/payouts/payout_history_screen.dart';
-import '../features/payouts/withdrawal_screen.dart';
 import '../features/calendar/calendar_sync_screen.dart';
 import '../features/owner/promote_listing_screen.dart';
 import '../features/security/two_factor_setup_screen.dart';
-import '../features/support/ticket_list_screen.dart';
-import '../features/support/dispute_resolution_screen.dart';
-import '../features/monetization/transaction_history_screen.dart';
 import '../features/booking/modular_booking_screen.dart';
 import '../features/booking/booking_confirmation_screen.dart';
+// import '../features/booking/booking_verification_screen.dart'; // removed
+import '../features/booking/booking_payment_screen.dart';
+import '../features/booking/booking_request_sent_screen.dart';
 import '../features/payment/payment_methods_screen.dart' as pay_methods;
 import '../features/payment/payment_integration_screen.dart' show PaymentIntegrationScreen;
 import '../features/widgets/property_gallery_widget.dart' show FullScreenGallery;
-import '../features/video/video_tour_system.dart' show VideoTourSchedulingScreen;
 import '../features/support/contact_support_screen.dart';
-import '../features/compliance/gdpr_compliance_screen.dart';
+import '../features/subscription/monthly_stay_setup_screen.dart';
+import '../services/user_preferences_service.dart';
+import '../features/subscription/rent_reminders_manage_screen.dart';
+import '../features/lease/recurring_payment_setup_screen.dart';
+import '../features/owner/owner_availability_screen.dart';
 
 // Root navigator key to allow certain routes to appear above the ShellRoute
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -107,14 +106,12 @@ class Routes {
   static const String chat = '/chat';
   static const String notifications = '/notifications';
   static const String profile = '/profile';
-  static const String support = '/support';
   static const String bookingHistory = '/booking-history';
   static const String wishlist = '/wishlist';
   static const String forgotPassword = '/forgot-password';
   static const String otpVerification = '/otp-verification';
   static const String resetPassword = '/auth/reset-password';
   static const String passwordChanged = '/password-changed';
-  static const String help = '/help';
   static const String terms = '/terms';
   static const String privacy = '/privacy';
   static const String reviews = '/reviews';
@@ -129,20 +126,14 @@ class Routes {
   static const String paymentMethods = '/payment-methods';
   static const String paymentIntegration = '/payment-integration';
   static const String gallery = '/gallery';
-  static const String videoTourSchedule = '/video-tour/schedule';
   static const String referrals = '/referrals';
   static const String trips = '/trips';
   static const String payoutMethods = '/payouts';
-  static const String payoutHistory = '/payouts/history';
-  static const String withdrawal = '/payouts/withdraw';
   static const String calendarSync = '/calendar-sync';
   static const String promoteListing = '/promote-listing';
-  static const String compliance = '/compliance';
   static const String twoFactor = '/security/2fa';
-  static const String tickets = '/support/tickets';
   static const String contactSupport = '/support/contact';
-  static const String disputes = '/support/disputes';
-  static const String transactions = '/transactions';
+  static const String rentReminders = '/rent-reminders';
 }
 
 
@@ -247,7 +238,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.register,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const FixedModernRegisterScreen()),
+        pageBuilder: (context, state) {
+          final refCode = state.uri.queryParameters['ref']
+              ?? state.uri.queryParameters['referral']
+              ?? (state.extra is String ? state.extra as String : null);
+          return _fadeSlidePage(child: FixedModernRegisterScreen(referralCode: refCode));
+        },
       ),
       
       GoRoute(
@@ -288,10 +284,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _fadeSlidePage(child: const PasswordChangedSuccessScreen()),
       ),
       GoRoute(
-        path: '/help',
-        pageBuilder: (context, state) => _fadeSlidePage(child: const SupportCenterScreen()),
-      ),
-      GoRoute(
         path: Routes.terms,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ModularTermsScreen()),
@@ -304,10 +296,19 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Immersive routes rendered above the Shell (no bottom nav)
       GoRoute(
+        path: '/owner/availability/:listingId',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final listingId = state.pathParameters['listingId'] ?? '';
+          return _fadeSlidePage(child: OwnerAvailabilityScreen(listingId: listingId));
+        },
+      ),
+      GoRoute(
         path: Routes.profile,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ModernProfileScreen()),
       ),
+      
       GoRoute(
         path: Routes.recommendations,
         name: 'recommendations',
@@ -356,6 +357,40 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Other immersive routes rendered above the Shell
       GoRoute(
+        path: '/book/:listingId/payment',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final listingId = state.pathParameters['listingId'] ?? '';
+          final extras = (state.extra as Map<String, dynamic>?) ?? const {};
+          double? parseDouble(dynamic v) {
+            if (v is double) return v;
+            if (v is int) return v.toDouble();
+            if (v is String) return double.tryParse(v);
+            return null;
+          }
+          final amount = parseDouble(extras['amount'] ?? state.uri.queryParameters['amount']);
+          final currency = (extras['currency'] ?? state.uri.queryParameters['currency'] ?? 'USD').toString();
+          final initialMethod = (extras['initialMethod'] ?? state.uri.queryParameters['method'])?.toString();
+          return _fadeSlidePage(child: BookingPaymentScreen(listingId: listingId, amount: amount, currency: currency, initialMethod: initialMethod));
+        },
+      ),
+      GoRoute(
+        path: '/booking/confirmed/:bookingId',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final bookingId = state.pathParameters['bookingId'] ?? '';
+          return _fadeSlidePage(child: BookingConfirmationScreen(bookingId: bookingId));
+        },
+      ),
+      GoRoute(
+        path: '/booking/requested/:bookingId',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final bookingId = state.pathParameters['bookingId'] ?? '';
+          return _fadeSlidePage(child: BookingRequestSentScreen(bookingId: bookingId));
+        },
+      ),
+      GoRoute(
         path: '/book/:id',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) {
@@ -383,11 +418,47 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/video-tour/:propertyId',
+        path: '/monthly/start/:listingId',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) {
-          final propertyId = state.pathParameters['propertyId'] ?? '';
-          return _fadeSlidePage(child: ModularVideoTourScreen(propertyId: propertyId));
+          final listingId = state.pathParameters['listingId'] ?? '';
+          final extra = (state.extra as Map<String, dynamic>?) ?? const {};
+          DateTime? parseDt(dynamic v) => v is DateTime ? v : null;
+          // Use user's preferred currency by default if not provided in extras
+          final userCurrency = ref.read(currentCurrencyProvider);
+          return _fadeSlidePage(
+            child: MonthlyStaySetupScreen(
+              listingId: listingId,
+              startDate: parseDt(extra['startDate']),
+              monthlyAmount: (extra['monthlyAmount'] as num?)?.toDouble(),
+              securityDeposit: (extra['securityDeposit'] as num?)?.toDouble(),
+              currency: (extra['currency'] as String?) ?? userCurrency,
+              requireSeekerId: (extra['requireSeekerId'] as bool?) ?? false,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/recurring/setup/:listingId',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final listingId = state.pathParameters['listingId'] ?? '';
+          final extras = (state.extra as Map<String, dynamic>?) ?? const {};
+          double? parseDouble(dynamic v) {
+            if (v is double) return v;
+            if (v is int) return v.toDouble();
+            if (v is String) return double.tryParse(v);
+            return null;
+          }
+          final amount = parseDouble(extras['monthlyAmount'] ?? state.uri.queryParameters['amount']);
+          final currency = (extras['currency'] ?? state.uri.queryParameters['currency'] ?? 'USD').toString();
+          return _fadeSlidePage(
+            child: RecurringPaymentSetupScreen(
+              listingId: listingId,
+              monthlyAmount: amount,
+              currency: currency,
+            ),
+          );
         },
       ),
       GoRoute(
@@ -421,35 +492,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const CalendarSyncScreen()),
       ),
-      GoRoute(
-        path: Routes.compliance,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const GDPRComplianceScreen()),
-      ),
       // Settings & Monetization flows (immersive, outside Shell)
       GoRoute(
         path: Routes.paymentMethods,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const pay_methods.PaymentMethodsScreen()),
-      ),
-      GoRoute(
-        path: '${Routes.videoTourSchedule}/:propertyId',
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) {
-          final extras = (state.extra as Map<String, dynamic>?) ?? const {};
-          final propertyId = state.pathParameters['propertyId'] ?? '';
-          final propertyTitle = extras['propertyTitle'] ?? state.uri.queryParameters['title'] ?? '';
-          final hostId = extras['hostId'] ?? state.uri.queryParameters['hostId'] ?? '';
-          final hostName = extras['hostName'] ?? state.uri.queryParameters['hostName'] ?? '';
-          return _fadeSlidePage(
-            child: VideoTourSchedulingScreen(
-              propertyId: propertyId,
-              propertyTitle: propertyTitle,
-              hostId: hostId,
-              hostName: hostName,
-            ),
-          );
-        },
       ),
       GoRoute(
         path: Routes.gallery,
@@ -497,30 +544,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ReferralDashboardScreen()),
       ),
+      // Referral deep link: /ref/:code -> forward to Register with prefilled code
+      GoRoute(
+        path: '/ref/:code',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final code = state.pathParameters['code'] ??
+              (state.uri.pathSegments.isNotEmpty ? state.uri.pathSegments.last : null);
+          return _fadeSlidePage(child: FixedModernRegisterScreen(referralCode: code));
+        },
+      ),
       GoRoute(
         path: Routes.wallet,
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const WalletScreen()),
+        pageBuilder: (context, state) => _fadeSlidePage(child: const CleanWalletScreen()),
       ),
       GoRoute(
         path: Routes.payoutMethods,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const PayoutMethodsScreen()),
-      ),
-      GoRoute(
-        path: Routes.payoutHistory,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const PayoutHistoryScreen()),
-      ),
-      GoRoute(
-        path: Routes.withdrawal,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const WithdrawalScreen()),
-      ),
-      GoRoute(
-        path: Routes.transactions,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const TransactionHistoryScreen()),
       ),
       GoRoute(
         path: Routes.subscriptionPlans,
@@ -533,29 +575,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const TwoFactorSetupScreen()),
       ),
-      // Support center and tools
-      GoRoute(
-        path: Routes.support,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const SupportCenterScreen()),
-      ),
+      // Support tools
       GoRoute(
         path: Routes.contactSupport,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ContactSupportScreen()),
-      ),
-      GoRoute(
-        path: Routes.tickets,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const TicketListScreen()),
-      ),
-      GoRoute(
-        path: Routes.disputes,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) {
-          final bookingId = (state.extra as Map?)?['bookingId'] as String?;
-          return _fadeSlidePage(child: DisputeResolutionScreen(bookingId: bookingId));
-        },
       ),
       
       // Protected routes with shell
@@ -618,6 +642,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.notifications,
             pageBuilder: (context, state) => _fadeSlidePage(child: const ModularNotificationsScreen()),
           ),
+          GoRoute(
+            path: Routes.rentReminders,
+            pageBuilder: (context, state) {
+              final listingId = state.uri.queryParameters['listingId'];
+              return _fadeSlidePage(child: RentRemindersManageScreen(filterListingId: listingId));
+            },
+          ),
           
           GoRoute(
             path: Routes.bookingHistory,
@@ -631,7 +662,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: Routes.wishlist,
             pageBuilder: (context, state) => _fadeSlidePage(child: const ModularWishlistScreen()),
           ),
-          
           GoRoute(
             path: Routes.manageListings,
             pageBuilder: (context, state) => _fadeSlidePage(child: const ModularManageListingsScreen()),

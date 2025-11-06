@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/providers/ui_visibility_provider.dart';
@@ -282,6 +282,7 @@ class _ModularManageListingsScreenState
     final theme = Theme.of(context);
     
     return AppBar(
+      automaticallyImplyLeading: false,
       title: Text(
         'Manage Listings',
         style: (theme.textTheme.titleLarge ?? theme.textTheme.titleMedium)?.copyWith(
@@ -300,10 +301,6 @@ class _ModularManageListingsScreenState
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
-      ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => context.pop(),
       ),
       actions: [
         IconButton(
@@ -419,27 +416,7 @@ class _ModularManageListingsScreenState
   }
 
   Widget _buildLoadingState() {
-    final bottomPad = MediaQuery.of(context).padding.bottom + 88;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        children: [
-          LoadingStates.propertyCardSkeleton(context),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.only(bottom: bottomPad),
-              itemCount: 6,
-              itemBuilder: (context, index) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: LoadingStates.propertyCardSkeleton(context),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return LoadingStates.listShimmer(context, itemCount: 7);
   }
 
   Widget _buildErrorState() {
@@ -532,7 +509,8 @@ class _ModularManageListingsScreenState
       builder: (context, cons) {
         final w = cons.maxWidth;
         final cross = w >= 1600 ? 6 : w >= 1400 ? 5 : w >= 1200 ? 4 : w >= 900 ? 3 : w >= 600 ? 2 : 1;
-        final aspect = w >= 1600 ? 1.2 : w >= 1200 ? 1.1 : w >= 900 ? 1.0 : w >= 600 ? 0.9 : 0.8;
+        // Slightly increase aspect ratios to reduce tile height across breakpoints
+        final aspect = w >= 1600 ? 1.3 : w >= 1200 ? 1.2 : w >= 900 ? 1.1 : w >= 600 ? 1.0 : 0.9;
         final bottomPad = MediaQuery.of(context).padding.bottom + 88;
         return GridView.builder(
           controller: _scrollController,
@@ -617,7 +595,7 @@ class _ModularManageListingsScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              CurrencyFormatter.formatPricePerUnit((listing['price'] as num).toDouble(), 'night'),
+                              CurrencyFormatter.formatPricePerUnit((listing['price'] as num).toDouble(), 'month'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleSmall?.copyWith(
@@ -739,7 +717,7 @@ class _ModularManageListingsScreenState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        CurrencyFormatter.formatPricePerUnit((listing['price'] as num).toDouble(), 'night'),
+                        CurrencyFormatter.formatPricePerUnit((listing['price'] as num).toDouble(), 'month'),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -854,6 +832,14 @@ class _ModularManageListingsScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
+            leading: const Icon(Icons.calendar_month),
+            title: const Text('Manage Availability'),
+            onTap: () {
+              context.pop();
+              context.push('/owner/availability/${listing['id']}');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.edit),
             title: const Text('Edit Listing'),
             onTap: () {
@@ -945,26 +931,125 @@ class _ModularManageListingsScreenState
   }
 
   void _deleteListing(Map<String, dynamic> listing) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Listing'),
-        content: Text('Are you sure you want to delete "${listing['title']}"?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Delete Listing',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.home_rounded, color: theme.colorScheme.primary, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      listing['title'],
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: theme.colorScheme.primary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Are you sure you want to delete this listing?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This action cannot be undone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.red.withOpacity(0.8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
-          TextButton(
+          ElevatedButton.icon(
             onPressed: () {
               context.pop();
               setState(() {
                 _listings.removeWhere((l) => l['id'] == listing['id']);
               });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text('Listing deleted successfully'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.delete_rounded, size: 20),
+            label: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       ),
     );
   }

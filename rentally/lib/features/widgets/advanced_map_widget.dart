@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -13,6 +14,7 @@ class MapProperty {
   final double rating;
   final LatLng position;
   final String propertyType;
+  final String? rentalUnit; // e.g., 'hour', 'day', 'month'
 
   const MapProperty({
     required this.id,
@@ -22,6 +24,7 @@ class MapProperty {
     required this.rating,
     required this.position,
     required this.propertyType,
+    this.rentalUnit,
   });
 }
 
@@ -439,19 +442,25 @@ class PropertyMapCard extends StatelessWidget {
               // Property Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  property.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: property.imageUrl,
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      color: theme.colorScheme.surfaceVariant,
-                      child: const Icon(Icons.image),
-                    );
-                  },
+                  placeholder: (context, url) => Container(
+                    width: 80,
+                    height: 80,
+                    color: theme.colorScheme.surfaceVariant,
+                    child: const Center(
+                      child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 80,
+                    height: 80,
+                    color: theme.colorScheme.surfaceVariant,
+                    child: const Icon(Icons.image),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -493,7 +502,10 @@ class PropertyMapCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      CurrencyFormatter.formatPricePerUnit(property.price, 'night'),
+                      CurrencyFormatter.formatPricePerUnit(
+                        property.price,
+                        (property.rentalUnit ?? (property.propertyType.toLowerCase() == 'vehicle' ? 'day' : 'month')),
+                      ),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,
@@ -582,19 +594,25 @@ class ClusterBottomSheet extends StatelessWidget {
                   child: ListTile(
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        property.imageUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: property.imageUrl,
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            color: theme.colorScheme.surfaceVariant,
-                            child: const Icon(Icons.image),
-                          );
-                        },
+                        placeholder: (context, url) => Container(
+                          width: 60,
+                          height: 60,
+                          color: theme.colorScheme.surfaceVariant,
+                          child: const Center(
+                            child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: 60,
+                          height: 60,
+                          color: theme.colorScheme.surfaceVariant,
+                          child: const Icon(Icons.image),
+                        ),
                       ),
                     ),
                     title: Text(
@@ -616,7 +634,10 @@ class ClusterBottomSheet extends StatelessWidget {
                       ],
                     ),
                     trailing: Text(
-                      CurrencyFormatter.formatPrice(property.price),
+                      CurrencyFormatter.formatPricePerUnit(
+                        property.price,
+                        (property.rentalUnit ?? (property.propertyType.toLowerCase() == 'vehicle' ? 'day' : 'month')),
+                      ),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.primary,

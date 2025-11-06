@@ -49,25 +49,25 @@ class CountrySelectionHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
           color: isDark 
-              ? Colors.white.withOpacity(0.1) 
-              : const Color(0xFFE2E8F0).withOpacity(0.6),
-          width: 0.5,
+              ? Colors.white.withOpacity(0.12) 
+              : const Color(0xFFCBD5E1), // stronger border in light mode for visibility
+          width: isDark ? 0.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(isDark ? 0.12 : 0.06),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
+            color: theme.colorScheme.primary.withOpacity(isDark ? 0.08 : 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.02),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(isDark ? 0.22 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
           if (!isDark)
             BoxShadow(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withOpacity(0.5),
               blurRadius: 1,
               offset: const Offset(0, 1),
               spreadRadius: 0,
@@ -130,15 +130,15 @@ class CountrySelectionHeader extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(isDark ? 0.4 : 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: theme.colorScheme.primary.withOpacity(isDark ? 0.24 : 0.16),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
                 spreadRadius: 0,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),

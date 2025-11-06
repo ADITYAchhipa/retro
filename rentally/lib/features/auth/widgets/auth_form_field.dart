@@ -12,6 +12,8 @@ class AuthFormField extends StatelessWidget {
   final Widget? suffixIcon;
   final VoidCallback? onTap;
   final bool readOnly;
+  final bool compact;
+  final bool emphasizeBorder;
 
   const AuthFormField({
     super.key,
@@ -25,12 +27,31 @@ class AuthFormField extends StatelessWidget {
     this.suffixIcon,
     this.onTap,
     this.readOnly = false,
+    this.compact = false,
+    this.emphasizeBorder = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final textStyle = (compact ? theme.textTheme.bodyMedium : theme.textTheme.bodyLarge)?.copyWith(
+      color: theme.colorScheme.onSurface,
+    );
+    final hintTextStyle = (compact ? theme.textTheme.bodyMedium : theme.textTheme.bodyLarge)?.copyWith(
+      color: theme.colorScheme.onSurface.withOpacity(0.5),
+    );
+    final double prefixSize = compact ? 18 : 20;
+    final double verticalPad = compact ? 12 : 16;
+    // Border styling
+    final Color baseBorderColor = isDark
+        ? EnterpriseDarkTheme.primaryBorder
+        : theme.colorScheme.outline.withOpacity(0.75);
+    final Color emphasizedBorderColor = isDark
+        ? EnterpriseDarkTheme.primaryBorder
+        : theme.colorScheme.outline.withOpacity(1.0);
+    final Color borderColor = emphasizeBorder ? emphasizedBorderColor : baseBorderColor;
+    final double borderWidth = emphasizeBorder ? 1.6 : 1.1;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,18 +75,14 @@ class AuthFormField extends StatelessWidget {
           validator: validator,
           onTap: onTap,
           readOnly: readOnly,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface,
-          ),
+          style: textStyle,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
-            ),
+            hintStyle: hintTextStyle,
             prefixIcon: Icon(
               prefixIcon,
               color: theme.colorScheme.onSurface.withOpacity(0.7),
-              size: 20,
+              size: prefixSize,
             ),
             suffixIcon: suffixIcon,
             filled: true,
@@ -75,17 +92,15 @@ class AuthFormField extends StatelessWidget {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark 
-                    ? EnterpriseDarkTheme.primaryBorder
-                    : theme.colorScheme.outline.withOpacity(0.3),
+                color: borderColor,
+                width: borderWidth,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark 
-                    ? EnterpriseDarkTheme.primaryBorder
-                    : theme.colorScheme.outline.withOpacity(0.3),
+                color: borderColor,
+                width: borderWidth,
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -108,9 +123,9 @@ class AuthFormField extends StatelessWidget {
                 width: 2,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 16,
+              vertical: verticalPad,
             ),
           ),
         ),

@@ -7,8 +7,10 @@ import 'widgets/auth_header.dart';
 import 'widgets/auth_form_field.dart';
 import 'widgets/auth_button.dart';
 
+// Design system
+import '../../core/neo/neo.dart';
+
 // Services
-import '../../widgets/responsive_layout.dart';
 
 class ModularResetPasswordScreen extends ConsumerStatefulWidget {
   final String email;
@@ -51,17 +53,17 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
-    return ResponsiveLayout(
-      child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
+    return Scaffold(
+      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
                 
                 // ========================================
                 // 📱 HEADER SECTION
@@ -70,10 +72,13 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                   title: 'Reset Password',
                   subtitle: 'Create a new secure password for your account',
                   showBackButton: true,
+                  showLogo: true,
+                  centered: true,
+                  compact: true,
                   onBackPressed: () => Navigator.pop(context),
                 ),
                 
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
                 
                 // ========================================
                 // 📝 RESET PASSWORD FORM
@@ -99,8 +104,11 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_off : Icons.visibility,
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            size: 18,
                           ),
                         ),
+                        compact: true,
+                        emphasizeBorder: true,
                       ),
                       
                       const SizedBox(height: 20),
@@ -122,14 +130,17 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                           icon: Icon(
                             _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            size: 18,
                           ),
                         ),
+                        compact: true,
+                        emphasizeBorder: true,
                       ),
                       
                       const SizedBox(height: 24),
                       
                       // Password Requirements
-                      _buildPasswordRequirements(theme),
+                      _buildPasswordRequirements(theme, isDark),
                       
                       const SizedBox(height: 32),
                       
@@ -146,82 +157,120 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   // ========================================
   // 🎨 UI HELPER METHODS
   // ========================================
   
-  Widget _buildPasswordRequirements(ThemeData theme) {
+  Widget _buildPasswordRequirements(ThemeData theme, bool isDark) {
     final password = _passwordController.text;
     
-    return Container(
+    return NeoGlass(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
+      blur: isDark ? 10 : 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Password Requirements:',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.2),
+                      theme.colorScheme.primary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.shield_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Password Requirements',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           _buildRequirement(
             'At least 8 characters',
             password.length >= 8,
             theme,
+            isDark,
           ),
           _buildRequirement(
             'Contains uppercase letter',
             password.contains(RegExp(r'[A-Z]')),
             theme,
+            isDark,
           ),
           _buildRequirement(
             'Contains lowercase letter',
             password.contains(RegExp(r'[a-z]')),
             theme,
+            isDark,
           ),
           _buildRequirement(
             'Contains number',
             password.contains(RegExp(r'[0-9]')),
             theme,
+            isDark,
           ),
           _buildRequirement(
             'Contains special character',
             password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]')),
             theme,
+            isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRequirement(String text, bool isMet, ThemeData theme) {
+  Widget _buildRequirement(String text, bool isMet, ThemeData theme, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.radio_button_unchecked,
-            size: 16,
-            color: isMet ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.5),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: isMet 
+                  ? Colors.green.withOpacity(0.15) 
+                  : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1)),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isMet ? Icons.check_circle : Icons.circle_outlined,
+              size: 16,
+              color: isMet ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.4),
+            ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: isMet ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.7),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isMet 
+                    ? Colors.green 
+                    : (isDark ? Colors.white70 : Colors.grey[700]),
+                fontWeight: isMet ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 13,
+              ),
             ),
           ),
         ],

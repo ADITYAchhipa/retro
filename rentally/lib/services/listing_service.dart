@@ -20,8 +20,14 @@ class Listing {
   final DateTime updatedAt;
   final bool isActive;
   final Map<String, dynamic> amenities;
+  final String? rentalUnit; // e.g., 'day', 'night', 'month', 'hour'
+  final double? securityDeposit;
+  final int? monthlyMinStayMonths;
+  final int? monthlyNoticePeriodDays;
   final double? rating;
   final int reviewCount;
+  final bool requireSeekerId;
+  final double? discountPercent;
 
   const Listing({
     required this.id,
@@ -39,8 +45,14 @@ class Listing {
     required this.updatedAt,
     required this.isActive,
     required this.amenities,
+    this.rentalUnit,
+    this.securityDeposit,
+    this.monthlyMinStayMonths,
+    this.monthlyNoticePeriodDays,
     this.rating,
     this.reviewCount = 0,
+    this.requireSeekerId = false,
+    this.discountPercent,
   });
 
   Map<String, dynamic> toJson() => {
@@ -59,8 +71,14 @@ class Listing {
     'updatedAt': updatedAt.toIso8601String(),
     'isActive': isActive,
     'amenities': amenities,
+    if (rentalUnit != null) 'rentalUnit': rentalUnit,
+    'securityDeposit': securityDeposit,
+    'monthlyMinStayMonths': monthlyMinStayMonths,
+    'monthlyNoticePeriodDays': monthlyNoticePeriodDays,
     'rating': rating,
     'reviewCount': reviewCount,
+    'requireSeekerId': requireSeekerId,
+    if (discountPercent != null) 'discountPercent': discountPercent,
   };
 
   factory Listing.fromJson(Map<String, dynamic> json) => Listing(
@@ -79,8 +97,16 @@ class Listing {
     updatedAt: DateTime.parse(json['updatedAt']),
     isActive: json['isActive'],
     amenities: json['amenities'],
+    rentalUnit: json['rentalUnit'],
+    securityDeposit: json['securityDeposit'] == null ? null : (json['securityDeposit'] as num).toDouble(),
+    monthlyMinStayMonths: json['monthlyMinStayMonths'],
+    monthlyNoticePeriodDays: json['monthlyNoticePeriodDays'],
     rating: json['rating']?.toDouble(),
     reviewCount: json['reviewCount'] ?? 0,
+    requireSeekerId: json['requireSeekerId'] ?? false,
+    discountPercent: (json['discountPercent'] ?? json['discount']) == null
+        ? null
+        : (json['discountPercent'] ?? json['discount']).toDouble(),
   );
 
   Listing copyWith({
@@ -95,8 +121,14 @@ class Listing {
     List<String>? images,
     bool? isActive,
     Map<String, dynamic>? amenities,
+    String? rentalUnit,
+    double? securityDeposit,
+    int? monthlyMinStayMonths,
+    int? monthlyNoticePeriodDays,
     double? rating,
     int? reviewCount,
+    bool? requireSeekerId,
+    double? discountPercent,
   }) => Listing(
     id: id,
     title: title ?? this.title,
@@ -113,8 +145,14 @@ class Listing {
     updatedAt: DateTime.now(),
     isActive: isActive ?? this.isActive,
     amenities: amenities ?? this.amenities,
+    rentalUnit: rentalUnit ?? this.rentalUnit,
+    securityDeposit: securityDeposit ?? this.securityDeposit,
+    monthlyMinStayMonths: monthlyMinStayMonths ?? this.monthlyMinStayMonths,
+    monthlyNoticePeriodDays: monthlyNoticePeriodDays ?? this.monthlyNoticePeriodDays,
     rating: rating ?? this.rating,
     reviewCount: reviewCount ?? this.reviewCount,
+    requireSeekerId: requireSeekerId ?? this.requireSeekerId,
+    discountPercent: discountPercent ?? this.discountPercent,
   );
 }
 
@@ -339,7 +377,7 @@ class ListingService extends StateNotifier<ListingState> {
         city: 'San Francisco',
         state: 'CA',
         zipCode: '94102',
-        images: ['https://via.placeholder.com/300x200/4CAF50/FFFFFF?text=Property+1'],
+        images: ['https://picsum.photos/seed/property1/300/200'],
         ownerId: 'owner1',
         createdAt: now.subtract(const Duration(days: 5)),
         updatedAt: now.subtract(const Duration(days: 1)),
@@ -358,7 +396,7 @@ class ListingService extends StateNotifier<ListingState> {
         city: 'Santa Monica',
         state: 'CA',
         zipCode: '90401',
-        images: ['https://via.placeholder.com/300x200/9C27B0/FFFFFF?text=Property+2'],
+        images: ['https://picsum.photos/seed/property2/300/200'],
         ownerId: 'owner2',
         createdAt: now.subtract(const Duration(days: 10)),
         updatedAt: now.subtract(const Duration(days: 2)),

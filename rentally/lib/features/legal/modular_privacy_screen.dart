@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../widgets/loading_states.dart';
-import '../../widgets/responsive_layout.dart';
+import '../../core/widgets/loading_states.dart';
+import '../../core/neo/neo.dart';
 
 /// Industrial-Grade Modular Privacy Policy Screen
 /// 
@@ -37,8 +37,6 @@ class _ModularPrivacyScreenState extends ConsumerState<ModularPrivacyScreen>
   
   bool _isLoading = true;
   String? _error;
-  final String _searchQuery = '';
-  final double _fontSize = 14.0;
   bool _showTableOfContents = false;
   
   final List<PrivacySection> _sections = [];
@@ -253,28 +251,19 @@ We will respond to your inquiry within 30 days or as required by applicable law.
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Theme(
-      data: theme.copyWith(
-        textTheme: theme.textTheme.apply(fontSizeFactor: 0.90),
-      ),
-      child: MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: const TextScaler.linear(1.0),
-        ),
-        child: Scaffold(
-          appBar: _buildAppBar(),
-          body: ResponsiveLayout(
-            child: _isLoading ? _buildLoadingState() : _buildContent(),
-          ),
-        ),
-      ),
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Scaffold(
+      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      appBar: _buildAppBar(theme, isDark),
+      body: _isLoading ? _buildLoadingState() : _buildContent(theme, isDark),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(ThemeData theme, bool isDark) {
     return AppBar(
       title: const Text('Privacy Policy'),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -284,37 +273,6 @@ We will respond to your inquiry within 30 days or as required by applicable law.
         PopupMenuButton<String>(
           onSelected: _handleMenuAction,
           itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'toc',
-              child: Row(
-                children: [
-                  Icon(Icons.list),
-                  SizedBox(width: 8),
-                  Text('Table of Contents'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'share',
-              child: Row(
-                children: [
-                  Icon(Icons.share),
-                  SizedBox(width: 8),
-                  Text('Share Policy'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'print',
-              child: Row(
-                children: [
-                  Icon(Icons.print),
-                  SizedBox(width: 8),
-                  Text('Print Policy'),
-                ],
-              ),
-            ),
-            const PopupMenuDivider(),
             const PopupMenuItem(
               value: 'expand_all',
               child: Row(
@@ -335,16 +293,6 @@ We will respond to your inquiry within 30 days or as required by applicable law.
                 ],
               ),
             ),
-            const PopupMenuItem(
-              value: 'scroll_top',
-              child: Row(
-                children: [
-                  Icon(Icons.keyboard_arrow_up),
-                  SizedBox(width: 8),
-                  Text('Scroll to Top'),
-                ],
-              ),
-            ),
           ],
         ),
       ],
@@ -355,19 +303,19 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        LoadingStates.textSkeleton(context),
+        LoadingStates.textShimmer(context),
         const SizedBox(height: 16),
-        LoadingStates.textSkeleton(context),
+        LoadingStates.textShimmer(context),
         const SizedBox(height: 24),
         for (int i = 0; i < 5; i++) ...[
-          LoadingStates.propertyCardSkeleton(context),
+          LoadingStates.propertyCardShimmer(context),
           const SizedBox(height: 16),
         ],
       ],
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(ThemeData theme, bool isDark) {
     if (_error != null) {
       return _buildErrorState();
     }
@@ -379,16 +327,16 @@ We will respond to your inquiry within 30 days or as required by applicable law.
         padding: EdgeInsets.zero,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         children: [
-          _buildHeader(),
-          if (_showTableOfContents) _buildTableOfContents(),
+          _buildHeader(theme, isDark),
+          if (_showTableOfContents) _buildTableOfContents(theme, isDark),
           ...List.generate(
             _sections.length,
             (index) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: _buildSectionCard(index),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: _buildSectionCard(index, theme, isDark),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -420,60 +368,75 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.18),
-            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.18),
-          ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-      ),
+  Widget _buildHeader(ThemeData theme, bool isDark) {
+    return NeoGlass(
+      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(16),
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
+      blur: isDark ? 10 : 0,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Rentaly Privacy Policy',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: _fontSize + 8,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.2),
+                      theme.colorScheme.primary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.privacy_tip_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Privacy Policy',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Last updated: ${DateTime.now().toString().substring(0, 10)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Last updated: ${DateTime.now().toString().substring(0, 10)}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: _fontSize - 2,
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'This privacy policy explains how Rentaly collects, uses, and protects your personal information when you use our rental platform.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: _fontSize,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.white70 : Colors.grey[700],
+              height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildMetaChip(Icons.verified_user, 'GDPR Compliant'),
-              _buildMetaChip(Icons.gpp_good_outlined, 'CCPA Ready'),
-              _buildMetaChip(Icons.lock_outline, 'Encryption at Rest'),
-              _buildMetaChip(Icons.shield_moon_outlined, 'ISO 27001-aligned'),
+              _buildMetaChip(Icons.verified_user, 'GDPR Compliant', theme, isDark),
+              _buildMetaChip(Icons.gpp_good_outlined, 'CCPA Ready', theme, isDark),
+              _buildMetaChip(Icons.lock_outline, 'Encrypted', theme, isDark),
             ],
           ),
         ],
@@ -481,60 +444,42 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     );
   }
 
-  Widget _buildMetaChip(IconData icon, String label) {
-    final theme = Theme.of(context);
-    final screenW = MediaQuery.of(context).size.width;
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: screenW - 48, // account for typical horizontal padding
+  Widget _buildMetaChip(IconData icon, String label, ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.3),
+          width: 1,
+        ),
       ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.25)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.primary,
+              fontSize: 11,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Icon(icon, size: 16, color: theme.colorScheme.primary),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTableOfContents() {
-    return Container(
+  Widget _buildTableOfContents(ThemeData theme, bool isDark) {
+    return NeoGlass(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -573,9 +518,7 @@ We will respond to your inquiry within 30 days or as required by applicable law.
                         '${i + 1}. ${_sections[i].title}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: _fontSize - 1,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                   ],
@@ -587,56 +530,60 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     );
   }
 
-  Widget _buildSectionCard(int index) {
+  Widget _buildSectionCard(int index, ThemeData theme, bool isDark) {
     final section = _sections[index];
     final isExpanded = _expandedSections.contains(index);
-    final isHighlighted = _searchQuery.isNotEmpty && 
-        (section.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-         section.content.toLowerCase().contains(_searchQuery.toLowerCase()));
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: isHighlighted ? 4 : 1,
-      color: isHighlighted 
-          ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-          : null,
+    return NeoGlass(
+      padding: EdgeInsets.zero,
+      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      borderWidth: 1,
+      blur: isDark ? 8 : 0,
       child: Column(
         children: [
-          InkWell(
-            onTap: () => _toggleSection(index),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      section.icon,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      '${index + 1}. ${section.title}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: _fontSize + 2,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _toggleSection(index),
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withOpacity(0.2),
+                            theme.colorScheme.primary.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        section.icon,
+                        color: theme.colorScheme.primary,
+                        size: 22,
                       ),
                     ),
-                  ),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ],
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        '${index + 1}. ${section.title}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -646,13 +593,15 @@ We will respond to your inquiry within 30 days or as required by applicable law.
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Divider(),
+                  Divider(
+                    color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     section.content,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.6,
-                      fontSize: _fontSize,
+                      color: isDark ? Colors.white70 : Colors.grey[700],
                     ),
                   ),
                 ],

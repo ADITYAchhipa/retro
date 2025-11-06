@@ -6,8 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 // import '../../models/listing_model.dart'; // Model will be created later
 import 'dart:io';
 import 'dart:async';
@@ -16,6 +20,11 @@ import '../../services/listing_service.dart';
 import '../../services/image_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../utils/snackbar_utils.dart';
+import 'forms/plot_details_form.dart';
+import 'forms/commercial_details_form.dart';
+import 'forms/residential_details_form.dart';
+import 'forms/venue_details_form.dart';
+import '../../app/app_state.dart';
 
 class FixedAddListingScreen extends ConsumerStatefulWidget {
   const FixedAddListingScreen({super.key});
@@ -38,6 +47,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   final _otherAmenitiesController = TextEditingController();
   final _pincodeController = TextEditingController();
   final _monthlyRentController = TextEditingController();
+  final _discountPercentController = TextEditingController();
+  final _noticePeriodDaysController = TextEditingController();
   final _contactPersonController = TextEditingController();
   final _phoneController = TextEditingController();
   final _alternatePhoneController = TextEditingController();
@@ -74,15 +85,37 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   final _warehousePowerController = TextEditingController(); // in kVA
   bool _warehouseTruckAccess = true;
 
-  // Generic area & lease fields
+  // Venue specific controllers/flags
+  final _venueSeatedCapacityController = TextEditingController();
+  final _venueParkingCapacityController = TextEditingController();
+  final _venueRoomCountController = TextEditingController(); // resort
+  final _venueHallAreaController = TextEditingController(); // event hall
+  final _venueGardenAreaController = TextEditingController(); // event garden
+  bool _venuePowerBackup = true;
+  bool _venueInHouseCatering = true;
+  bool _venueOutsideCateringAllowed = false;
+  bool _venueAlcoholAllowed = false;
+  bool _venueHallAC = false;
+  bool _venueStageIncluded = false;
+  bool _venueBridalRoom = false;
+  bool _venueOpenAirAllowed = false;
+
+  // Generic area fields
   final _carpetAreaController = TextEditingController(); // apartment/condo/townhouse
-  final _leaseTenureYearsController = TextEditingController(); // commercial
-  final _lockInMonthsController = TextEditingController(); // commercial
-  String _leaseType = 'Flexible/Negotiable';
   // Generic commercial area for new types
   final _commercialBuiltUpAreaController = TextEditingController();
   // Penthouse specific
   final _terraceAreaController = TextEditingController();
+  
+  // New: Rental & Plot support
+  String _rentalModeListing = 'both'; // both | rental | monthly
+  String _plotUsageListing = 'any'; // any | agriculture | commercial | events | construction
+  List<XFile> _documentImages = [];
+  // Geo location (persisted in draft)
+  double? _latitude;
+  double? _longitude;
+  // Monthly stay settings
+  int _minStayMonthsMonthly = 0; // 0 = Any
 
   late TabController _tabController;
   String _selectedPropertyType = 'apartment';
@@ -103,6 +136,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   bool _petsAllowed = false;
   bool _hidePhoneNumber = false;
   bool _agreeToTerms = false;
+  bool _requireSeekerId = false;
 
   final List<String> _availableAmenities = [
     'Parking', 'Wi-Fi', 'Full Kitchen', 'TV', 'AC', '24/7 Water',
@@ -129,17 +163,12 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     'No Preference', 'Vegetarian Only', 'Non-Vegetarian Only'
   ];
 
-  // Lease type options (primarily for Commercial)
-  final List<String> _leaseTypeOptions = [
-    'Flexible/Negotiable', 'Short-term (<= 3 yrs)', 'Long-term (3+ yrs)'
-  ];
-
   // PG/Hostel options
   final List<String> _pgGenderOptions = ['Any', 'Male', 'Female'];
   final List<String> _pgMealsOptions = ['No Meals', 'Breakfast', 'Breakfast + Dinner', 'All Meals'];
   
   // Categories
-  final List<String> _categories = ['Residential', 'Commercial'];
+  final List<String> _categories = ['Residential', 'Commercial', 'Plot', 'Venue'];
 
   // Room options (Residential -> Room)
   final List<String> _roomBathroomOptions = ['Shared', 'Separate', 'Attached'];
@@ -295,6 +324,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     required TextEditingController controller,
     required String label,
     String? hint,
+    String? helperText,
     IconData? prefixIcon,
     int maxLines = 1,
     TextInputType? keyboardType,
@@ -312,14 +342,13 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        helperText: helperText,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
         hintStyle: TextStyle(
-          fontSize: isPhone ? 12 : 13,
-          color: theme.colorScheme.onSurface.withOpacity(0.4),
+          fontSize: isPhone ? 11 : 12,
+          color: theme.hintColor.withOpacity(0.9),
         ),
         labelStyle: TextStyle(fontSize: isPhone ? 13 : 15),
-        prefixIcon: prefixIcon != null 
-          ? Icon(prefixIcon, size: 20, color: theme.colorScheme.primary.withOpacity(0.7))
-          : null,
         filled: true,
         fillColor: theme.colorScheme.surface,
         border: OutlineInputBorder(
@@ -346,114 +375,12 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     );
   }
   
-  // Helper method to build modern dropdowns
-  Widget _buildModernDropdown<T>({
-    required T value,
-    required String label,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    IconData? prefixIcon,
-  }) {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items,
-      onChanged: onChanged,
-      style: TextStyle(
-        fontSize: isPhone ? 11 : 12,
-        color: theme.colorScheme.onSurface,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(fontSize: isPhone ? 13 : 14),
-        prefixIcon: prefixIcon != null 
-          ? Icon(prefixIcon, size: 20, color: theme.colorScheme.primary.withOpacity(0.7))
-          : null,
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: prefixIcon != null ? 12 : 16,
-          vertical: 14,
-        ),
-      ),
-    );
-  }
-  
-  // Helper method to format property types
-  String _formatPropertyType(String type) {
-    final formatted = type.replaceAll('_', ' ');
-    return formatted.split(' ').map((word) => 
-      word.substring(0, 1).toUpperCase() + word.substring(1)
-    ).join(' ');
-  }
-  
-  // Helper method to build compact dropdowns with small font sizes
-  Widget _buildCompactDropdown<T>({
-    required T value,
-    required String label,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    IconData? prefixIcon,
-  }) {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items,
-      onChanged: onChanged,
-      isExpanded: true,
-      style: TextStyle(
-        fontSize: isPhone ? 12 : 13,
-        color: theme.colorScheme.onSurface,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(fontSize: isPhone ? 12 : 13),
-        prefixIcon: prefixIcon != null 
-          ? Icon(prefixIcon, size: 18, color: theme.colorScheme.primary.withOpacity(0.7))
-          : null,
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: prefixIcon != null ? 12 : 14,
-          vertical: 12,
-        ),
-      ),
-    );
-  }
-  
   // Helper method to build compact text fields
   Widget _buildCompactTextField({
     required TextEditingController controller,
     required String label,
     String? hint,
+    String? helperText,
     IconData? prefixIcon,
     int maxLines = 1,
     TextInputType? keyboardType,
@@ -471,14 +398,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        hintStyle: TextStyle(
-          fontSize: isPhone ? 9 : 10,
-          color: theme.colorScheme.onSurface.withOpacity(0.4),
-        ),
-        labelStyle: TextStyle(fontSize: isPhone ? 10 : 11),
-        prefixIcon: prefixIcon != null 
-          ? Icon(prefixIcon, size: 18, color: theme.colorScheme.primary.withOpacity(0.7))
-          : null,
+        helperText: helperText,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
+        labelStyle: TextStyle(fontSize: isPhone ? 12 : 13),
+        hintStyle: TextStyle(fontSize: isPhone ? 11 : 12, color: theme.hintColor.withOpacity(0.9)),
         filled: true,
         fillColor: theme.colorScheme.surface,
         border: OutlineInputBorder(
@@ -505,6 +428,100 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     );
   }
 
+  // Helper method to build modern dropdowns
+  Widget _buildModernDropdown<T>({
+    required T value,
+    required String label,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
+    IconData? prefixIcon,
+  }) {
+    final theme = Theme.of(context);
+    final isPhone = MediaQuery.of(context).size.width < 600;
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      isExpanded: true,
+      style: TextStyle(fontSize: isPhone ? 12 : 13, color: theme.colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: isPhone ? 13 : 15),
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
+        filled: true,
+        fillColor: theme.colorScheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: prefixIcon != null ? 12 : 16,
+          vertical: 14,
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build compact dropdowns
+  Widget _buildCompactDropdown<T>({
+    required T value,
+    required String label,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
+    IconData? prefixIcon,
+  }) {
+    final theme = Theme.of(context);
+    final isPhone = MediaQuery.of(context).size.width < 600;
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      isExpanded: true,
+      style: TextStyle(fontSize: isPhone ? 12 : 13, color: theme.colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: isPhone ? 12 : 13),
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
+        filled: true,
+        fillColor: theme.colorScheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: prefixIcon != null ? 12 : 14,
+          vertical: 12,
+        ),
+      ),
+    );
+  }
+
+  // Format property type strings like "apartment" -> "Apartment", "penthouse_suite" -> "Penthouse Suite"
+  String _formatPropertyType(String type) {
+    final formatted = type.replaceAll('_', ' ');
+    return formatted
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
   // Returns base amenities plus type-specific extras without duplicates
   List<String> _getAvailableAmenities() {
     final Map<String, List<String>> extrasByType = {
@@ -528,6 +545,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       'clinic': ['Waiting Area', 'Reception', 'Washroom'],
       'restaurant': ['Exhaust', 'Kitchen Setup', 'Fire Safety'],
       'industrial': ['Power Backup', 'Crane', 'Truck Access'],
+      // Venue types
+      'resort': ['Power Backup', 'In-house Catering', 'Accommodation'],
+      'event_hall': ['AC', 'Stage', 'Bridal Room', 'Power Backup'],
+      'event_garden': ['Open Air', 'Outdoor Lighting', 'Power Backup'],
     };
     final extras = extrasByType[_selectedPropertyType] ?? const <String>[];
     final set = <String>{..._availableAmenities, ...extras};
@@ -541,9 +562,48 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         return ['pg', 'hostel'];
       case 'Commercial':
         return ['office', 'shop', 'warehouse', 'coworking', 'showroom', 'clinic', 'restaurant', 'industrial'];
+      case 'Plot':
+        return ['plot'];
+      case 'Venue':
+        return ['resort', 'event_hall', 'event_garden'];
       case 'Residential':
       default:
         return ['apartment', 'house', 'villa', 'studio', 'townhouse', 'condo', 'room', 'duplex', 'penthouse', 'bungalow'];
+    }
+  }
+
+  Future<void> _pickDocuments() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'],
+      );
+      if (result == null) return;
+
+      final files = result.files;
+      if (files.length > 10) {
+        if (mounted) {
+          SnackBarUtils.showWarning(context, 'You can select maximum 10 documents');
+        }
+        return;
+      }
+
+      final List<XFile> picked = [];
+      for (final f in files) {
+        if (f.path != null && f.path!.isNotEmpty) {
+          picked.add(XFile(f.path!));
+        }
+      }
+
+      setState(() {
+        _documentImages = picked;
+      });
+      _scheduleDraftSave();
+    } catch (e) {
+      if (mounted) {
+        SnackBarUtils.showError(context, 'Failed to pick documents: $e');
+      }
     }
   }
 
@@ -553,6 +613,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       _titleController,
       _descriptionController,
       _monthlyRentController,
+      _discountPercentController,
       _securityDepositController,
       _addressController,
       _cityController,
@@ -582,11 +643,16 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       _warehouseCeilingHeightController,
       _warehouseLoadingBaysController,
       _warehousePowerController,
+      // Venue controllers
+      _venueSeatedCapacityController,
+      _venueParkingCapacityController,
+      _venueRoomCountController,
+      _venueHallAreaController,
+      _venueGardenAreaController,
       _carpetAreaController,
       _terraceAreaController,
-      _leaseTenureYearsController,
-      _lockInMonthsController,
       _commercialBuiltUpAreaController,
+      _noticePeriodDaysController,
     ];
     for (final c in ctrls) {
       c.addListener(_scheduleDraftSave);
@@ -609,6 +675,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         'title': _titleController.text,
         'description': _descriptionController.text,
         'monthlyRent': _monthlyRentController.text,
+        'discountPercent': _discountPercentController.text,
         'securityDeposit': _securityDepositController.text,
         'address': _addressController.text,
         'city': _cityController.text,
@@ -622,6 +689,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         'amenities': _selectedAmenities,
         'nearby': _selectedNearbyFacilities,
         'charges': _selectedChargesIncluded,
+        'documents': _documentImages.map((x) => x.path).toList(),
         'pg': {
           'occupancy': _pgOccupancyController.text,
           'gender': _pgGender,
@@ -647,10 +715,14 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
           'hidePhone': _hidePhoneNumber,
           'agree': _agreeToTerms,
         },
-        'lease': {
-          'type': _leaseType,
-          'tenureYears': _leaseTenureYearsController.text,
-          'lockInMonths': _lockInMonthsController.text,
+        'rentalMode': _rentalModeListing,
+        'requireSeekerId': _requireSeekerId,
+        'monthly': {
+          'minStayMonths': _minStayMonthsMonthly,
+          'noticeDays': _noticePeriodDaysController.text,
+        },
+        'plot': {
+          'usage': _plotUsageListing,
         },
         'area': {
           'carpet': _carpetAreaController.text,
@@ -683,9 +755,132 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             'builtUpArea': _commercialBuiltUpAreaController.text,
           },
         },
+        'venue': {
+          'seatedCapacity': _venueSeatedCapacityController.text,
+          'parkingCapacity': _venueParkingCapacityController.text,
+          'powerBackup': _venuePowerBackup,
+          'inHouseCatering': _venueInHouseCatering,
+          'outsideCateringAllowed': _venueOutsideCateringAllowed,
+          'alcoholAllowed': _venueAlcoholAllowed,
+          'resort': {
+            'roomCount': _venueRoomCountController.text,
+          },
+          'event_hall': {
+            'hallArea': _venueHallAreaController.text,
+            'hallAC': _venueHallAC,
+            'stageIncluded': _venueStageIncluded,
+            'bridalRoom': _venueBridalRoom,
+          },
+          'event_garden': {
+            'gardenArea': _venueGardenAreaController.text,
+            'openAirAllowed': _venueOpenAirAllowed,
+          },
+        },
+        'geo': {
+          'lat': _latitude,
+          'lng': _longitude,
+        },
       };
       await prefs.setString('listing_draft_v1', jsonEncode(data));
     } catch (_) {}
+  }
+
+  // Location helpers
+  Future<bool> _ensureLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) SnackBarUtils.showWarning(context, 'Location services are disabled');
+      return false;
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) SnackBarUtils.showWarning(context, 'Location permission denied');
+        return false;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) SnackBarUtils.showWarning(context, 'Permission permanently denied. Enable in settings.');
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _useCurrentLocation() async {
+    try {
+      final ok = await _ensureLocationPermission();
+      if (!ok) return;
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _latitude = pos.latitude;
+        _longitude = pos.longitude;
+      });
+      _scheduleDraftSave();
+      if (mounted) SnackBarUtils.showSuccess(context, 'Location updated');
+    } catch (e) {
+      if (mounted) SnackBarUtils.showError(context, 'Failed to get location: $e');
+    }
+  }
+
+  void _openMapPicker() {
+    final theme = Theme.of(context);
+    LatLng selected = LatLng(_latitude ?? 28.6139, _longitude ?? 77.2090); // Default: New Delhi
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        return FractionallySizedBox(
+          heightFactor: 0.9,
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return Scaffold(
+                appBar: AppBar(
+                  title: const Text('Pick Location'),
+                  leading: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+                body: GoogleMap(
+                  initialCameraPosition: CameraPosition(target: selected, zoom: 14.5),
+                  myLocationButtonEnabled: true,
+                  myLocationEnabled: true,
+                  zoomControlsEnabled: true,
+                  markers: {
+                    Marker(markerId: const MarkerId('sel'), position: selected),
+                  },
+                  onTap: (pos) {
+                    setModalState(() {
+                      selected = pos;
+                    });
+                  },
+                ),
+                bottomNavigationBar: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _latitude = selected.latitude;
+                          _longitude = selected.longitude;
+                        });
+                        _scheduleDraftSave();
+                        Navigator.of(ctx).pop();
+                      },
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('Use this location'),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _loadDraft() async {
@@ -713,6 +908,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _titleController.text = _asString(map['title']) ?? '';
         _descriptionController.text = _asString(map['description']) ?? '';
         _monthlyRentController.text = _asString(map['monthlyRent']) ?? '';
+        _discountPercentController.text = _asString(map['discountPercent']) ?? '';
         _securityDepositController.text = _asString(map['securityDeposit']) ?? '';
         _addressController.text = _asString(map['address']) ?? '';
         _cityController.text = _asString(map['city']) ?? '';
@@ -759,10 +955,21 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _hidePhoneNumber = _asBool(prefsMap['hidePhone']);
         _agreeToTerms = _asBool(prefsMap['agree']);
 
-        final lease = _asMap(map['lease']);
-        _leaseType = _asString(lease['type']) ?? _leaseType;
-        _leaseTenureYearsController.text = _asString(lease['tenureYears']) ?? '';
-        _lockInMonthsController.text = _asString(lease['lockInMonths']) ?? '';
+        // Restore rental mode selection
+        _rentalModeListing = _asString(map['rentalMode']) ?? _rentalModeListing;
+        _requireSeekerId = _asBool(map['requireSeekerId']);
+
+        final monthly = _asMap(map['monthly']);
+        _minStayMonthsMonthly = _asInt(monthly['minStayMonths']) ?? _minStayMonthsMonthly;
+        _noticePeriodDaysController.text = _asString(monthly['noticeDays']) ?? _noticePeriodDaysController.text;
+
+        final plot = _asMap(map['plot']);
+        _plotUsageListing = _asString(plot['usage']) ?? _plotUsageListing;
+
+        final docs = map['documents'];
+        if (docs is List) {
+          _documentImages = docs.whereType<String>().map((p) => XFile(p)).toList();
+        }
 
         final area = _asMap(map['area']);
         _carpetAreaController.text = _asString(area['carpet']) ?? '';
@@ -790,6 +997,38 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _warehouseTruckAccess = _asBool(warehouse['truckAccess']);
         final generic = _asMap(commercial['generic']);
         _commercialBuiltUpAreaController.text = _asString(generic['builtUpArea']) ?? '';
+        // Venue
+        final venue = _asMap(map['venue']);
+        _venueSeatedCapacityController.text = _asString(venue['seatedCapacity']) ?? '';
+        _venueParkingCapacityController.text = _asString(venue['parkingCapacity']) ?? '';
+        _venuePowerBackup = _asBool(venue['powerBackup']);
+        _venueInHouseCatering = _asBool(venue['inHouseCatering']);
+        _venueOutsideCateringAllowed = _asBool(venue['outsideCateringAllowed']);
+        _venueAlcoholAllowed = _asBool(venue['alcoholAllowed']);
+        final resort = _asMap(venue['resort']);
+        _venueRoomCountController.text = _asString(resort['roomCount']) ?? '';
+        final hall = _asMap(venue['event_hall']);
+        _venueHallAreaController.text = _asString(hall['hallArea']) ?? '';
+        _venueHallAC = _asBool(hall['hallAC']);
+        _venueStageIncluded = _asBool(hall['stageIncluded']);
+        _venueBridalRoom = _asBool(hall['bridalRoom']);
+        final garden = _asMap(venue['event_garden']);
+        _venueGardenAreaController.text = _asString(garden['gardenArea']) ?? '';
+        _venueOpenAirAllowed = _asBool(garden['openAirAllowed']);
+        // Geo (lat/lng)
+        final geo = _asMap(map['geo']);
+        final latRaw = geo['lat'];
+        final lngRaw = geo['lng'];
+        if (latRaw is num) {
+          _latitude = latRaw.toDouble();
+        } else if (latRaw is String) {
+          _latitude = double.tryParse(latRaw);
+        }
+        if (lngRaw is num) {
+          _longitude = lngRaw.toDouble();
+        } else if (lngRaw is String) {
+          _longitude = double.tryParse(lngRaw);
+        }
       });
     } catch (_) {}
   }
@@ -808,10 +1047,13 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       setState(() {
         _selectedCategory = 'Residential';
         _selectedPropertyType = _getTypesForCategory().first;
+        _rentalModeListing = 'both';
+        _minStayMonthsMonthly = 0;
         _titleController.clear();
         _descriptionController.clear();
         _monthlyRentController.clear();
         _securityDepositController.clear();
+        _noticePeriodDaysController.clear();
         _addressController.clear();
         _cityController.clear();
         _stateController.clear();
@@ -831,9 +1073,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _pgOccupancyController.clear();
         _carpetAreaController.clear();
         _terraceAreaController.clear();
-        _leaseType = 'Flexible/Negotiable';
-        _leaseTenureYearsController.clear();
-        _lockInMonthsController.clear();
         _roomBathroomType = 'Attached';
         _pgAttachedBathroom = true;
         _pgGender = 'Any';
@@ -846,11 +1085,29 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _petsAllowed = false;
         _hidePhoneNumber = false;
         _agreeToTerms = false;
+        _requireSeekerId = false;
         _selectedAmenities.clear();
         _selectedNearbyFacilities.clear();
         _selectedChargesIncluded.clear();
         _selectedImages.clear();
+        _documentImages.clear();
         _commercialBuiltUpAreaController.clear();
+        // Venue clears
+        _venueSeatedCapacityController.clear();
+        _venueParkingCapacityController.clear();
+        _venueRoomCountController.clear();
+        _venueHallAreaController.clear();
+        _venueGardenAreaController.clear();
+        _venuePowerBackup = true;
+        _venueInHouseCatering = true;
+        _venueOutsideCateringAllowed = false;
+        _venueAlcoholAllowed = false;
+        _venueHallAC = false;
+        _venueStageIncluded = false;
+        _venueBridalRoom = false;
+        _venueOpenAirAllowed = false;
+        _latitude = null;
+        _longitude = null;
       });
       await _clearDraft();
       if (!mounted) return;
@@ -965,10 +1222,12 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     _otherAmenitiesController.dispose();
     _pincodeController.dispose();
     _monthlyRentController.dispose();
+    _noticePeriodDaysController.dispose();
     _contactPersonController.dispose();
     _phoneController.dispose();
     _alternatePhoneController.dispose();
     _emailController.dispose();
+    _discountPercentController.dispose();
     // Dispose type-specific controllers
     _floorController.dispose();
     _totalFloorsController.dispose();
@@ -987,10 +1246,16 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     _warehouseCeilingHeightController.dispose();
     _warehouseLoadingBaysController.dispose();
     _warehousePowerController.dispose();
-    // Dispose generic lease/area
+    // Dispose venue controllers
+    _venueSeatedCapacityController.dispose();
+    _venueParkingCapacityController.dispose();
+    _venueRoomCountController.dispose();
+    _venueHallAreaController.dispose();
+    _venueGardenAreaController.dispose();
+    // Dispose generic area
     _carpetAreaController.dispose();
-    _leaseTenureYearsController.dispose();
-    _lockInMonthsController.dispose();
+    _terraceAreaController.dispose();
+    _commercialBuiltUpAreaController.dispose();
     super.dispose();
   }
 
@@ -1017,16 +1282,32 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   }
 
   Future<void> _pickVideo() async {
+    // Video upload feature removed
+    if (mounted) {
+      SnackBarUtils.showWarning(context, 'Video upload is no longer supported.');
+    }
+  }
+
+  // ignore: unused_element
+  Future<void> _pickDocumentImages() async {
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+      final List<XFile> docs = await picker.pickMultiImage();
       
-      if (video != null && mounted) {
-        SnackBarUtils.showSuccess(context, 'Video selected successfully!');
+      if (docs.length > 10) {
+        if (mounted) {
+          SnackBarUtils.showWarning(context, 'You can select maximum 10 document images');
+        }
+        return;
       }
+
+      setState(() {
+        _documentImages = docs;
+      });
+      _scheduleDraftSave();
     } catch (e) {
       if (mounted) {
-        SnackBarUtils.showError(context, 'Error picking video: $e');
+        SnackBarUtils.showError(context, 'Failed to pick documents: $e');
       }
     }
   }
@@ -1039,6 +1320,20 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
 
     if (_selectedImages.isEmpty) {
       SnackBarUtils.showWarning(context, 'Please select at least one image');
+      return;
+    }
+
+    // Require owner role and KYC verification before creating a listing
+    final auth = ref.read(authProvider);
+    final user = auth.user;
+    if (user == null || user.role != UserRole.owner) {
+      SnackBarUtils.showWarning(context, 'Only owners can create listings. Please switch to Owner role.');
+      if (mounted) context.go('/role');
+      return;
+    }
+    if (!user.isKycVerified) {
+      SnackBarUtils.showWarning(context, 'Please complete owner verification (KYC) before listing.');
+      if (mounted) context.push('/kyc');
       return;
     }
 
@@ -1056,11 +1351,29 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         }
       }
 
+      // Upload document images (optional)
+      List<String> documentUrls = [];
+      for (XFile doc in _documentImages) {
+        String? url = await imageService.uploadImage(doc);
+        if (url != null) {
+          documentUrls.add(url);
+        }
+      }
+
       // Create amenities map
       Map<String, dynamic> amenitiesMap = {};
       for (String amenity in _selectedAmenities) {
         amenitiesMap[amenity.toLowerCase().replaceAll(' ', '_')] = true;
       }
+
+      // Rental & deposits
+      amenitiesMap['rental_mode'] = _rentalModeListing;
+      int? secDep = int.tryParse(_securityDepositController.text.trim());
+      if ((secDep == null || secDep <= 0) && _rentalModeListing == 'monthly') {
+        final mr = int.tryParse(_monthlyRentController.text.trim());
+        if (mr != null && mr > 0) secDep = mr; // default to 1-month deposit
+      }
+      if (secDep != null) amenitiesMap['security_deposit'] = secDep;
 
       // Add type-specific details into metadata
       if (_selectedPropertyType == 'studio') {
@@ -1082,6 +1395,13 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         final parking = int.tryParse(_parkingSpacesController.text.trim());
         if (plot != null) amenitiesMap['plot_area_sqft'] = plot;
         if (parking != null) amenitiesMap['parking_spaces'] = parking;
+      }
+      if (_selectedPropertyType == 'plot') {
+        final plot = int.tryParse(_plotAreaController.text.trim());
+        if (plot != null) amenitiesMap['plot_area_sqft'] = plot;
+        if (_plotUsageListing.isNotEmpty && _plotUsageListing != 'any') {
+          amenitiesMap['plot_usage'] = _plotUsageListing;
+        }
       }
       if (_selectedPropertyType == 'apartment' || _selectedPropertyType == 'condo' || _selectedPropertyType == 'townhouse' || _selectedPropertyType == 'duplex' || _selectedPropertyType == 'penthouse') {
         final carpet = int.tryParse(_carpetAreaController.text.trim());
@@ -1135,19 +1455,29 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         if (power != null) amenitiesMap['wh_power_kva'] = power;
         amenitiesMap['wh_truck_access'] = _warehouseTruckAccess;
       }
-      if (_selectedCategory == 'Commercial') {
-        amenitiesMap['lease_type'] = _leaseType.toLowerCase();
-        final tenure = int.tryParse(_leaseTenureYearsController.text.trim());
-        final lockIn = int.tryParse(_lockInMonthsController.text.trim());
-        if (tenure != null) amenitiesMap['lease_tenure_years'] = tenure;
-        if (lockIn != null) amenitiesMap['lease_lockin_months'] = lockIn;
-        if (_selectedPropertyType != 'office' && _selectedPropertyType != 'shop' && _selectedPropertyType != 'warehouse') {
-          final built = int.tryParse(_commercialBuiltUpAreaController.text.trim());
-          if (built != null) amenitiesMap['commercial_builtup_area_sqft'] = built;
-        }
+      if (_selectedCategory == 'Commercial' && _selectedPropertyType != 'office' && _selectedPropertyType != 'shop' && _selectedPropertyType != 'warehouse') {
+        final built = int.tryParse(_commercialBuiltUpAreaController.text.trim());
+        if (built != null) amenitiesMap['commercial_builtup_area_sqft'] = built;
+      }
+      // Monthly/Rental mode meta
+      if (_rentalModeListing == 'monthly') {
+        amenitiesMap['rental_unit'] = 'monthly';
+        amenitiesMap['monthly_min_stay_months'] = _minStayMonthsMonthly;
+        final nd = int.tryParse(_noticePeriodDaysController.text.trim());
+        if (nd != null) amenitiesMap['monthly_notice_period_days'] = nd;
+      } else if (_rentalModeListing == 'rental') {
+        amenitiesMap['rental_unit'] = 'day';
+      } else {
+        // both
+        amenitiesMap['rental_unit'] = 'both';
       }
 
       // Create listing
+      final String? rentalUnit = _rentalModeListing == 'monthly'
+          ? 'month'
+          : _rentalModeListing == 'rental'
+              ? 'day'
+              : null; // 'both' -> normal daily flow
       final listing = Listing(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text,
@@ -1163,7 +1493,21 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         isActive: true,
-        amenities: amenitiesMap,
+        amenities: {
+          ...amenitiesMap,
+          if (documentUrls.isNotEmpty) 'document_urls': documentUrls,
+        },
+        requireSeekerId: _requireSeekerId,
+        rentalUnit: rentalUnit,
+        securityDeposit: secDep?.toDouble(),
+        monthlyMinStayMonths: _rentalModeListing == 'monthly' ? _minStayMonthsMonthly : null,
+        monthlyNoticePeriodDays: _rentalModeListing == 'monthly' ? int.tryParse(_noticePeriodDaysController.text.trim()) : null,
+        discountPercent: () {
+          final d = double.tryParse(_discountPercentController.text.trim());
+          if (d == null) return null;
+          final clamped = d.clamp(0, 90).toDouble();
+          return clamped;
+        }(),
       );
 
       await ref.read(listingProvider.notifier).addListing(listing);
@@ -1376,7 +1720,13 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                           children: [
                             Icon(Icons.info_outline, size: isPhone ? 10 : 12),
                             SizedBox(width: isPhone ? 2 : 3),
-                            const Text('Details'),
+                            Text(
+                              _selectedCategory == 'Commercial'
+                                  ? 'Commercial Details'
+                                  : (_selectedCategory == 'Plot'
+                                      ? 'Plot Details'
+                                      : 'Residential Details'),
+                            ),
                           ],
                         ),
                       ),
@@ -1544,8 +1894,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                     ),
                     boxShadow: isSelected ? [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        blurRadius: 8,
+                        color: theme.colorScheme.primary.withOpacity(0.08),
+                        blurRadius: 6,
                         offset: const Offset(0, 2),
                       )
                     ] : null,
@@ -1563,7 +1913,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                         child: Icon(
                           category == 'Residential' 
                             ? Icons.home_rounded
-                            : Icons.business_rounded,
+                            : (category == 'Commercial' ? Icons.business_rounded : Icons.terrain_rounded),
                           size: 22,
                           color: isSelected
                             ? theme.colorScheme.primary
@@ -1589,7 +1939,9 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                             Text(
                               category == 'Residential'
                                 ? 'Homes, Apartments, PG, Hostels'
-                                : 'Offices, Shops, Warehouses, etc.',
+                                : (category == 'Commercial'
+                                  ? 'Offices, Shops, Warehouses, etc.'
+                                  : 'Land/Plots for agriculture, commercial, events, construction'),
                               style: TextStyle(
                                 fontSize: isPhone ? 10 : 11,
                                 color: theme.colorScheme.onSurface.withOpacity(0.5),
@@ -1652,7 +2004,9 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isCommercial = _selectedCategory == 'Commercial';
-    final showFurnishing = !isCommercial || _selectedPropertyType == 'office';
+    final isPlotCat = _selectedCategory == 'Plot';
+    final isVenue = _selectedCategory == 'Venue';
+    final showFurnishing = (!isCommercial || _selectedPropertyType == 'office') && !isPlotCat;
     
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -1670,7 +2024,81 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
           ),
           const SizedBox(height: 12),
+          if (isPlotCat) ...[
+            PlotDetailsForm(
+              plotAreaController: _plotAreaController,
+              plotUsage: _plotUsageListing,
+              onPlotUsageChanged: (u) { setState(() { _plotUsageListing = u; }); _scheduleDraftSave(); },
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (isVenue) ...[
+            VenueDetailsForm(
+              propertyType: _selectedPropertyType,
+              seatedCapacityController: _venueSeatedCapacityController,
+              parkingCapacityController: _venueParkingCapacityController,
+              powerBackup: _venuePowerBackup,
+              onPowerBackupChanged: (v) { setState(() { _venuePowerBackup = v; }); _scheduleDraftSave(); },
+              inHouseCatering: _venueInHouseCatering,
+              onInHouseCateringChanged: (v) { setState(() { _venueInHouseCatering = v; }); _scheduleDraftSave(); },
+              outsideCateringAllowed: _venueOutsideCateringAllowed,
+              onOutsideCateringAllowedChanged: (v) { setState(() { _venueOutsideCateringAllowed = v; }); _scheduleDraftSave(); },
+              alcoholAllowed: _venueAlcoholAllowed,
+              onAlcoholAllowedChanged: (v) { setState(() { _venueAlcoholAllowed = v; }); _scheduleDraftSave(); },
+              roomCountController: _venueRoomCountController,
+              hallAreaController: _venueHallAreaController,
+              hallAC: _venueHallAC,
+              onHallACChanged: (v) { setState(() { _venueHallAC = v; }); _scheduleDraftSave(); },
+              stageIncluded: _venueStageIncluded,
+              onStageIncludedChanged: (v) { setState(() { _venueStageIncluded = v; }); _scheduleDraftSave(); },
+              bridalRoom: _venueBridalRoom,
+              onBridalRoomChanged: (v) { setState(() { _venueBridalRoom = v; }); _scheduleDraftSave(); },
+              gardenAreaController: _venueGardenAreaController,
+              openAirAllowed: _venueOpenAirAllowed,
+              onOpenAirAllowedChanged: (v) { setState(() { _venueOpenAirAllowed = v; }); _scheduleDraftSave(); },
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (_selectedCategory == 'Residential') ...[
+            ResidentialDetailsForm(
+              propertyType: _selectedPropertyType,
+              furnishing: _furnishing,
+              furnishingOptions: _furnishingOptions,
+              onFurnishingChanged: (v) { setState(() { _furnishing = v; }); _scheduleDraftSave(); },
+              apartmentBhk: _apartmentBhk,
+              bhkOptions: _bhkOptions,
+              onApartmentBhkChanged: (v) { setState(() { _apartmentBhk = v; }); _scheduleDraftSave(); },
+              bedrooms: _bedrooms,
+              onBedroomsChanged: (v) { setState(() { _bedrooms = v; }); _scheduleDraftSave(); },
+              bathrooms: _bathrooms,
+              onBathroomsChanged: (v) { setState(() { _bathrooms = v; }); _scheduleDraftSave(); },
+              roomBathroomType: _roomBathroomType,
+              roomBathroomOptions: _roomBathroomOptions,
+              onRoomBathroomTypeChanged: (v) { setState(() { _roomBathroomType = v; }); _scheduleDraftSave(); },
+              studioSizeController: _studioSizeController,
+              floorController: _floorController,
+              totalFloorsController: _totalFloorsController,
+              plotAreaController: _plotAreaController,
+              parkingSpacesController: _parkingSpacesController,
+              hoaFeeController: _hoaFeeController,
+              carpetAreaController: _carpetAreaController,
+              terraceAreaController: _terraceAreaController,
+              pgOccupancyController: _pgOccupancyController,
+              pgGender: _pgGender,
+              pgGenderOptions: _pgGenderOptions,
+              onPgGenderChanged: (v) { setState(() { _pgGender = v; }); _scheduleDraftSave(); },
+              pgMeals: _pgMeals,
+              pgMealsOptions: _pgMealsOptions,
+              onPgMealsChanged: (v) { setState(() { _pgMeals = v; }); _scheduleDraftSave(); },
+              pgAttachedBathroom: _pgAttachedBathroom,
+              onPgAttachedBathroomChanged: (v) { setState(() { _pgAttachedBathroom = v; }); _scheduleDraftSave(); },
+            ),
+            const SizedBox(height: 12),
+          ],
           LayoutBuilder(builder: (context, cons) {
+            if (!isCommercial) {
+              return const SizedBox.shrink();
+            }
             final isXS = cons.maxWidth < 360;
             if (isXS) {
               return Column(
@@ -1709,7 +2137,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                         _scheduleDraftSave();
                       }),
                     ),
-                  ] else if (!isCommercial && _selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room') ...[
+                  ] else if (!isCommercial && _selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room' && _selectedPropertyType != 'plot') ...[
                     const SizedBox(height: 12),
                     _buildCompactDropdown<int>(
                       value: _bedrooms,
@@ -1805,78 +2233,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             );
           }),
           const SizedBox(height: 12),
-          LayoutBuilder(builder: (context, cons) {
-            final isXS = cons.maxWidth < 360;
-            if (isCommercial) {
-              return const SizedBox.shrink();
-            }
-            if (_selectedPropertyType == 'room') {
-              if (isXS) {
-                return DropdownButtonFormField<String>(
-                  value: _roomBathroomType,
-                  decoration: InputDecoration(
-                    labelText: 'Bathroom Type',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  items: _roomBathroomOptions.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                  onChanged: (v) => setState(() { _roomBathroomType = v ?? _roomBathroomType; _scheduleDraftSave(); }),
-                );
-              }
-              return Row(children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _roomBathroomType,
-                    decoration: InputDecoration(
-                      labelText: 'Bathroom Type',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    isExpanded: true,
-                    items: _roomBathroomOptions.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                    onChanged: (v) => setState(() { _roomBathroomType = v ?? _roomBathroomType; _scheduleDraftSave(); }),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(child: SizedBox()),
-              ]);
-            }
-            if (isXS) {
-              return DropdownButtonFormField<int>(
-                value: _bathrooms,
-                decoration: InputDecoration(
-                  labelText: 'Bathrooms',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                isExpanded: true,
-                items: List.generate(4, (index) => index + 1).map((number) {
-                  return DropdownMenuItem(value: number, child: Text('$number'));
-                }).toList(),
-                onChanged: (value) => setState(() => _bathrooms = value!),
-              );
-            }
-            return Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    value: _bathrooms,
-                    decoration: InputDecoration(
-                      labelText: 'Bathrooms',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    isExpanded: true,
-                    items: List.generate(4, (index) => index + 1).map((number) {
-                      return DropdownMenuItem(value: number, child: Text('$number'));
-                    }).toList(),
-                    onChanged: (value) => setState(() => _bathrooms = value!),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(child: SizedBox()),
-              ],
-            );
-          }),
+          const SizedBox.shrink(),
           const SizedBox(height: 12),
-          // Type-specific details
+          // Type-specific details (moved into ResidentialDetailsForm)
+/*
           Text('Type-Specific Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           if (_selectedPropertyType == 'studio') ...[
@@ -2033,14 +2393,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
             const SizedBox(height: 12),
           ],
-          if (_selectedPropertyType == 'penthouse') ...[
-            _buildCompactTextField(
-              controller: _leaseTenureYearsController,
-              label: 'Lease Tenure (years)',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-          ],
           if (_selectedPropertyType == 'bungalow') ...[
             Row(
               children: [
@@ -2075,53 +2427,37 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
             const SizedBox(height: 12),
           ],
-          // Commercial: Generic built-up area for new types (coworking, showroom, clinic, restaurant, industrial)
-          if (_selectedCategory == 'Commercial' && _selectedPropertyType != 'office' && _selectedPropertyType != 'shop' && _selectedPropertyType != 'warehouse') ...[
-            _buildCompactTextField(
-              controller: _commercialBuiltUpAreaController,
-              label: 'Built-up Area (sq ft)*',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (_selectedCategory == 'Commercial' && _selectedPropertyType != 'office' && _selectedPropertyType != 'shop' && _selectedPropertyType != 'warehouse' && (value?.isEmpty ?? true)) {
-                  return 'Built-up area is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-          // Commercial: Lease options (applies to all commercial types)
+*/
+          // Commercial: details
           if (_selectedCategory == 'Commercial') ...[
-            DropdownButtonFormField<String>(
-              value: _leaseType,
-              decoration: InputDecoration(
-                labelText: 'Lease Option',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              isExpanded: true,
-              items: _leaseTypeOptions.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-              onChanged: (v) => setState(() { _leaseType = v ?? _leaseType; _scheduleDraftSave(); }),
+            CommercialDetailsForm(
+              propertyType: _selectedPropertyType,
+              // Office
+              officeCarpetAreaController: _officeCarpetAreaController,
+              officeCabinsController: _officeCabinsController,
+              officeConferenceRoomsController: _officeConferenceRoomsController,
+              officePantry: _officePantry,
+              onOfficePantryChanged: (v) { setState(() { _officePantry = v; }); _scheduleDraftSave(); },
+              // Shop
+              shopCarpetAreaController: _shopCarpetAreaController,
+              shopFrontageController: _shopFrontageController,
+              shopFootfall: _shopFootfall,
+              onShopFootfallChanged: (v) { setState(() { _shopFootfall = v; }); _scheduleDraftSave(); },
+              shopWashroom: _shopWashroom,
+              onShopWashroomChanged: (v) { setState(() { _shopWashroom = v; }); _scheduleDraftSave(); },
+              // Warehouse
+              warehouseBuiltUpAreaController: _warehouseBuiltUpAreaController,
+              warehouseCeilingHeightController: _warehouseCeilingHeightController,
+              warehouseLoadingBaysController: _warehouseLoadingBaysController,
+              warehousePowerController: _warehousePowerController,
+              warehouseTruckAccess: _warehouseTruckAccess,
+              onWarehouseTruckAccessChanged: (v) { setState(() { _warehouseTruckAccess = v; }); _scheduleDraftSave(); },
+              // Generic
+              commercialBuiltUpAreaController: _commercialBuiltUpAreaController,
             ),
             const SizedBox(height: 12),
-            Row(children: [
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _leaseTenureYearsController,
-                  label: 'Lease Tenure (years)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _lockInMonthsController,
-                  label: 'Lock-in (months)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-            ]),
-            const SizedBox(height: 12),
           ],
+          // Commercial: generic extra fields handled above; lease options removed
           Text('Location Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           _buildCompactTextField(
@@ -2204,6 +2540,27 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 12),
+          if (_latitude != null && _longitude != null) ...[
+            Text('Coordinates: ${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}'),
+            const SizedBox(height: 8),
+          ],
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _useCurrentLocation,
+                icon: const Icon(Icons.my_location),
+                label: const Text('Use current location'),
+              ),
+              FilledButton.icon(
+                onPressed: _openMapPicker,
+                icon: const Icon(Icons.pin_drop_outlined),
+                label: const Text('Pick on map'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           SafeArea(
             top: false,
             child: Container(
@@ -2213,8 +2570,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 3,
                   offset: const Offset(0, -2),
                 ),
               ],
@@ -2347,45 +2704,109 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             }).toList(),
           ),
           const SizedBox(height: 15),
-          Text('Rental Terms', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          LayoutBuilder(builder: (context, cons) {
-            final isXS = cons.maxWidth < 360;
-            if (isXS) {
-              return Column(children: [
-                _buildCompactTextField(
-                  controller: _monthlyRentController,
-                  label: rentLabel,
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value?.isEmpty ?? true ? 'Price is required' : null,
-                ),
-                const SizedBox(height: 12),
-                _buildCompactTextField(
-                  controller: _securityDepositController,
-                  label: 'Security Deposit (₹)',
-                  keyboardType: TextInputType.number,
-                ),
-              ]);
-            }
-            return Row(children: [
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _monthlyRentController,
-                  label: rentLabel,
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value?.isEmpty ?? true ? 'Price is required' : null,
-                ),
+          Row(children: [
+            Expanded(
+              child: _buildCompactTextField(
+                controller: _monthlyRentController,
+                label: rentLabel,
+                prefixIcon: Icons.currency_rupee,
+                hint: 'e.g., 25000',
+                helperText: 'Amount billed monthly',
+                keyboardType: TextInputType.number,
+                validator: (value) => value?.isEmpty ?? true ? 'Price is required' : null,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _securityDepositController,
-                  label: 'Security Deposit (₹)',
-                  keyboardType: TextInputType.number,
-                ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildCompactTextField(
+                controller: _securityDepositController,
+                label: 'Security Deposit (₹, optional)',
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null;
+                  }
+                  final n = int.tryParse(value.trim());
+                  if (n == null || n < 0) return 'Enter a valid amount';
+                  return null;
+                },
               ),
-            ]);
-          }),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          _buildCompactTextField(
+            controller: _discountPercentController,
+            label: 'Discount (%) (optional)',
+            hint: '0-90',
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
+              final d = double.tryParse(value.trim());
+              if (d == null) return 'Enter a valid number';
+              if (d < 0 || d > 90) return 'Enter 0-90';
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          Text('Rental Mode', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              {'key': 'both', 'label': 'Both'},
+              {'key': 'rental', 'label': 'Rental'},
+              {'key': 'monthly', 'label': 'Monthly Stay'},
+            ].map((m) {
+              final String k = m['key']!;
+              final bool sel = _rentalModeListing == k;
+              return ChoiceChip(
+                showCheckmark: false,
+                selected: sel,
+                label: Text(m['label']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                selectedColor: theme.colorScheme.primary,
+                shape: const StadiumBorder(),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                onSelected: (_) { setState(() { _rentalModeListing = k; }); _scheduleDraftSave(); },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+          if (_rentalModeListing == 'monthly') ...[
+            const SizedBox(height: 10),
+            DropdownButtonFormField<int>(
+              value: _minStayMonthsMonthly,
+              decoration: InputDecoration(
+                labelText: 'Minimum Stay (months)',
+                helperText: 'Set to Any if you do not enforce a minimum',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              isExpanded: true,
+              items: <int>[0, 1, 2, 3, 6, 9, 12]
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m == 0 ? 'Any' : '$m months')))
+                  .toList(),
+              onChanged: (v) => setState(() { _minStayMonthsMonthly = v ?? 0; _scheduleDraftSave(); }),
+            ),
+            const SizedBox(height: 10),
+            _buildCompactTextField(
+              controller: _noticePeriodDaysController,
+              label: 'Notice Period (days) for Cancellation',
+              hint: 'e.g., 30',
+              helperText: 'Max 90 days',
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (_rentalModeListing == 'monthly') {
+                  if (value != null && value.isNotEmpty) {
+                    final n = int.tryParse(value.trim());
+                    if (n == null || n < 0) return 'Enter a valid number of days';
+                    if (n > 90) return 'Maximum allowed is 90 days';
+                  }
+                }
+                return null;
+              },
+            ),
+          ],
           if (!isCommercial) ...[
             const SizedBox(height: 15),
             Text('Charges Included in Rent', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
@@ -2504,6 +2925,15 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               value: _petsAllowed,
               onChanged: (value) => setState(() => _petsAllowed = value),
             ),
+            SwitchListTile(
+              title: const Text('Require Seeker ID at booking'),
+              subtitle: const Text('Seeker must upload a government ID photo during booking'),
+              value: _requireSeekerId,
+              onChanged: (value) {
+                setState(() => _requireSeekerId = value);
+                _scheduleDraftSave();
+              },
+            ),
           ],
           const SizedBox(height: 15),
           Container(
@@ -2513,8 +2943,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 3,
                   offset: const Offset(0, -2),
                 ),
               ],
@@ -2760,7 +3190,114 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
           ],
           
+          const SizedBox(height: 16),
+          Text(
+            'Documents (Optional)${_documentImages.isNotEmpty ? ' (${_documentImages.length})' : ''}',
+            style: TextStyle(
+              fontSize: isPhone ? 16 : 16,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: _pickDocuments,
+            icon: const Icon(Icons.upload_file, size: 18),
+            label: Text('Upload Documents (PDF/DOC/DOCX/Images)', style: TextStyle(fontSize: isPhone ? 14 : 15)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: isPhone ? 10 : 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+          ),
+          if (_documentImages.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Selected Documents (${_documentImages.length})',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: _documentImages.length,
+              itemBuilder: (context, index) {
+                final path = _documentImages[index].path.toLowerCase();
+                final isPdf = path.endsWith('.pdf');
+                final isDoc = path.endsWith('.doc') || path.endsWith('.docx');
+                return Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () => OpenFilex.open(_documentImages[index].path),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: isPdf || isDoc
+                            ? Container(
+                                color: theme.colorScheme.surfaceVariant,
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(isPdf ? Icons.picture_as_pdf : Icons.description, size: 36, color: theme.colorScheme.primary),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _documentImages[index].name,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withOpacity(0.8)),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Image.file(
+                                File(_documentImages[index].path),
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _documentImages.removeAt(index);
+                          });
+                          _scheduleDraftSave();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            color: theme.colorScheme.onPrimary,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
           const SizedBox(height: 24),
+
           const Text(
             'Upload Video Tour (Optional)',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

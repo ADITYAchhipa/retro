@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/providers/ui_visibility_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Industrial-Grade Modular Reviews and Ratings Screen
 /// 
@@ -51,6 +52,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
   ReviewSort _currentSort = ReviewSort.newest;
   int _currentPage = 1;
   bool _hasMoreReviews = true;
+  bool _isLoadingMore = false;
   
   // Review Form
   double _userRating = 0.0;
@@ -192,18 +194,30 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveLayout(
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: _isLoading ? _buildLoadingState() : _buildContent(),
-        floatingActionButton: _buildWriteReviewFAB(),
-      ),
+    final scaffold = Scaffold(
+      appBar: _buildAppBar(),
+      body: _isLoading ? _buildLoadingState() : _buildContent(),
+      floatingActionButton: _buildWriteReviewFAB(),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <= 600) {
+          // Full-bleed on phones
+          return scaffold;
+        }
+        // Constrain on larger screens while keeping modest padding
+        return ResponsiveLayout(
+          maxWidth: 900,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: scaffold,
+        );
+      },
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text('Reviews & Ratings'),
+      title: Text(AppLocalizations.of(context)!.reviews),
       backgroundColor: Theme.of(context).colorScheme.surface,
       elevation: 0,
       leading: IconButton(
@@ -214,26 +228,27 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
         IconButton(
           icon: const Icon(Icons.filter_list),
           onPressed: _showFilterOptions,
-          tooltip: 'Filter Reviews',
+          tooltip: AppLocalizations.of(context)!.filters,
         ),
         IconButton(
           icon: const Icon(Icons.sort),
           onPressed: _showSortOptions,
-          tooltip: 'Sort Reviews',
+          tooltip: AppLocalizations.of(context)!.sortBy,
         ),
       ],
     );
   }
 
   Widget _buildLoadingState() {
+    final isPhone = MediaQuery.of(context).size.width <= 600;
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+      padding: EdgeInsets.symmetric(horizontal: isPhone ? 0 : 16, vertical: 16),
+      child: ListView(
         children: [
-          LoadingStates.propertyCardSkeleton(context),
+          LoadingStates.propertyCardShimmer(context),
           const SizedBox(height: 16),
           for (int i = 0; i < 3; i++) ...[
-            LoadingStates.propertyCardSkeleton(context),
+            LoadingStates.propertyCardShimmer(context),
             const SizedBox(height: 12),
           ],
         ],
@@ -263,7 +278,11 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                       child: _buildReviewCard(_reviews[index]),
                     );
                   } else if (_hasMoreReviews) {
-                    _loadMoreReviews();
+                    if (!_isLoadingMore) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _loadMoreReviews();
+                      });
+                    }
                     return const Padding(
                       padding: EdgeInsets.all(16),
                       child: Center(child: CircularProgressIndicator()),
@@ -290,7 +309,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Error Loading Reviews',
+              AppLocalizations.of(context)!.error,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
@@ -303,7 +322,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
             ElevatedButton.icon(
               onPressed: _loadReviews,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context)!.retry),
             ),
           ],
         ),
@@ -314,16 +333,17 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
   Widget _buildStatsSection() {
     if (_stats == null) return const SizedBox.shrink();
     
+    final isPhone = MediaQuery.of(context).size.width <= 600;
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: isPhone ? 0 : 16, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -332,25 +352,27 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
         children: [
           Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _stats!.averageRating.toStringAsFixed(1),
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _stats!.averageRating.toStringAsFixed(1),
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                  ),
-                  _buildStarRating(_stats!.averageRating, size: 20),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_stats!.totalReviews} reviews',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    _buildStarRating(_stats!.averageRating, size: 20),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_stats!.totalReviews} reviews',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(width: 32),
               Expanded(child: _buildRatingDistribution()),
@@ -395,8 +417,9 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
   }
 
   Widget _buildFiltersSection() {
+    final isPhone = MediaQuery.of(context).size.width <= 600;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: isPhone ? 0 : 16, vertical: 8),
       child: Row(
         children: [
           Expanded(
@@ -428,16 +451,17 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
   }
 
   Widget _buildReviewCard(PropertyReview review) {
+    final isPhone = MediaQuery.of(context).size.width <= 600;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: isPhone ? 0 : 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 3,
             offset: const Offset(0, 2),
           ),
         ],
@@ -449,7 +473,25 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: CachedNetworkImageProvider(review.userAvatar),
+                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                child: ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: review.userAvatar,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Icon(
+                      Icons.person,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    errorWidget: (context, url, error) => Icon(
+                      Icons.person,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -458,10 +500,14 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                   children: [
                     Row(
                       children: [
-                        Text(
-                          review.userName,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            review.userName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         if (review.isVerified) ...[
@@ -478,10 +524,14 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                       children: [
                         _buildStarRating(review.rating, size: 16),
                         const SizedBox(width: 8),
-                        Text(
-                          _formatTimeAgo(review.timestamp),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        Flexible(
+                          child: Text(
+                            _formatTimeAgo(review.timestamp),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ],
@@ -560,8 +610,14 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                 child: CachedNetworkImage(
                   imageUrl: photos[index],
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Card(
-                    child: LoadingStates.propertyCardSkeleton(context),
+                  placeholder: (context, url) => const SkeletonLoader(
+                    width: double.infinity,
+                    height: double.infinity,
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.black12,
+                    child: const Center(child: Icon(Icons.broken_image, size: 20, color: Colors.grey)),
                   ),
                 ),
               ),
@@ -593,7 +649,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
     return FloatingActionButton.extended(
       onPressed: _showWriteReviewDialog,
       icon: const Icon(Icons.rate_review),
-      label: const Text('Write Review'),
+      label: Text(AppLocalizations.of(context)!.writeReview),
     );
   }
 
@@ -611,12 +667,20 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
   }
 
   void _loadMoreReviews() {
-    if (!_hasMoreReviews) return;
-    
+    if (!_hasMoreReviews || _isLoadingMore) return;
+    _isLoadingMore = true;
     setState(() {
       _currentPage++;
     });
-    _loadReviews();
+    _loadReviews().whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      } else {
+        _isLoadingMore = false;
+      }
+    });
   }
 
   void _showFilterOptions() {
@@ -628,7 +692,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Filter Reviews',
+              AppLocalizations.of(context)!.filters,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -663,7 +727,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Sort Reviews',
+              AppLocalizations.of(context)!.sortBy,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -690,61 +754,161 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
   }
 
   void _showWriteReviewDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Write a Review'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+          title: Row(
             children: [
-              const Text('Rate your experience:'),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _userRating = index + 1.0;
-                      });
-                    },
-                    child: Icon(
-                      index < _userRating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 32,
-                    ),
-                  );
-                }),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.amber, Colors.amber.shade700],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.star_rounded, color: Colors.white, size: 28),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _reviewController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Share your experience...',
-                  border: OutlineInputBorder(),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.writeReview,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${AppLocalizations.of(context)!.rating}:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _userRating = index + 1.0;
+                            });
+                            setDialogState(() {});
+                          },
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              index < _userRating ? Icons.star_rounded : Icons.star_outline_rounded,
+                              color: Colors.amber,
+                              size: 36,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  AppLocalizations.of(context)!.comment,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _reviewController,
+                  maxLines: 5,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Share your experience...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white.withOpacity(0.4) : Colors.grey[400],
+                    ),
+                    filled: true,
+                    fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+            ElevatedButton.icon(
+              onPressed: _userRating > 0 ? _submitReview : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.send_rounded, size: 20),
+              label: Text(
+                AppLocalizations.of(context)!.submit,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: _userRating > 0 ? _submitReview : null,
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Submit'),
-          ),
-        ],
       ),
     );
   }
@@ -763,7 +927,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Review submitted successfully!')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.success)),
       );
     }
     
@@ -780,31 +944,106 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
 
   void _replyToReview(PropertyReview review) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Reply feature coming soon!')),
+      SnackBar(content: Text(AppLocalizations.of(context)!.info)),
     );
   }
 
   void _reportReview(PropertyReview review) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Report Review'),
-        content: const Text('Are you sure you want to report this review?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.flag_rounded, color: Colors.red, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)!.reportProperty,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.report_problem_rounded,
+              size: 60,
+              color: Colors.red.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Report this review for inappropriate content?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Our team will review your report.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white60 : Colors.grey[500],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
-          FilledButton(
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Review reported successfully')),
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text('Report submitted successfully'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               );
             },
-            child: const Text('Report'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.flag_rounded, size: 20),
+            label: const Text('Report', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       ),
     );
   }
@@ -819,12 +1058,12 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.share),
-              title: const Text('Share Review'),
+              title: Text(AppLocalizations.of(context)!.share),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.flag),
-              title: const Text('Report Review'),
+              title: Text(AppLocalizations.of(context)!.reportProperty),
               onTap: () {
                 Navigator.pop(context);
                 _reportReview(review);

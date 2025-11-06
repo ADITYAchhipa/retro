@@ -8,7 +8,8 @@ import '../../widgets/responsive_layout.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 
 class FixedModernRegisterScreen extends ConsumerStatefulWidget {
-  const FixedModernRegisterScreen({super.key});
+  const FixedModernRegisterScreen({super.key, this.referralCode});
+  final String? referralCode;
 
   @override
   ConsumerState<FixedModernRegisterScreen> createState() => _FixedModernRegisterScreenState();
@@ -21,9 +22,30 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _referralController = TextEditingController();
+  final FocusNode _referralFocusNode = FocusNode();
+  String? _referralErrorText;
+  bool _isReferralChecking = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final code = widget.referralCode;
+    if (code != null && code.isNotEmpty) {
+      _referralController.text = code;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _validateReferralCode();
+      });
+    }
+    _referralFocusNode.addListener(() {
+      if (!_referralFocusNode.hasFocus) {
+        _validateReferralCode();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -32,6 +54,8 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _referralController.dispose();
+    _referralFocusNode.dispose();
     super.dispose();
   }
 
@@ -49,16 +73,37 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
       }
       return;
     }
-    
+    // Validate referral code before submit (non-blocking if empty)
+    final referralOk = await _validateReferralCode();
+    if (!referralOk) {
+      if (mounted) {
+        context.showError('Please enter a valid referral code');
+      }
+      return;
+    }
+
     try {
       ref.startLoading('auth', message: 'Creating account...');
-      
-      // TODO: Implement actual registration logic
-      // Simulate registration for now
+
+      final registrationData = {
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'password': _passwordController.text,
+        if (_referralController.text.trim().isNotEmpty)
+          'referralCode': _referralController.text.trim().toUpperCase(),
+      };
+      debugPrint('Registration payload: $registrationData');
+
+      // TODO: Implement actual registration logic with registrationData
       await Future.delayed(const Duration(seconds: 1));
-      
+
       if (mounted) {
-        context.showSuccess('Account created successfully!');
+        final code = _referralController.text.trim();
+        final msg = code.isNotEmpty
+            ? 'Account created successfully with referral code.'
+            : 'Account created successfully!';
+        context.showSuccess(msg);
         context.go(Routes.role);
       }
     } catch (e) {
@@ -67,6 +112,43 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
       }
     } finally {
       ref.stopLoading('auth');
+    }
+  }
+
+  Future<bool> _validateReferralCode() async {
+    final raw = _referralController.text.trim();
+    if (raw.isEmpty) {
+      setState(() {
+        _referralErrorText = null;
+      });
+      return true;
+    }
+
+    final code = raw.toUpperCase();
+    // Basic client-side format check: 4-12 uppercase letters/digits
+    final validFormat = RegExp(r'^[A-Z0-9]{4,12}$').hasMatch(code);
+    if (!validFormat) {
+      setState(() {
+        _referralErrorText = 'Invalid code format';
+      });
+      return false;
+    }
+
+    setState(() {
+      _referralErrorText = null;
+      _isReferralChecking = true;
+    });
+
+    try {
+      // Simulate async server validation placeholder
+      await Future.delayed(const Duration(milliseconds: 400));
+      return true;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isReferralChecking = false;
+        });
+      }
     }
   }
 
@@ -121,10 +203,10 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                         boxShadow: [
                           BoxShadow(
                             color: isDark 
-                                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.4)
-                                : theme.colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.22)
+                                : theme.colorScheme.primary.withOpacity(0.18),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -194,10 +276,10 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                       boxShadow: [
                         BoxShadow(
                           color: isDark 
-                              ? const Color(0xFF58A6FF).withOpacity(0.2)
-                              : Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                              ? const Color(0xFF58A6FF).withOpacity(0.12)
+                              : Colors.black.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -669,6 +751,95 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                               ],
                             ),
                             
+                            TextFormField(
+                              controller: _referralController,
+                              focusNode: _referralFocusNode,
+                              textCapitalization: TextCapitalization.characters,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 13,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: 'Referral Code (optional)',
+                                hintText: 'Enter referral code',
+                                errorText: _referralErrorText,
+                                labelStyle: TextStyle(
+                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  fontSize: 12,
+                                ),
+                                hintStyle: TextStyle(
+                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  fontSize: 12,
+                                ),
+                                prefixIcon: Container(
+                                  margin: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.card_giftcard,
+                                    color: theme.colorScheme.primary,
+                                    size: 16,
+                                  ),
+                                ),
+                                suffixIcon: _isReferralChecking
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                        ),
+                                      )
+                                    : (_referralErrorText == null && _referralController.text.trim().isNotEmpty
+                                        ? const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18)
+                                        : null),
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    width: 1,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    width: 1,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 20,
+                                ),
+                              ),
+                              onFieldSubmitted: (_) {
+                                _validateReferralCode();
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+
                             const SizedBox(height: 32),
                             
                             // Modern Register Button

@@ -165,10 +165,10 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                         boxShadow: [
                           BoxShadow(
                             color: isDark 
-                                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.4)
-                                : theme.colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.22)
+                                : theme.colorScheme.primary.withOpacity(0.18),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -238,10 +238,10 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                       boxShadow: [
                         BoxShadow(
                           color: isDark 
-                              ? const Color(0xFF58A6FF).withOpacity(0.2)
-                              : Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                              ? const Color(0xFF58A6FF).withOpacity(0.12)
+                              : Colors.black.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),

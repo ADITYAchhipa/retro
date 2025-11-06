@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rentally/services/notification_service.dart';
@@ -240,7 +241,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
             ),
           ),
           subtitle: _buildNotificationSubtitle(notification, theme),
-          trailing: _buildNotificationActions(context, ref, notification),
+          trailing: _buildNotificationActions(context, ref, notification, theme),
           onTap: () => _handleNotificationTap(context, ref, notification),
         ),
       ),
@@ -312,19 +313,34 @@ class ModularNotificationsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AppNotification notification,
+    ThemeData theme,
   ) {
     return PopupMenuButton<String>(
       onSelected: (value) => _handleNotificationAction(context, ref, notification, value),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'mark_read',
-          child: Text(notification.isRead ? 'Mark as Unread' : 'Mark as Read'),
-        ),
-        const PopupMenuItem(
-          value: 'delete',
-          child: Text('Delete'),
-        ),
-      ],
+      itemBuilder: (context) {
+        final items = <PopupMenuEntry<String>>[
+          PopupMenuItem(
+            value: 'mark_read',
+            child: Text(notification.isRead ? 'Mark as Unread' : 'Mark as Read'),
+          ),
+        ];
+        final data = notification.data ?? {};
+        final emailBody = (data['emailBody'] as String?) ?? '';
+        final smsText = (data['smsText'] as String?) ?? '';
+        final hasCopyItems = emailBody.isNotEmpty || smsText.isNotEmpty;
+        if (hasCopyItems) {
+          items.add(const PopupMenuDivider());
+          if (emailBody.isNotEmpty) {
+            items.add(const PopupMenuItem(value: 'copy_email', child: Text('Copy Email')));
+          }
+          if (smsText.isNotEmpty) {
+            items.add(const PopupMenuItem(value: 'copy_sms', child: Text('Copy SMS')));
+          }
+        }
+        items.add(const PopupMenuDivider());
+        items.add(const PopupMenuItem(value: 'delete', child: Text('Delete')));
+        return items;
+      },
     );
   }
 
@@ -376,6 +392,8 @@ class ModularNotificationsScreen extends ConsumerWidget {
         if (bookingId != null && bookingId.isNotEmpty) {
           if (status == 'confirmed') {
             context.push('/booking-confirmation/$bookingId');
+          } else if (status == 'pending') {
+            context.push('/booking/requested/$bookingId');
           } else {
             context.push('/booking-history/$bookingId');
           }
@@ -413,6 +431,28 @@ class ModularNotificationsScreen extends ConsumerWidget {
           ref.read(notificationProvider.notifier).markAsRead(notification.id);
         }
         break;
+      case 'copy_email':
+        {
+          final body = notification.data?['emailBody'] as String?;
+          if (body != null && body.isNotEmpty) {
+            Clipboard.setData(ClipboardData(text: body));
+            _showSnackBar(context, 'Email template copied');
+          } else {
+            _showSnackBar(context, 'No email template found');
+          }
+        }
+        break;
+      case 'copy_sms':
+        {
+          final sms = notification.data?['smsText'] as String?;
+          if (sms != null && sms.isNotEmpty) {
+            Clipboard.setData(ClipboardData(text: sms));
+            _showSnackBar(context, 'SMS template copied');
+          } else {
+            _showSnackBar(context, 'No SMS template found');
+          }
+        }
+        break;
       case 'delete':
         // Remove notification functionality disabled for frontend-only app
         _showSnackBar(context, 'Notification deleted');
@@ -422,25 +462,101 @@ class ModularNotificationsScreen extends ConsumerWidget {
 
   /// Shows clear all confirmation dialog
   void _showClearAllDialog(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear All Notifications'),
-        content: const Text('Are you sure you want to clear all notifications? This action cannot be undone.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete_sweep_rounded, color: Colors.red, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Clear All Notifications',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.notifications_off_rounded,
+              size: 60,
+              color: theme.colorScheme.primary.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Are you sure you want to clear all notifications?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This action cannot be undone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.red.withOpacity(0.8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
-          TextButton(
+          ElevatedButton.icon(
             onPressed: () {
-              // Clear all notifications functionality disabled for frontend-only app
               Navigator.of(context).pop();
-              _showSnackBar(context, 'All notifications cleared');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text('All notifications cleared'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              );
             },
-            child: const Text('Clear All'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.delete_sweep_rounded, size: 20),
+            label: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       ),
     );
   }

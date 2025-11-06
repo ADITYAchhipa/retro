@@ -75,7 +75,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         name: 'John Doe',
         email: email,
         role: 'seeker',
-        profileImageUrl: 'https://via.placeholder.com/150',
+        profileImageUrl: 'https://picsum.photos/seed/profile_john/150',
       );
       
       state = state.copyWith(user: user, isLoading: false);

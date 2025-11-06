@@ -245,14 +245,14 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 );
               },
             ),
-            SizedBox(height: isPhone ? 8 : 12),
+            SizedBox(height: isPhone ? 6 : 8),
             row(
               icon: Icons.percent,
               color: Colors.redAccent,
               label: 'Current commission rate',
               value: '${(rate * 100).toStringAsFixed(0)}% applied on host gross',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             row(
               icon: Icons.stacked_line_chart,
               color: Colors.orange,
@@ -593,6 +593,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
+        color: PdfColors.grey300,
         borderRadius: pw.BorderRadius.circular(8),
         border: pw.Border.all(color: PdfColors.grey300),
       ),
@@ -675,7 +676,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           padding: EdgeInsets.only(
             left: isPhone ? 12 : 16,
             right: isPhone ? 12 : 16,
-            bottom: bottomPad + 56,
+            bottom: bottomPad,
           ),
           child: Column(
             children: [
@@ -715,20 +716,6 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
             ],
           ),
         ),
-        Positioned(
-          right: isPhone ? 12 : 24,
-          bottom: isPhone ? 86 : 96,
-          child: FloatingActionButton.small(
-            onPressed: () {
-              ref.read(immersiveRouteOpenProvider.notifier).state = true;
-              context.push('/support').whenComplete(() {
-                ref.read(immersiveRouteOpenProvider.notifier).state = false;
-              });
-            },
-            tooltip: 'Support',
-            child: const Icon(Icons.chat_bubble_outline),
-          ),
-        ),
       ],
     );
   }
@@ -737,7 +724,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
 
   Widget _buildGrowSkeleton(ThemeData theme) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-    final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + (isPhone ? 8.0 : 12.0);
+    final bottomPad = MediaQuery.of(context).padding.bottom + (isPhone ? 6.0 : 12.0);
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.only(
@@ -859,7 +846,6 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isPhone = MediaQuery.sizeOf(context).width < 600;
     
     return ErrorBoundary(
       onError: (details) {
@@ -874,7 +860,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : EnterpriseLightTheme.primaryBackground,
           appBar: _buildAppBar(theme),
           body: _buildBody(theme, isDark),
-          floatingActionButton: isPhone ? null : _buildFloatingActionButton(theme),
+          floatingActionButton: null,
           ),
         ),
       ),
@@ -884,7 +870,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
   // Skeletons for Overview while loading
   Widget _buildOverviewSkeleton(ThemeData theme) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-    final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + (isPhone ? 8.0 : 12.0);
+    final bottomPad = MediaQuery.of(context).padding.bottom + (isPhone ? 6.0 : 12.0);
     return SingleChildScrollView(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -1269,7 +1255,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     }
 
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-    final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + (isPhone ? 8.0 : 12.0);
+    final bottomPad = MediaQuery.of(context).padding.bottom + (isPhone ? 6.0 : 12.0);
     final monet = ref.watch(monetizationServiceProvider);
     final hasSub = monet.currentSubscription?.isValid == true;
     return SingleChildScrollView(
@@ -1346,7 +1332,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           ),
           if (hasSub) _buildPlanPill(theme),
           _buildStatsGrid(theme, isDark),
-          SizedBox(height: isPhone ? 12 : 16),
+          SizedBox(height: isPhone ? 6 : 10),
           if (!hasSub) _buildSubscriptionPromptCard(theme),
           SizedBox(height: isPhone ? 12 : 16),
           _buildRecentActivityCard(theme),
@@ -1475,19 +1461,24 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           ),
           borderRadius: BorderRadius.circular(14),
         ),
-        padding: EdgeInsets.all(isPhone ? 12 : 16),
+        padding: EdgeInsets.fromLTRB(
+          isPhone ? 10 : 12,
+          isPhone ? 8 : 12,
+          isPhone ? 10 : 12,
+          isPhone ? 8 : 12,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: Colors.orange.withOpacity(0.14),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              child: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: isPhone ? 18 : 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1495,7 +1486,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('No Active Subscription', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text('Upgrade to unlock premium features and reduce commission rates.', style: theme.textTheme.bodySmall),
                 ],
               ),
@@ -1509,8 +1500,8 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 });
               },
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: isPhone ? 14 : 18, vertical: isPhone ? 10 : 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 16, vertical: isPhone ? 8 : 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text('Upgrade'),
             ),
@@ -1601,7 +1592,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.08),
+              color: theme.colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
             ),
@@ -1645,21 +1636,13 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     final width = MediaQuery.sizeOf(context).width;
     final isPhone = width < 600;
     final isXS = width < 360;
-    final monet = ref.watch(monetizationServiceProvider);
-    final boostItem = monet.microtransactionItems.firstWhere(
-      (i) => i.type == MicrotransactionType.boostListing,
-      orElse: () => const MicrotransactionItem(id: 'boost_listing', type: MicrotransactionType.boostListing, name: 'Boost Listing', description: '', price: 299, icon: '🚀', duration: Duration(days: 7)),
-    );
-    final verifiedItem = monet.microtransactionItems.firstWhere(
-      (i) => i.type == MicrotransactionType.verifiedBadge,
-      orElse: () => const MicrotransactionItem(id: 'verified_badge', type: MicrotransactionType.verifiedBadge, name: 'Verified Badge', description: '', price: 499, icon: '✅', isOneTime: true),
-    );
+  // Verified handled via KYC route; no item lookup needed here
     Widget tile({required Color color, required IconData icon, required String label, required VoidCallback onTap}) {
       return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: isPhone ? 8 : 12),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
             color: color.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
@@ -1668,8 +1651,8 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: isPhone ? 16 : 18),
-              SizedBox(height: isPhone ? 2 : 4),
+              Icon(icon, color: color, size: isPhone ? 20 : 18),
+              const SizedBox(height: 2),
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -1682,22 +1665,41 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
       );
     }
 
+    // Responsive breakpoints for Quick Actions grid
+    final isTablet = width >= 600 && width < 900;
+    final isLaptop = width >= 900 && width < 1400;
+
+    // More columns and flatter aspect on larger screens to avoid huge tiles
+    final int qaCols = isPhone ? 2 : isTablet ? 3 : isLaptop ? 4 : 6;
+    final double qaAspect = isPhone
+        ? (isXS ? 1.35 : 1.9)
+        : isTablet
+            ? 2.6
+            : isLaptop
+                ? 4.0
+                : 5.0; // desktop+
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: EdgeInsets.all(isPhone ? 12 : 16),
+        padding: EdgeInsets.fromLTRB(
+          isPhone ? 8 : 12,
+          isPhone ? 4 : 10,
+          isPhone ? 8 : 12,
+          isPhone ? 4 : 10,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Quick Actions', style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(fontWeight: FontWeight.bold)),
-            SizedBox(height: isPhone ? 12 : 16),
+            SizedBox(height: isPhone ? 2 : 8),
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
+              crossAxisCount: qaCols,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: isXS ? 1.4 : (isPhone ? 1.55 : 2.15),
+              childAspectRatio: qaAspect,
               children: [
                 tile(
                   color: Colors.indigo,
@@ -1710,18 +1712,43 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   icon: Icons.rocket_launch_outlined,
                   label: 'Boost Listing',
                   onTap: () async {
-                    final ok = await ref.read(monetizationServiceProvider.notifier).purchaseMicrotransaction(boostItem);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'Boost purchased successfully' : 'Failed to purchase boost')));
+                    try {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(duration: Duration(milliseconds: 800), content: Text('Opening Promote Listing...')));
+                      }
+                      ref.read(immersiveRouteOpenProvider.notifier).state = true;
+                      await context.push('/promote-listing');
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open Promote Listing: $e')));
+                      }
+                    } finally {
+                      ref.read(immersiveRouteOpenProvider.notifier).state = false;
                     }
                   },
                 ),
-                // Removed 'Add Listing' quick action
                 tile(
                   color: Colors.purple,
                   icon: Icons.verified_outlined,
                   label: 'Get Verified',
                   onTap: () async {
+                    final isKycVerified = ref.read(authProvider).user?.isKycVerified == true;
+                    if (!isKycVerified) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete KYC to buy the Verified badge')));
+                      }
+                      ref.read(immersiveRouteOpenProvider.notifier).state = true;
+                      await context.push('/kyc').whenComplete(() {
+                        ref.read(immersiveRouteOpenProvider.notifier).state = false;
+                      });
+                      return;
+                    }
+                    // Purchase only after verified
+                    final monetState = ref.read(monetizationServiceProvider);
+                    final verifiedItem = monetState.microtransactionItems.firstWhere(
+                      (i) => i.type == MicrotransactionType.verifiedBadge,
+                      orElse: () => const MicrotransactionItem(id: 'verified_badge', type: MicrotransactionType.verifiedBadge, name: 'Verified Badge', description: '', price: 499, icon: '✅', isOneTime: true),
+                    );
                     final ok = await ref.read(monetizationServiceProvider.notifier).purchaseMicrotransaction(verifiedItem);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'Verified badge purchased' : 'Purchase failed')));
@@ -1751,17 +1778,6 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   },
                 ),
                 tile(
-                  color: Colors.cyan,
-                  icon: Icons.event_available,
-                  label: 'Calendar Sync',
-                  onTap: () {
-                    ref.read(immersiveRouteOpenProvider.notifier).state = true;
-                    context.push('/calendar-sync').whenComplete(() {
-                      ref.read(immersiveRouteOpenProvider.notifier).state = false;
-                    });
-                  },
-                ),
-                tile(
                   color: Colors.deepPurple,
                   icon: Icons.campaign_outlined,
                   label: 'Promote',
@@ -1772,143 +1788,148 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           ],
         ),
       ),
-    );
-  }
+  );
+}
 
-  Widget _buildStatsGrid(ThemeData theme, bool isDark) {
-    final size = MediaQuery.sizeOf(context);
-    final isPhone = size.width < 600;
-    // Responsive columns/aspect for better desktop usage
-    final bool isXL = size.width >= 1600;
-    final bool isLG = size.width >= 1200;
-    final bool isMD = size.width >= 900;
-    final int columns = isXL ? 6 : isLG ? 4 : isMD ? 3 : 2;
-    // Slightly lower aspect ratios on desktop to give more height and avoid overflow
-    final double aspect = isPhone
-        ? 1.65
-        : isXL
-            ? 2.3
-            : isLG
-                ? 2.0
-                : isMD
-                    ? 1.85
-                    : 1.8;
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: columns,
-      crossAxisSpacing: isPhone ? 12 : 16,
-      mainAxisSpacing: isPhone ? 4 : 16,
-      childAspectRatio: aspect,
-      children: [
-        _buildStatCard(
-          'Total Earnings',
-          CurrencyFormatter.formatPrice((_dashboardData['totalEarnings'] as num).toDouble()),
-          Icons.attach_money,
-          Colors.green,
-          theme,
-          isDark,
-        ),
-        _buildStatCard(
-          'Monthly Earnings',
-          CurrencyFormatter.formatPrice((_dashboardData['monthlyEarnings'] as num).toDouble()),
-          Icons.trending_up,
-          Colors.blue,
-          theme,
-          isDark,
-        ),
-        _buildStatCard(
-          'Total Bookings',
-          '${_dashboardData['totalBookings']}',
-          Icons.book,
-          Colors.orange,
-          theme,
-          isDark,
-        ),
-        _buildStatCard(
-          'Active Listings',
-          '${_dashboardData['activeListings']}',
-          Icons.home,
-          Colors.purple,
-          theme,
-          isDark,
-        ),
-      ],
-    );
-  }
+Widget _buildStatsGrid(ThemeData theme, bool isDark) {
+  final size = MediaQuery.sizeOf(context);
+  final isPhone = size.width < 600;
+  // Responsive columns/aspect for better desktop usage
+  final bool isXL = size.width >= 1600;
+  final bool isLG = size.width >= 1200;
+  final bool isMD = size.width >= 900;
+  final int columns = isXL ? 6 : isLG ? 4 : isMD ? 3 : 2;
+  // Flatter aspect on phones to give more height and avoid overflow
+  final bool isXS = size.width < 360;
+  final double aspect = isXS
+      ? 1.05
+      : isPhone
+          ? 1.20
+          : isXL
+              ? 1.90
+              : isLG
+                  ? 1.75
+                  : isMD
+                      ? 1.60
+                      : 1.55;
+  return GridView.count(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    crossAxisCount: columns,
+    crossAxisSpacing: isPhone ? 12 : 16,
+    mainAxisSpacing: isPhone ? 4 : 16,
+    childAspectRatio: aspect,
+    children: [
+      _buildStatCard(
+        'Total Earnings',
+        CurrencyFormatter.formatPrice((_dashboardData['totalEarnings'] as num).toDouble()),
+        Icons.attach_money,
+        Colors.green,
+        theme,
+        isDark,
+      ),
+      _buildStatCard(
+        'Monthly Earnings',
+        CurrencyFormatter.formatPrice((_dashboardData['monthlyEarnings'] as num).toDouble()),
+        Icons.trending_up,
+        Colors.blue,
+        theme,
+        isDark,
+      ),
+      _buildStatCard(
+        'Total Bookings',
+        '${_dashboardData['totalBookings']}',
+        Icons.book,
+        Colors.orange,
+        theme,
+        isDark,
+      ),
+      _buildStatCard(
+        'Active Listings',
+        '${_dashboardData['activeListings']}',
+        Icons.home,
+        Colors.purple,
+        theme,
+        isDark,
+      ),
+    ],
+  );
+}
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, ThemeData theme, bool isDark) {
-    final size = MediaQuery.sizeOf(context);
-    final isPhone = size.width < 600;
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: EdgeInsets.all(isPhone ? 10 : 14),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: isPhone ? 22 : 28),
-            SizedBox(height: isPhone ? 2 : 4),
-            Expanded(
-              child: Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    value,
-                    style: (
-                      isPhone
-                          ? theme.textTheme.titleMedium
-                          : (size.width >= 1200
-                              ? theme.textTheme.titleLarge
-                              : theme.textTheme.titleMedium)
-                    )?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+Widget _buildStatCard(String title, String value, IconData icon, Color color, ThemeData theme, bool isDark) {
+  final size = MediaQuery.sizeOf(context);
+  final isPhone = size.width < 600;
+  final outline = theme.colorScheme.outline.withOpacity(isDark ? 0.75 : 0.55);
+  return Card(
+    margin: EdgeInsets.zero,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(color: outline, width: 2.0),
+    ),
+    child: LayoutBuilder(
+      builder: (ctx, cons) {
+        final compact = cons.maxHeight < 120; // tighten when vertical space is constrained
+        final padAll = isPhone ? (compact ? 8.0 : 10.0) : 14.0;
+        final box = isPhone ? (compact ? 30.0 : 34.0) : 40.0;
+        final iconSizeLocal = isPhone ? (compact ? 16.0 : 18.0) : 22.0;
+        final topGap = isPhone ? (compact ? 7.0 : 10.0) : 12.0;
+        final preValueGap = isPhone ? (compact ? 5.0 : 8.0) : 12.0;
+        return Padding(
+          padding: EdgeInsets.all(padAll),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: box,
+                height: box,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: color.withOpacity(0.24), width: 1),
+                ),
+                child: Icon(icon, color: color, size: iconSizeLocal),
+              ),
+              SizedBox(height: topGap),
+              Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface.withOpacity(0.80),
+                  height: 1.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                softWrap: false,
+              ),
+              SizedBox(height: preValueGap),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                    height: 1.1,
+                    fontSize: isPhone ? (compact ? 14.0 : 15.0) : null,
                   ),
+                  textAlign: TextAlign.center,
+                  softWrap: false,
                 ),
               ),
-            ),
-            SizedBox(height: isPhone ? 1 : 2),
-            Text(
-              title,
-              style: isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodySmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentBookings(ThemeData theme, bool isDark) {
-    final isPhone = MediaQuery.sizeOf(context).width < 600;
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: EdgeInsets.all(isPhone ? 12 : 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Recent Bookings',
-              style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: isPhone ? 8 : 12),
-            ...(_dashboardData['recentBookings'] as List).map((booking) => 
-              _buildBookingItem(booking, theme, isDark)
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
 
   Widget _buildBookingItem(Map<String, dynamic> booking, ThemeData theme, bool isDark) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
@@ -2048,7 +2069,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
       child: Column(
         children: [
           _buildEarningsKpisRow(theme),
-          SizedBox(height: isPhone ? 12 : 16),
+          SizedBox(height: isPhone ? 6 : 10),
           _buildEarningsChartSection(theme),
           SizedBox(height: isPhone ? 12 : 16),
           _buildPayoutSummary(theme),
@@ -2059,6 +2080,117 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           SizedBox(height: isPhone ? 12 : 16),
           _buildEarningsActions(theme),
         ],
+      ),
+    );
+  }
+
+  // Reusable industrial-grade KPI card for Earnings section
+  Widget _buildEarningsKpiCard({
+    required ThemeData theme,
+    required bool isPhone,
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    String? subtitle,
+    String? deltaText,
+    bool? deltaPositive,
+  }) {
+    final outline = theme.colorScheme.outline.withOpacity(theme.brightness == Brightness.dark ? 0.75 : 0.55);
+    final isXSLocal = MediaQuery.sizeOf(context).width < 360;
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: outline, width: 2.0),
+      ),
+      child: LayoutBuilder(
+        builder: (ctx, cons) {
+          final compact = cons.maxHeight < 140; // hide subtitle when compact
+          final micro = cons.maxHeight < 140; // optionally hide delta when very tight
+          final padAll = isPhone ? (compact ? 8.0 : 10.0) : 14.0;
+          final box = isPhone ? (compact ? 30.0 : 34.0) : 40.0;
+          final iconSizeLocal = isPhone ? (compact ? 16.0 : 18.0) : 22.0;
+          final topGap = isPhone ? (compact ? 1.0 : 3.0) : 4.0;
+          final preValueGap = isPhone ? (compact ? 3.0 : 4.0) : 8.0;
+          final showDelta = deltaText != null && deltaPositive != null && !micro;
+          final showSubtitle = subtitle != null && !isXSLocal && !compact;
+          return Padding(
+            padding: EdgeInsets.all(padAll),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: box,
+                  height: box,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withOpacity(0.24), width: 1),
+                  ),
+                  child: Icon(icon, color: color, size: iconSizeLocal),
+                ),
+                SizedBox(height: topGap),
+                Text(
+                  title,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface.withOpacity(0.80),
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  softWrap: false,
+                ),
+                if (showDelta) ...[
+                  SizedBox(height: isPhone ? 2 : 4),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: isPhone ? 5 : 8, vertical: isPhone ? 1 : 2),
+                    decoration: BoxDecoration(
+                      color: (deltaPositive ? Colors.green : Colors.red).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: (deltaPositive ? Colors.green : Colors.red).withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(deltaPositive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: isPhone ? 9 : 12, color: deltaPositive ? Colors.green : Colors.red),
+                        const SizedBox(width: 3),
+                        Text(deltaText, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: deltaPositive ? Colors.green : Colors.red, height: 1.0)),
+                      ],
+                    ),
+                  ),
+                ],
+                SizedBox(height: preValueGap),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      height: 1.2,
+                      fontSize: isPhone ? (compact ? 14.0 : 15.0) : null,
+                    ),
+                    textAlign: TextAlign.center,
+                    softWrap: false,
+                  ),
+                ),
+                if (showSubtitle) ...[
+                  SizedBox(height: isPhone ? 2 : 4),
+                  Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -2079,52 +2211,45 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
       crossAxisCount: isPhone ? 2 : 4,
       crossAxisSpacing: isPhone ? 12 : 16,
       mainAxisSpacing: isPhone ? 8 : 12,
-      childAspectRatio: isXS ? 1.5 : (isPhone ? 1.8 : 2.1),
+      childAspectRatio: isXS ? 0.95 : (isPhone ? 1.1 : 1.70),
       children: [
-        _buildOverviewStatCard(
+        _buildEarningsKpiCard(
+          theme: theme,
+          isPhone: isPhone,
           title: 'Monthly Earnings',
           value: CurrencyFormatter.formatPrice(monthly),
           icon: Icons.attach_money,
           color: Colors.green,
+          subtitle: 'Last 30 days',
+          deltaText: '${(monthlyDelta * 100).toStringAsFixed(0)}%',
+          deltaPositive: monthlyDelta >= 0,
+        ),
+        _buildEarningsKpiCard(
           theme: theme,
           isPhone: isPhone,
-          changeText: monthlyDelta >= 0 ? '+${(monthlyDelta * 100).toStringAsFixed(0)}%' : '${(monthlyDelta * 100).toStringAsFixed(0)}%',
-          valueNumber: monthly,
-          valueFormatter: (v) => CurrencyFormatter.formatPrice(v),
-          tooltip: 'Earnings for last 30 days',
-        ),
-        _buildOverviewStatCard(
           title: 'Total Earnings',
           value: CurrencyFormatter.formatPrice(total),
           icon: Icons.savings_outlined,
           color: Colors.blue,
+          subtitle: 'Lifetime total',
+        ),
+        _buildEarningsKpiCard(
           theme: theme,
           isPhone: isPhone,
-          valueNumber: total,
-          valueFormatter: (v) => CurrencyFormatter.formatPrice(v),
-          tooltip: 'Lifetime earnings',
-        ),
-        _buildOverviewStatCard(
           title: 'AOV',
           value: CurrencyFormatter.formatPrice(aov),
           icon: Icons.calculate_outlined,
           color: Colors.orange,
+          subtitle: 'Avg per booking',
+        ),
+        _buildEarningsKpiCard(
           theme: theme,
           isPhone: isPhone,
-          valueNumber: aov,
-          valueFormatter: (v) => CurrencyFormatter.formatPrice(v),
-          tooltip: 'Average order value',
-        ),
-        _buildOverviewStatCard(
           title: 'Refunds',
           value: CurrencyFormatter.formatPrice(refunds),
           icon: Icons.receipt_long_outlined,
           color: Colors.purple,
-          theme: theme,
-          isPhone: isPhone,
-          valueNumber: refunds,
-          valueFormatter: (v) => CurrencyFormatter.formatPrice(v),
-          tooltip: 'Total refunded last 30 days',
+          subtitle: 'Last 30 days',
         ),
       ],
     );
@@ -2146,15 +2271,23 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     final primary = _earningsShowNet ? currentNet : currentGross;
     final secondary = _comparePrevious ? (_earningsShowNet ? prevNet : prevGross) : List<double>.filled(primary.length, 0.0);
     final labels = _seriesLabels;
+    final outline = theme.colorScheme.outline.withOpacity(theme.brightness == Brightness.dark ? 0.75 : 0.55);
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: outline, width: 2.0)),
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: EdgeInsets.all(isPhone ? 12 : 16),
+        padding: EdgeInsets.fromLTRB(
+          isPhone ? 10 : 12,
+          isPhone ? 8 : 12,
+          isPhone ? 10 : 12,
+          isPhone ? 10 : 12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Earnings Trend', style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -2275,38 +2408,85 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     final etaDays = (_dashboardData['nextPayoutEtaDays'] as num?)?.toInt() ?? 0;
     Widget item(IconData icon, Color color, String label, String value) {
       return Row(children: [
-        Container(width: 28, height: 28, alignment: Alignment.center, decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 16)),
+        Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+          child: Icon(icon, color: color, size: 16),
+        ),
         const SizedBox(width: 8),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
-          Text(value, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
-        ])),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              Text(
+                value,
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+              ),
+            ],
+          ),
+        ),
       ]);
     }
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Expanded(child: Text('Payouts Summary', style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(fontWeight: FontWeight.bold))),
-            TextButton(onPressed: () {
-              ref.read(immersiveRouteOpenProvider.notifier).state = true;
-              context.push('/payouts').whenComplete(() {
-                ref.read(immersiveRouteOpenProvider.notifier).state = false;
-              });
-            }, child: const Text('View Payouts')),
-          ]),
-          SizedBox(height: isPhone ? 8 : 12),
-          LayoutBuilder(builder: (context, c) {
-            final wide = c.maxWidth > 640;
-            return Wrap(spacing: 16, runSpacing: 12, children: [
-              SizedBox(width: wide ? (c.maxWidth - 32) / 3 : c.maxWidth, child: item(Icons.timelapse, Colors.orange, 'Pending Payouts', CurrencyFormatter.formatPrice(pending))),
-              SizedBox(width: wide ? (c.maxWidth - 32) / 3 : c.maxWidth, child: item(Icons.payments_outlined, Colors.green, 'Last Payout', '${CurrencyFormatter.formatPrice(lastAmt)} • $lastDate')),
-              SizedBox(width: wide ? (c.maxWidth - 32) / 3 : c.maxWidth, child: item(Icons.schedule, Colors.blue, 'Next Payout ETA', etaDays > 0 ? '$etaDays days' : 'Queued')),
-            ]);
-          })
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Payouts Summary',
+                    style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    ref.read(immersiveRouteOpenProvider.notifier).state = true;
+                    context.push('/payouts').whenComplete(() {
+                      ref.read(immersiveRouteOpenProvider.notifier).state = false;
+                    });
+                  },
+                  child: const Text('View Payouts'),
+                ),
+              ],
+            ),
+            SizedBox(height: isPhone ? 8 : 12),
+            LayoutBuilder(
+              builder: (context, c) {
+                final wide = c.maxWidth > 640;
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: wide ? (c.maxWidth - 32) / 3 : c.maxWidth,
+                      child: item(Icons.timelapse, Colors.orange, 'Pending Payouts', CurrencyFormatter.formatPrice(pending)),
+                    ),
+                    SizedBox(
+                      width: wide ? (c.maxWidth - 32) / 3 : c.maxWidth,
+                      child: item(Icons.payments_outlined, Colors.green, 'Last Payout', '${CurrencyFormatter.formatPrice(lastAmt)} • $lastDate'),
+                    ),
+                    SizedBox(
+                      width: wide ? (c.maxWidth - 32) / 3 : c.maxWidth,
+                      child: item(Icons.schedule, Colors.blue, 'Next Payout ETA', etaDays > 0 ? '$etaDays days' : 'Queued'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2324,14 +2504,36 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
         margin: EdgeInsets.zero,
         child: Padding(
           padding: EdgeInsets.all(isPhone ? 12 : 16),
-          child: Row(children: [
-            Container(width: 28, height: 28, alignment: Alignment.center, decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 16)),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-              Text(val, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
-            ])),
-          ]),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      val,
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -2343,18 +2545,41 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Earnings Breakdown', style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'Earnings Breakdown',
+              style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: isPhone ? 10 : 12),
-            LayoutBuilder(builder: (context, c) {
-              final wide = c.maxWidth > 640;
-              final w = wide ? (c.maxWidth - 24) / 2 : c.maxWidth;
-              return Wrap(spacing: 12, runSpacing: 12, children: [
-                SizedBox(width: w, child: cell('Gross', CurrencyFormatter.formatPrice(gross), Colors.blueGrey, Icons.stacked_bar_chart)),
-                SizedBox(width: w, child: cell('Commission (${(rate * 100).toStringAsFixed(0)}%)', '-${CurrencyFormatter.formatPrice(commission)}', Colors.red, Icons.percent)),
-                SizedBox(width: w, child: cell('Taxes (18%)', '-${CurrencyFormatter.formatPrice(taxes)}', Colors.orange, Icons.receipt_long)),
-                SizedBox(width: w, child: cell('Net', CurrencyFormatter.formatPrice(net), Colors.green, Icons.ssid_chart_outlined)),
-              ]);
-            })
+            LayoutBuilder(
+              builder: (context, c) {
+                final wide = c.maxWidth > 640;
+                final w = wide ? (c.maxWidth - 24) / 2 : c.maxWidth;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: w,
+                      child: cell('Gross', CurrencyFormatter.formatPrice(gross), Colors.blueGrey, Icons.stacked_bar_chart),
+                    ),
+                    SizedBox(
+                      width: w,
+                      child: cell('Commission (${(rate * 100).toStringAsFixed(0)}%)', '-${CurrencyFormatter.formatPrice(commission)}', Colors.red, Icons.percent),
+                    ),
+                    SizedBox(
+                      width: w,
+                      child: cell('Taxes (18%)', '-${CurrencyFormatter.formatPrice(taxes)}', Colors.orange, Icons.receipt_long),
+                    ),
+                    SizedBox(
+                      width: w,
+                      child: cell('Net', CurrencyFormatter.formatPrice(net), Colors.green, Icons.ssid_chart_outlined),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -2367,14 +2592,57 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
       margin: EdgeInsets.zero,
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
-        child: Wrap(spacing: 12, runSpacing: 8, children: [
-          ElevatedButton.icon(onPressed: () async { if (!mounted) return; ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout request submitted'))); }, icon: const Icon(Icons.request_page), label: const Text('Request Payout')),
-          OutlinedButton.icon(onPressed: () async { await _exportEarningsPdf(); }, icon: const Icon(Icons.picture_as_pdf), label: const Text('Export PDF')),
-          OutlinedButton.icon(onPressed: () async { await _shareEarningsPdf(); }, icon: const Icon(Icons.share), label: const Text('Share PDF')),
-          OutlinedButton.icon(onPressed: () async { await _exportSelectedRangeCsv(); }, icon: const Icon(Icons.file_download), label: const Text('Export CSV')),
-          OutlinedButton.icon(onPressed: () => context.push('/owner/analytics'), icon: const Icon(Icons.analytics_outlined), label: const Text('Analytics')),
-          OutlinedButton.icon(onPressed: () async { await showDateRangePicker(context: context, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now()); }, icon: const Icon(Icons.filter_alt_outlined), label: const Text('Filter')),
-        ]),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout request submitted')));
+              },
+              icon: const Icon(Icons.request_page),
+              label: const Text('Request Payout'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await _exportEarningsPdf();
+              },
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('Export PDF'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await _shareEarningsPdf();
+              },
+              icon: const Icon(Icons.share),
+              label: const Text('Share PDF'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await _exportSelectedRangeCsv();
+              },
+              icon: const Icon(Icons.file_download),
+              label: const Text('Export CSV'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/owner/analytics'),
+              icon: const Icon(Icons.analytics_outlined),
+              label: const Text('Analytics'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                  lastDate: DateTime.now(),
+                );
+              },
+              icon: const Icon(Icons.filter_alt_outlined),
+              label: const Text('Filter'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2654,7 +2922,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
 
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isTablet = MediaQuery.sizeOf(context).width >= 600 && MediaQuery.sizeOf(context).width < 1200;
-    final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + (isPhone ? 8.0 : 12.0);
+    final bottomPad = MediaQuery.of(context).padding.bottom + (isPhone ? 6.0 : 12.0);
 
     // Monetization state
     final monet = ref.watch(monetizationServiceProvider);
@@ -2686,7 +2954,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           padding: EdgeInsets.only(
             left: isPhone ? 12 : 16,
             right: isPhone ? 12 : 16,
-            bottom: bottomPad + 56,
+            bottom: bottomPad,
           ),
           child: Column(
             children: [
@@ -2914,7 +3182,12 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
               Card(
                 margin: EdgeInsets.zero,
                 child: Padding(
-                  padding: EdgeInsets.all(isPhone ? 12 : 16),
+                  padding: EdgeInsets.fromLTRB(
+                    isPhone ? 12 : 16,
+                    isPhone ? 12 : 16,
+                    isPhone ? 12 : 16,
+                    isPhone ? 0 : 12,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -2927,20 +3200,6 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 ),
               ),
             ],
-          ),
-        ),
-        Positioned(
-          right: isPhone ? 12 : 24,
-          bottom: isPhone ? 86 : 96,
-          child: FloatingActionButton.small(
-            onPressed: () {
-              ref.read(immersiveRouteOpenProvider.notifier).state = true;
-              context.push('/support').whenComplete(() {
-                ref.read(immersiveRouteOpenProvider.notifier).state = false;
-              });
-            },
-            tooltip: 'Support',
-            child: const Icon(Icons.chat_bubble_outline),
           ),
         ),
       ],
@@ -2988,11 +3247,35 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           children: [
             Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Colors.teal),
-                const SizedBox(width: 8),
-                Text('Growth Checklist', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const Spacer(),
-                Text('${(progress * 100).toStringAsFixed(0)}%'),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.check_circle_outline,
+                    color: theme.colorScheme.primary,
+                    size: isPhone ? 24 : 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Growth Checklist',
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${(progress * 100).toStringAsFixed(0)}%',
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             SizedBox(height: isPhone ? 8 : 12),
@@ -3027,15 +3310,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     );
   }
 
-  Widget _buildFloatingActionButton(ThemeData theme) {
-    final isPhone = MediaQuery.sizeOf(context).width < 600;
-    return FloatingActionButton(
-      mini: isPhone,
-      onPressed: () => _showAddListingDialog(context),
-      tooltip: 'Add New Property',
-      child: const Icon(Icons.add),
-    );
-  }
+  // _buildFloatingActionButton removed: No FAB on Owner Dashboard
 
   void _showAddListingDialog(BuildContext context) {
     showDialog(
@@ -3142,8 +3417,8 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.1),
-            blurRadius: 12,
+            color: theme.colorScheme.primary.withOpacity(0.08),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -3227,8 +3502,8 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.orange.withOpacity(0.08),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -3248,7 +3523,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
               size: isPhone ? 24 : (isDesktop ? 22 : 16),
             ),
           ),
-          SizedBox(height: isPhone ? 16 : (isDesktop ? 12 : 8)),
+          SizedBox(height: isPhone ? 16 : (isDesktop ? 12 : 10)),
           Text(
             'Boost Listings',
             style: theme.textTheme.titleMedium?.copyWith(
@@ -3284,16 +3559,21 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: monet.isLoading
-                  ? null
-                  : () async {
-                      final ok = await ref.read(monetizationServiceProvider.notifier).purchaseMicrotransaction(boostItem);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(ok ? 'Boost purchased successfully' : 'Failed to purchase boost')),
-                        );
-                      }
-                    },
+              onPressed: () async {
+                try {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(duration: Duration(milliseconds: 800), content: Text('Opening Promote Listing...')));
+                  }
+                  ref.read(immersiveRouteOpenProvider.notifier).state = true;
+                  await context.push('/promote-listing');
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open Promote Listing: $e')));
+                  }
+                } finally {
+                  ref.read(immersiveRouteOpenProvider.notifier).state = false;
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
@@ -3333,8 +3613,8 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.green.withOpacity(0.08),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -3373,16 +3653,23 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: monet.isLoading
-                  ? null
-                  : () async {
-                      final ok = await ref.read(monetizationServiceProvider.notifier).purchaseMicrotransaction(verifiedItem);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(ok ? 'Verified badge purchased' : 'Purchase failed')),
-                        );
-                      }
-                    },
+              onPressed: () async {
+                final isKycVerified = ref.read(authProvider).user?.isKycVerified == true;
+                if (!isKycVerified) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete KYC to buy the Verified badge')));
+                  }
+                  ref.read(immersiveRouteOpenProvider.notifier).state = true;
+                  await context.push('/kyc').whenComplete(() {
+                    ref.read(immersiveRouteOpenProvider.notifier).state = false;
+                  });
+                  return;
+                }
+                final ok = await ref.read(monetizationServiceProvider.notifier).purchaseMicrotransaction(verifiedItem);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'Verified badge purchased' : 'Purchase failed')));
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,

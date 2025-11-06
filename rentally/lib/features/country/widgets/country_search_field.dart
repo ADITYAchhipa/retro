@@ -49,15 +49,15 @@ class CountrySearchField extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDark 
-                ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.5)
-                : EnterpriseLightTheme.primaryAccent.withOpacity(0.06),
-            blurRadius: 25,
-            offset: const Offset(0, 8),
+                ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.35)
+                : EnterpriseLightTheme.primaryAccent.withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
           if (isDark) BoxShadow(
-            color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.1),
-            blurRadius: 40,
-            offset: const Offset(0, 16),
+            color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

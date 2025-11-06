@@ -420,8 +420,8 @@ class _CalendarAvailabilityScreenState extends ConsumerState<CalendarAvailabilit
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 3,
             offset: const Offset(0, -2),
           ),
         ],
@@ -593,7 +593,7 @@ class _DayDetailsBottomSheetState extends State<DayDetailsBottomSheet> {
           // Price
           if (_selectedStatus == AvailabilityStatus.available) ...[
             Text(
-              'Price per night',
+              'Monthly price',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -731,7 +731,7 @@ class _PricingDialogState extends State<PricingDialog> {
             controller: _priceController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: 'Price per night',
+              labelText: 'Monthly price',
               prefixText: '\$',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -853,7 +853,7 @@ class _BulkEditDialogState extends State<BulkEditDialog> {
               controller: _priceController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Price per night',
+                labelText: 'Monthly price',
                 prefixText: '\$',
                 border: OutlineInputBorder(),
               ),

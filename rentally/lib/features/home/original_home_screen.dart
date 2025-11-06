@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../widgets/error_boundary.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
-import '../../core/theme/enterprise_light_theme.dart';
 import '../../core/providers/property_provider.dart';
 import '../../core/database/models/property_model.dart';
 import 'widgets/home_header.dart';
@@ -13,9 +12,12 @@ import 'widgets/home_category_navigation.dart';
 import 'widgets/home_featured_section.dart';
 import 'widgets/home_promo_banner.dart';
 import 'widgets/home_recommended_section.dart';
-// import 'widgets/home_nearby_section.dart'; // Removed: Nearby Rentals section
-import 'widgets/home_recently_viewed_section.dart';
+import 'widgets/home_nearby_section.dart';
 import '../../core/widgets/tab_back_handler.dart';
+import 'package:go_router/go_router.dart';
+import '../../services/recently_viewed_service.dart';
+import '../../core/utils/currency_formatter.dart';
+import '../../core/widgets/listing_card.dart';
 
 /// **Original Home Screen**
 /// 
@@ -27,7 +29,7 @@ import '../../core/widgets/tab_back_handler.dart';
 /// - Specialized widget components for each section
 /// - Tab-based navigation between Properties and Vehicles
 /// - Category navigation with icons
-/// - Featured, recommended, nearby, and recently viewed sections
+/// - Featured, recommended, and nearby sections
 /// - Promotional banners and search functionality
 class OriginalHomeScreen extends StatefulWidget {
   const OriginalHomeScreen({super.key});
@@ -43,6 +45,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
   
   bool _isLoading = false;
   int _selectedCategoryIndex = 0;
+  List<RecentlyViewedItem> _recentlyViewed = const [];
   
   // Category data
   // Property categories
@@ -119,35 +122,120 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _loadInitialData();
+        _loadRecentlyViewed();
       }
     });
   }
 
-  @override
-  void dispose() {
-    _tabController.removeListener(_onTabChanged);
-    _tabController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  Future<void> _loadRecentlyViewed() async {
+    try {
+      final items = await RecentlyViewedService.list();
+      if (!mounted) return;
+      setState(() {
+        _recentlyViewed = items;
+      });
+    } catch (_) {
+      // ignore failures
+    }
+  }
+
+  Widget _buildRecentlyViewedSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recently Viewed',
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              if (_recentlyViewed.length >= 5)
+                TextButton(
+                  onPressed: _showAllRecentlyViewed,
+                  child: const Text('See All'),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 232,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            clipBehavior: Clip.none,
+            scrollDirection: Axis.horizontal,
+            itemCount: _recentlyViewed.length.clamp(0, 10),
+            separatorBuilder: (context, _) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final item = _recentlyViewed[index];
+              return _buildRecentCard(item, theme);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentCard(RecentlyViewedItem item, ThemeData theme) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // RecentlyViewedItem doesn't carry type; default to property unit for display consistency
+    const unit = 'month';
+    final vm = ListingViewModel(
+      id: item.id,
+      title: item.title,
+      location: item.location,
+      priceLabel: CurrencyFormatter.formatPricePerUnit(item.price, unit),
+      rentalUnit: unit,
+      imageUrl: item.imageUrl,
+      rating: 0,
+      chips: const [],
+      metaItems: const [],
+      fallbackIcon: Icons.home,
+      isVehicle: false,
+    );
+    return SizedBox(
+      width: 260,
+      child: ListingCard(
+        model: vm,
+        isDark: isDark,
+        width: 260,
+        margin: EdgeInsets.zero,
+        onTap: () => context.push('/listing/${item.id}'),
+        chipOnImage: false,
+        showInfoChip: false,
+        chipInRatingRowRight: true,
+        priceBottomLeft: true,
+        shareBottomRight: true,
+      ),
+    );
+  }
+
+  void _showAllRecentlyViewed() {
+    // Placeholder for a full-screen Recently Viewed list
+    // For now, no-op or could navigate to '/search?recentlyViewed=true'
   }
 
   Future<void> _loadInitialData() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    
     try {
       // Load properties using provider
       await context.read<PropertyProvider>().loadProperties();
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+    } catch (_) {
+      // ignore for now
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _onRefresh() async {
     await _loadInitialData();
+    await _loadRecentlyViewed();
   }
 
   void _onCategorySelected(int index) {
@@ -218,7 +306,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
       child: TabBackHandler(
         tabController: _tabController,
         child: Scaffold(
-        backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : EnterpriseLightTheme.primaryBackground,
+        backgroundColor: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
         body: _buildBody(theme, isDark),
         ),
       ),
@@ -240,6 +328,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
         key: const ValueKey('original_home_refresh'),
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          clipBehavior: Clip.none,
           controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -251,7 +340,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
           // Search Bar Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.only(top: 6, bottom: 4),
               child: HomeSearchBar(theme: theme, isDark: isDark),
             ),
           ),
@@ -286,7 +375,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
                 final cats = isProps ? _propertyCategories : _vehicleCategories;
                 final catIcons = isProps ? _propertyCategoryIcons : _vehicleCategoryIcons;
                 return Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 2),
+                  padding: const EdgeInsets.only(top: 16, bottom: 2),
                   child: HomeCategoryNavigation(
                     categories: cats,
                     categoryIcons: catIcons,
@@ -310,15 +399,16 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
           // Promotional Banner
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 6),
+              padding: const EdgeInsets.only(top: 0, bottom: 8),
               child: HomePromoBanner(theme: theme, isDark: isDark),
             ),
           ),
           
+          
           // Featured Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 8),
+              padding: const EdgeInsets.only(top: 6, bottom: 10),
               child: HomeFeaturedSection(
                 theme: theme,
                 isDark: isDark,
@@ -331,7 +421,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
           // Recommended Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 16),
+              padding: const EdgeInsets.only(top: 6, bottom: 14),
               child: HomeRecommendedSection(
                 theme: theme,
                 isDark: isDark,
@@ -341,24 +431,11 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
             ),
           ),
           
-          // Nearby Section (removed per request)
-          // SliverToBoxAdapter(
-          //   child: Padding(
-          //     padding: const EdgeInsets.symmetric(vertical: 16),
-          //     child: HomeNearbySection(
-          //       theme: theme,
-          //       isDark: isDark,
-          //       tabController: _tabController,
-          //       selectedCategory: derivedCategories[_selectedCategoryIndex],
-          //     ),
-          //   ),
-          // ),
-          
-          // Recently Viewed Section
+          // Nearby Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: HomeRecentlyViewedSection(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: HomeNearbySection(
                 theme: theme,
                 isDark: isDark,
                 tabController: _tabController,
@@ -366,10 +443,19 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
               ),
             ),
           ),
+
+          // Recently Viewed Section (if any)
+          if (_recentlyViewed.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 8),
+                child: _buildRecentlyViewedSection(theme),
+              ),
+            ),
           
-          // Bottom padding
+          // Bottom padding (reduced)
           const SliverToBoxAdapter(
-            child: SizedBox(height: 120),
+            child: SizedBox(height: 80),
           ),
         ],
       ),

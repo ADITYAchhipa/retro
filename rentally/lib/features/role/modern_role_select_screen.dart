@@ -98,9 +98,9 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                                color: theme.colorScheme.primary.withOpacity(0.18),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
                               ),
                             ],
                           ),
@@ -253,14 +253,14 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
             ),
             BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: theme.colorScheme.primary.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -276,9 +276,9 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: theme.colorScheme.primary.withOpacity(0.16),
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),

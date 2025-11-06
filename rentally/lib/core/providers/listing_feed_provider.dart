@@ -4,7 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../database/models/property_model.dart';
 import '../database/models/vehicle_model.dart';
 import '../widgets/listing_card.dart';
-import '../utils/currency_formatter.dart';
+import '../utils/price_unit_helper.dart';
 import '../../services/view_history_service.dart';
 
 /// ListingFeedProvider exposes combined, UI-ready feeds (as ListingViewModel)
@@ -102,11 +102,15 @@ class ListingFeedProvider with ChangeNotifier {
   }
 
   ListingViewModel _vmFromProperty(PropertyModel p) {
+    final res = PriceUnitHelper.forProperty(p);
     return ListingViewModel(
       id: p.id,
       title: p.title,
       location: p.location,
-      priceLabel: CurrencyFormatter.formatPricePerUnit(p.pricePerNight, 'night'),
+      priceLabel: PriceUnitHelper.format(res),
+      originalPriceLabel: PriceUnitHelper.formatOriginal(res),
+      discountPercent: res.discountPercent,
+      rentalUnit: res.unit,
       imageUrl: p.images.isNotEmpty ? p.images.first : null,
       rating: p.rating,
       reviewCount: p.reviewCount,
@@ -126,11 +130,15 @@ class ListingFeedProvider with ChangeNotifier {
   }
 
   ListingViewModel _vmFromVehicle(VehicleModel v) {
+    final res = PriceUnitHelper.forVehicle(v);
     return ListingViewModel(
       id: v.id,
       title: v.title,
       location: v.location,
-      priceLabel: CurrencyFormatter.formatPricePerUnit(v.pricePerDay, 'day'),
+      priceLabel: PriceUnitHelper.format(res),
+      originalPriceLabel: PriceUnitHelper.formatOriginal(res),
+      discountPercent: res.discountPercent,
+      rentalUnit: res.unit,
       imageUrl: v.images.isNotEmpty ? v.images.first : null,
       rating: v.rating,
       reviewCount: v.reviewCount,
@@ -154,6 +162,9 @@ class ListingFeedProvider with ChangeNotifier {
       title: vm.title,
       location: vm.location,
       priceLabel: vm.priceLabel,
+      originalPriceLabel: vm.originalPriceLabel,
+      discountPercent: vm.discountPercent,
+      rentalUnit: vm.rentalUnit,
       imageUrl: vm.imageUrl,
       rating: vm.rating,
       reviewCount: vm.reviewCount,

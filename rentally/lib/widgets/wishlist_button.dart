@@ -77,7 +77,7 @@ class WishlistOverlayHeart extends StatelessWidget {
               color: isLiked ? Colors.red.withOpacity(0.15) : Colors.white.withOpacity(0.9),
               shape: BoxShape.circle,
               boxShadow: const [
-                BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2)),
+                BoxShadow(color: Color(0x14000000), blurRadius: 3, offset: Offset(0, 2)),
               ],
             ),
             child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, size: size, color: isLiked ? Colors.red : Colors.grey),
@@ -109,7 +109,7 @@ class WishlistButton extends StatelessWidget {
             color: Colors.white.withOpacity(0.9),
             shape: BoxShape.circle,
             boxShadow: const [
-              BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2)),
+              BoxShadow(color: Color(0x14000000), blurRadius: 3, offset: Offset(0, 2)),
             ],
           ),
           child: Icon(

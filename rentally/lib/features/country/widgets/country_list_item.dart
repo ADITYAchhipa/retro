@@ -86,14 +86,14 @@ class CountryListItem extends StatelessWidget {
             ? (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent)
             : isDark 
                 ? EnterpriseDarkTheme.primaryBorder
-                : EnterpriseLightTheme.cardBorder,
-        width: isSelected ? 2 : 1,
+                : EnterpriseLightTheme.secondaryBorder, // stronger light border for visibility
+        width: isSelected ? 2 : (isDark ? 1 : 1.2),
       ),
       boxShadow: isSelected ? [
         BoxShadow(
-          color: (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withOpacity(isDark ? 0.3 : 0.15),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
+          color: (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withOpacity(isDark ? 0.22 : 0.16),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
         ),
       ] : [],
     );
@@ -125,8 +125,8 @@ class CountryListItem extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: countryColor.withOpacity(0.3),
-            blurRadius: isSelected ? 8 : 4,
+            color: countryColor.withOpacity(0.18),
+            blurRadius: isSelected ? 6 : 3,
             offset: const Offset(0, 2),
           ),
         ],

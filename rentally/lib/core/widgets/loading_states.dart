@@ -13,50 +13,96 @@ class LoadingStates {
       highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 200,
-              width: double.infinity,
-              color: Colors.white,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 20,
-                    width: double.infinity,
-                    color: Colors.white,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Natural height of this skeleton when unscaled
+            const double naturalHeight = 160 + 32 + (20 + 8 + 16 + 8 + 16); // 260
+            // Scale down when the parent gives a tight/small height
+            double scale = 1.0;
+            if (constraints.hasBoundedHeight && constraints.maxHeight.isFinite) {
+              scale = (constraints.maxHeight / naturalHeight).clamp(0.2, 1.0);
+            }
+            // Heights and paddings scaled
+            final double imageH = 160 * scale;
+            final double pad = 16 * scale;
+            final double h1 = 20 * scale;
+            final double h2 = 16 * scale;
+            final double h3 = 16 * scale;
+            final double gap = 8 * scale;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: imageH,
+                  width: double.infinity,
+                  color: Colors.white,
+                ),
+                Padding(
+                  padding: EdgeInsets.all(pad),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: h1,
+                        width: double.infinity,
+                        color: Colors.white,
+                      ),
+                      SizedBox(height: gap),
+                      Container(
+                        height: h2,
+                        width: (150 * scale).clamp(60.0, double.infinity),
+                        color: Colors.white,
+                      ),
+                      SizedBox(height: gap),
+                      Container(
+                        height: h3,
+                        width: (100 * scale).clamp(50.0, double.infinity),
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 16,
-                    width: 150,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 16,
-                    width: 100,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
   /// List shimmer loading
-  static Widget listShimmer(BuildContext context, {int itemCount = 5}) {
-    return ListView.builder(
-      itemCount: itemCount,
-      itemBuilder: (context, index) => propertyCardShimmer(context),
+  static Widget listShimmer(
+    BuildContext context, {
+    int itemCount = 5,
+    bool shrinkWrap = true,
+    ScrollPhysics physics = const NeverScrollableScrollPhysics(),
+    EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasBoundedHeight = constraints.hasBoundedHeight;
+        if (!hasBoundedHeight) {
+          // When vertically unbounded (e.g., inside another scrollable),
+          // avoid nesting a scrollable viewport. Use a simple Column.
+          return Padding(
+            padding: padding,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(itemCount, (index) => propertyCardShimmer(context)),
+            ),
+          );
+        }
+        return ListView.builder(
+          shrinkWrap: shrinkWrap,
+          physics: physics,
+          padding: padding,
+          itemCount: itemCount,
+          itemBuilder: (context, index) => propertyCardShimmer(context),
+        );
+      },
     );
   }
 
@@ -249,55 +295,63 @@ class LoadingStates {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.8,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-          highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
-          child: Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    width: double.infinity,
-                    color: Colors.white,
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 16,
-                          width: double.infinity,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          height: 14,
-                          width: 80,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // GridView with shrinkWrap handles most nested cases; when unbounded height,
+        // shrinkWrap + NeverScrollableScrollPhysics prevents nested scroll issues.
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.8,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
           ),
+          itemCount: itemCount,
+          itemBuilder: (context, index) {
+            return Shimmer.fromColors(
+              baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+              highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+              child: Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        width: double.infinity,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 16,
+                              width: double.infinity,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: 14,
+                              width: 80,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );

@@ -46,19 +46,9 @@ class SplashBackground extends StatelessWidget {
       );
     }
 
+    // Light theme: bright white background
     return const BoxDecoration(
-      gradient: RadialGradient(
-        center: Alignment(0.0, -0.3), // Slightly above center
-        radius: 1.2,
-        colors: [
-          Color(0xFFFFFFFF), // Pure white at center
-          Color(0xFFF8FAFC), // Very light gray-blue
-          Color(0xFFF1F5F9), // Light slate
-          Color(0xFFE2E8F0), // Professional gray
-          Color(0xFFCBD5E1), // Subtle darker gray
-        ],
-        stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-      ),
+      color: Colors.white,
     );
   }
 }

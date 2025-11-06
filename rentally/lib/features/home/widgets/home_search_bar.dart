@@ -26,46 +26,91 @@ class HomeSearchBar extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isDark ? EnterpriseDarkTheme.cardBackground : EnterpriseLightTheme.cardBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: isDark ? Border.all(
-              color: EnterpriseDarkTheme.primaryBorder,
-              width: 1,
-            ) : Border.all(
-              color: EnterpriseLightTheme.secondaryBorder,
-              width: 1,
+            color: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                  : EnterpriseLightTheme.secondaryBorder,
+              width: 1.1,
             ),
             boxShadow: [
+              // Dual soft shadows (green-marked style)
               BoxShadow(
-                color: isDark 
-                    ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.3)
-                    : EnterpriseLightTheme.cardShadow.withOpacity(0.08),
-                blurRadius: isDark ? 8 : 4,
-                offset: const Offset(0, 2),
+                color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                blurRadius: 10,
+                offset: const Offset(-5, -5),
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: (isDark
+                        ? EnterpriseDarkTheme.primaryAccent
+                        : EnterpriseLightTheme.primaryAccent)
+                    .withOpacity(isDark ? 0.18 : 0.12),
+                blurRadius: 10,
+                offset: const Offset(5, 5),
+                spreadRadius: 0,
               ),
             ],
           ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.search,
-            color: isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.secondaryText,
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Search properties or vehicles...',
-              style: TextStyle(
-                color: isDark ? EnterpriseDarkTheme.tertiaryText : EnterpriseLightTheme.tertiaryText,
-                fontSize: 14,
+          child: Row(
+            children: [
+              Icon(
+                Icons.search,
+                color: isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.secondaryText,
+                size: 18,
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Search properties or vehicles...',
+                  style: TextStyle(
+                    color: isDark ? EnterpriseDarkTheme.tertiaryText : EnterpriseLightTheme.tertiaryText,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                        : EnterpriseLightTheme.secondaryBorder,
+                    width: 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                      blurRadius: 10,
+                      offset: const Offset(-5, -5),
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: (isDark
+                              ? EnterpriseDarkTheme.primaryAccent
+                              : EnterpriseLightTheme.primaryAccent)
+                          .withOpacity(isDark ? 0.18 : 0.12),
+                      blurRadius: 10,
+                      offset: const Offset(5, 5),
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.tune,
+                  color: theme.colorScheme.primary,
+                  size: 16,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
         ),
       ),
     );

@@ -10,9 +10,9 @@ import '../../../core/database/models/property_model.dart';
 import '../../../core/widgets/loading_states.dart';
 import '../../../core/providers/vehicle_provider.dart';
 import '../../../core/widgets/listing_card.dart';
-import '../../../core/widgets/listing_badges.dart';
-import '../../../core/utils/currency_formatter.dart';
+import '../../../core/widgets/listing_vm_factory.dart';
 import '../../../core/widgets/hover_scale.dart';
+// import '../../../core/utils/price_unit_helper.dart';
 
 /// Featured section widget showing highlighted properties/vehicles
 class HomeFeaturedSection extends StatefulWidget {
@@ -75,8 +75,8 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     final screenWidth = MediaQuery.of(context).size.width;
     final viewportFraction = _getViewportFraction(screenWidth);
     
-    // Only update if viewport fraction has changed significantly
-    if ((_propertyPageController.viewportFraction - viewportFraction).abs() > 0.05) {
+    // Only update if viewport fraction has changed noticeably
+    if ((_propertyPageController.viewportFraction - viewportFraction).abs() > 0.005) {
       _propertyPageController.dispose();
       _vehiclePageController.dispose();
       _propertyPageController = PageController(viewportFraction: viewportFraction, initialPage: 0);
@@ -89,8 +89,8 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     if (screenWidth > 1200) return 0.22; // Desktop: show ~4.5 cards
     if (screenWidth > 900) return 0.28;  // Medium desktop: show ~3.5 cards
     if (screenWidth > 700) return 0.42;  // Tablet: show ~2.4 cards
-    if (screenWidth > 500) return 0.75;  // Large phone: show main card prominently
-    return 0.8;                         // Small phone: show main card prominently
+    if (screenWidth > 500) return 0.78;   // Large phone: slightly larger while keeping next card peek
+    return 0.89;                          // Small phone: slightly larger while keeping next card peek
   }
 
   double _getCardWidth(double screenWidth) {
@@ -128,15 +128,20 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     final isPropertyTab = widget.tabController.index == 0;
     final media = MediaQuery.of(context);
     final screenWidth = media.size.width;
+    // Ensure controllers reflect the latest viewport fraction at build time
+    _updateControllers();
     
     // Responsive section height based on screen size
     final sectionHeight = _getSectionHeight(screenWidth);
     // Derive cardWidth from viewportFraction so section height and card size match exactly
     final vp = _propertyPageController.viewportFraction;
-    final perItemPadding = screenWidth <= 600 ? 8.0 : 8.0; // increased padding for better spacing
-    // Slightly reduce initial left padding for the first card only
-    final startPadding = perItemPadding / 2;
+    final perItemPadding = screenWidth <= 600 ? 6.0 : 8.0; // slightly increased gap on phones
+    // Slightly increase initial left padding for the first card on phones
+    final startPadding = screenWidth <= 600 ? 14.0 : perItemPadding / 2;
     final cardWidth = (screenWidth * vp) - (perItemPadding * 2);
+    // Taller image for Featured cards: lower aspect ratio => more height
+    final isCompactWidth = cardWidth <= 280;
+    final featuredImageAspect = isCompactWidth ? 2.5 : 2.3; // was ~3.0/2.9 in height calc and 3.8/3.2 in card
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,10 +197,10 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Container(
           height: sectionHeight,
-          padding: const EdgeInsets.only(top: 8, bottom: 20), // Reduced top padding for tighter spacing
+          padding: const EdgeInsets.only(top: 8, bottom: 12), // keep in sync with _getSectionHeight containerVerticalPadding
           clipBehavior: Clip.none, // Allow overflow for pop-up effect
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
@@ -220,31 +225,12 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                         return ListView.builder(
                           scrollDirection: Axis.horizontal,
                           physics: const BouncingScrollPhysics(),
+                          clipBehavior: Clip.none,
                           padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final property = items[index];
-                            final vm = ListingViewModel(
-                              id: property.id,
-                              title: property.title,
-                              location: property.location,
-                              priceLabel: CurrencyFormatter.formatPricePerUnit(property.pricePerNight, 'night'),
-                              imageUrl: _getPropertyImageUrl(property),
-                              rating: property.rating,
-                              reviewCount: property.reviewCount,
-                              chips: [property.type.displayName, if (property.amenities.isNotEmpty) property.amenities.first],
-                              metaItems: [
-                                ListingMetaItem(icon: Icons.bed, text: '${property.bedrooms} bd'),
-                                ListingMetaItem(icon: Icons.bathtub, text: '${property.bathrooms} ba'),
-                                ListingMetaItem(icon: Icons.person, text: '${property.maxGuests} guests'),
-                              ],
-                              fallbackIcon: _getPropertyIcon(property.type),
-                              badges: [
-                                if (property.isFeatured) ListingBadgeType.featured,
-                                if (property.rating >= 4.7 && property.reviewCount > 25) ListingBadgeType.topRated,
-                                if (DateTime.now().difference(property.createdAt).inDays <= 30) ListingBadgeType.newListing,
-                              ],
-                            );
+                            final vm = ListingViewModelFactory.fromProperty(property);
                             return Padding(
                               padding: EdgeInsets.only(
                                 left: index == 0 ? 0 : perItemPadding,
@@ -267,6 +253,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                                     chipInRatingRowRight: true,
                                     priceBottomLeft: true,
                                     shareBottomRight: true,
+                                    imageAspectRatio: featuredImageAspect,
                                   ),
                                 ),
                               ),
@@ -277,7 +264,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                       return PageView.builder(
                         controller: _propertyPageController,
                         physics: const BouncingScrollPhysics(),
-                        padEnds: true, // Enable padding to center cards
+                        padEnds: false, // Align first card to left so next card peeks on the right
                         clipBehavior: Clip.none, // Allow cards to overflow
                         onPageChanged: (index) {
                           setState(() {
@@ -287,35 +274,16 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           final property = items[index];
-                          final vm = ListingViewModel(
-                              id: property.id,
-                              title: property.title,
-                              location: property.location,
-                              priceLabel: CurrencyFormatter.formatPricePerUnit(property.pricePerNight, 'night'),
-                              imageUrl: _getPropertyImageUrl(property),
-                              rating: property.rating,
-                              reviewCount: property.reviewCount,
-                              chips: [property.type.displayName, if (property.amenities.isNotEmpty) property.amenities.first],
-                              metaItems: [
-                                ListingMetaItem(icon: Icons.bed, text: '${property.bedrooms} bd'),
-                                ListingMetaItem(icon: Icons.bathtub, text: '${property.bathrooms} ba'),
-                                ListingMetaItem(icon: Icons.person, text: '${property.maxGuests} guests'),
-                              ],
-                              fallbackIcon: _getPropertyIcon(property.type),
-                              badges: [
-                                if (property.isFeatured) ListingBadgeType.featured,
-                                if (property.rating >= 4.7 && property.reviewCount > 25) ListingBadgeType.topRated,
-                                if (DateTime.now().difference(property.createdAt).inDays <= 30) ListingBadgeType.newListing,
-                              ],
-                            );
+                          final vm = ListingViewModelFactory.fromProperty(property);
                           final isActive = index == _currentPropertyIndex;
                           final isFirstOrLast = index == 0 || index == items.length - 1;
                           final shouldPopUp = isActive && !isFirstOrLast;
                           
                           return Container(
-                            margin: EdgeInsets.symmetric(horizontal: perItemPadding),
-                            child: Center(
-                              child: AnimatedScale(
+                            width: double.infinity,
+                            alignment: Alignment.centerLeft,
+                            margin: EdgeInsets.only(left: index == 0 ? startPadding : 0, right: perItemPadding),
+                            child: AnimatedScale(
                                 scale: shouldPopUp ? 1.05 : (isActive ? 1.0 : 0.95),
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeOutCubic,
@@ -327,12 +295,19 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                                     // Apply background shadow for the active visible card on phone
                                     boxShadow: isActive ? [
                                       BoxShadow(
-                                        color: widget.isDark 
-                                            ? Colors.blue.withOpacity(0.3)
-                                            : Colors.black.withOpacity(0.2),
-                                        blurRadius: 22,
-                                        offset: const Offset(0, 8),
-                                        spreadRadius: 2,
+                                        color: widget.isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                                        blurRadius: 10,
+                                        offset: const Offset(-5, -5),
+                                        spreadRadius: 0,
+                                      ),
+                                      BoxShadow(
+                                        color: (widget.isDark
+                                                ? EnterpriseDarkTheme.primaryAccent
+                                                : EnterpriseLightTheme.primaryAccent)
+                                            .withOpacity(widget.isDark ? 0.18 : 0.12),
+                                        blurRadius: 10,
+                                        offset: const Offset(5, 5),
+                                        spreadRadius: 0,
                                       ),
                                     ] : null,
                                   ),
@@ -351,11 +326,11 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                                       chipInRatingRowRight: true,
                                       priceBottomLeft: true,
                                       shareBottomRight: true,
+                                      imageAspectRatio: featuredImageAspect,
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
                           );
                         },
                       );
@@ -410,40 +385,23 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
         final screenWidth = MediaQuery.of(context).size.width;
         // Derive vehicle card width from vehicle page controller viewportFraction
         final vp = _vehiclePageController.viewportFraction;
-        final perItemPadding = screenWidth <= 600 ? 8.0 : 8.0; // consistent with property section
-        final startPadding = perItemPadding / 2; // reduce initial left padding for first card only
+        final perItemPadding = screenWidth <= 600 ? 6.0 : 8.0; // slightly increased gap on phones
+        final startPadding = screenWidth <= 600 ? 14.0 : perItemPadding / 2; // slight left gap on phones
         final cardWidth = (screenWidth * vp) - (perItemPadding * 2);
+        final isCompactWidth = cardWidth <= 280;
+        final featuredImageAspect = isCompactWidth ? 2.7 : 2.6;
 
         final useList = screenWidth > 700; // On desktop/tablet, left-align with a simple list
         if (useList) {
           return ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
+            clipBehavior: Clip.none,
             padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
             itemCount: items.length,
             itemBuilder: (context, index) {
               final v = items[index];
-              final vm = ListingViewModel(
-                id: v.id,
-                title: v.title,
-                location: v.location,
-                priceLabel: CurrencyFormatter.formatPricePerUnit(v.pricePerDay, 'day'),
-                imageUrl: v.images.isNotEmpty ? v.images.first : null,
-                rating: v.rating,
-                reviewCount: v.reviewCount,
-                chips: ['${v.category} • ${v.seats} seats'],
-                metaItems: [
-                  ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '${v.seats}'),
-                  ListingMetaItem(icon: Icons.settings, text: v.transmission),
-                  ListingMetaItem(icon: v.fuel.toLowerCase() == 'electric' ? Icons.electric_bolt : Icons.local_gas_station, text: v.fuel),
-                ],
-                fallbackIcon: Icons.directions_car,
-                isVehicle: true,
-                badges: [
-                  if (v.isFeatured) ListingBadgeType.featured,
-                  if (v.rating >= 4.7 && v.reviewCount > 25) ListingBadgeType.topRated,
-                ],
-              );
+              final vm = ListingViewModelFactory.fromVehicle(v);
               return Padding(
                 padding: EdgeInsets.only(
                   left: index == 0 ? 0 : perItemPadding,
@@ -466,6 +424,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                       chipInRatingRowRight: true,
                       priceBottomLeft: true,
                       shareBottomRight: true,
+                      imageAspectRatio: featuredImageAspect, // added imageAspectRatio
                     ),
                   ),
                 ),
@@ -476,7 +435,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
         return PageView.builder(
           controller: _vehiclePageController,
           physics: const BouncingScrollPhysics(),
-          padEnds: true, // Enable padding to center cards
+          padEnds: false, // Align first card to left so next card peeks on the right
           clipBehavior: Clip.none, // Allow cards to overflow
           onPageChanged: (index) {
             setState(() {
@@ -486,35 +445,16 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
           itemCount: items.length,
           itemBuilder: (context, index) {
             final v = items[index];
-            final vm = ListingViewModel(
-                id: v.id,
-                title: v.title,
-                location: v.location,
-                priceLabel: CurrencyFormatter.formatPricePerUnit(v.pricePerDay, 'day'),
-                imageUrl: v.images.isNotEmpty ? v.images.first : null,
-                rating: v.rating,
-                reviewCount: v.reviewCount,
-                chips: ['${v.category} • ${v.seats} seats'],
-                metaItems: [
-                  ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '${v.seats}'),
-                  ListingMetaItem(icon: Icons.settings, text: v.transmission),
-                  ListingMetaItem(icon: v.fuel.toLowerCase() == 'electric' ? Icons.electric_bolt : Icons.local_gas_station, text: v.fuel),
-                ],
-                fallbackIcon: Icons.directions_car,
-                isVehicle: true,
-                badges: [
-                  if (v.isFeatured) ListingBadgeType.featured,
-                  if (v.rating >= 4.7 && v.reviewCount > 25) ListingBadgeType.topRated,
-                ],
-              );
+            final vm = ListingViewModelFactory.fromVehicle(v);
             final isActive = index == _currentVehicleIndex;
             final isFirstOrLast = index == 0 || index == items.length - 1;
             final shouldPopUp = isActive && !isFirstOrLast;
             
             return Container(
-              margin: EdgeInsets.symmetric(horizontal: perItemPadding),
-              child: Center(
-                child: AnimatedScale(
+              width: double.infinity,
+              alignment: Alignment.centerLeft,
+              margin: EdgeInsets.only(left: index == 0 ? startPadding : 0, right: perItemPadding),
+              child: AnimatedScale(
                   scale: shouldPopUp ? 1.05 : (isActive ? 1.0 : 0.95),
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
@@ -526,12 +466,19 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                       // Apply background shadow for the active visible card on phone
                       boxShadow: isActive ? [
                         BoxShadow(
-                          color: widget.isDark 
-                              ? Colors.blue.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.2),
-                          blurRadius: 22,
-                          offset: const Offset(0, 8),
-                          spreadRadius: 2,
+                          color: widget.isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                          blurRadius: 10,
+                          offset: const Offset(-5, -5),
+                          spreadRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: (widget.isDark
+                                  ? EnterpriseDarkTheme.primaryAccent
+                                  : EnterpriseLightTheme.primaryAccent)
+                              .withOpacity(widget.isDark ? 0.18 : 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(5, 5),
+                          spreadRadius: 0,
                         ),
                       ] : null,
                     ),
@@ -554,7 +501,6 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                     ),
                   ),
                 ),
-              ),
             );
           },
         );
@@ -694,30 +640,49 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     // not the heuristic _getCardWidth. This keeps image + info fully visible.
     final isPropertyTab = widget.tabController.index == 0;
     final vp = (isPropertyTab ? _propertyPageController : _vehiclePageController).viewportFraction;
-    const horizontalPadding = 4.0; // reduced padding for tighter spacing
-    final cardWidth = (screenWidth * vp) - (horizontalPadding * 2);
-    final imageHeight = cardWidth * 0.5; // 2:1 image (height = width / 2)
+    // Use same padding heuristic as build() to derive exact card width
+    final perItemPadding = screenWidth <= 600 ? 6.0 : 8.0;
+    final cardWidth = (screenWidth * vp) - (perItemPadding * 2);
+    // Match ListingCard image aspect override for Featured
+    final isCompactWidth = cardWidth <= 280;
+    final imageAspect = isCompactWidth ? 2.7 : 2.6; // keep in sync with featuredImageAspect in build()
+    final imageHeight = cardWidth / imageAspect; // height = width / aspect
 
     // Match ListingCard info rows but in a compact form
     double infoBase;
     if (cardWidth >= 260) {
-      infoBase = 85.0; // slight increase for more info breathing room
+      infoBase = 70.0; // compacted further
     } else if (cardWidth >= 220) {
-      infoBase = 82.0;
+      infoBase = 66.0;
     } else {
-      infoBase = 76.0;
+      infoBase = 60.0;
     }
 
     // Allowances: include rating row height and extra padding variance on small screens
-    const ratingAllowance = 18.0;  // star + number row
-    const contentAllowance = 18.0; // chip/meta spacing + small variability
-    const extra = 2.0;            // border + rounding safety
-    final mobileBoost = screenWidth <= 600 ? 22.0 : 16.0; // more room on phones
+    const ratingAllowance = 10.0;  // star + number row (tighter)
+    const contentAllowance = 10.0; // chip/meta spacing (tighter)
+    const extra = 2.0;             // border + rounding safety
+    final mobileBoost = screenWidth <= 600 ? 12.0 : 10.0; // compact extra room on phones
+    // Account for system text scale to prevent overflow on larger accessibility settings
+    final textScaler = MediaQuery.textScalerOf(context);
+    final scaleFactor = textScaler.scale(16.0) / 16.0; // normalized scale at 16px baseline
+    final textScalePad = scaleFactor > 1.0 ? (scaleFactor - 1.0) * 22.0 : 0.0;
     
     // Add extra space for pop-up effect (5% scale increase + shadow)
-    const popupAllowance = 40.0; // Extra space for 1.05 scale and shadow
-    
-    return imageHeight + infoBase + ratingAllowance + contentAllowance + extra + mobileBoost + popupAllowance;
+    const popupAllowance = 24.0; // Extra space for 1.05 scale and shadow (slightly reduced)
+    const safetyPad = 12.0; // small cushion to avoid occasional overflow
+    const containerVerticalPadding = 20.0; // Container padding: top 8 + bottom 12 in build()
+
+    return imageHeight
+        + infoBase
+        + ratingAllowance
+        + contentAllowance
+        + extra
+        + mobileBoost
+        + popupAllowance
+        + textScalePad
+        + safetyPad
+        + containerVerticalPadding;
   }
 
   IconData _getPropertyIcon(PropertyType type) {

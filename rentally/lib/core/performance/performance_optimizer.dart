@@ -1,6 +1,7 @@
 // ignore_for_file: unused_element, unused_field
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 /// Performance optimization utilities for industrial-grade Flutter app
 class PerformanceOptimizer {
@@ -86,18 +87,13 @@ class PerformanceOptimizer {
     Widget? placeholder,
     Widget? errorWidget,
   }) {
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       width: width,
       height: height,
       fit: fit,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return placeholder ?? const CircularProgressIndicator();
-      },
-      errorBuilder: (context, error, stackTrace) {
-        return errorWidget ?? const Icon(Icons.error);
-      },
+      placeholder: (context, url) => placeholder ?? const CircularProgressIndicator(),
+      errorWidget: (context, url, error) => errorWidget ?? const Icon(Icons.error),
     );
   }
 

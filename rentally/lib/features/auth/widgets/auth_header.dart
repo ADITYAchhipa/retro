@@ -15,6 +15,12 @@ class AuthHeader extends StatelessWidget {
   
   /// Callback function when back button is pressed
   final VoidCallback? onBackPressed;
+  
+  /// Whether to center the logo/title/subtitle content (back button stays left)
+  final bool centered;
+  
+  /// Use tighter vertical spacing between logo, title, and subtitle
+  final bool compact;
 
   const AuthHeader({
     super.key,
@@ -23,6 +29,8 @@ class AuthHeader extends StatelessWidget {
     this.showLogo = true,
     this.showBackButton = false,
     this.onBackPressed,
+    this.centered = false,
+    this.compact = false,
   });
 
   @override
@@ -42,53 +50,58 @@ class AuthHeader extends StatelessWidget {
                   Icons.arrow_back_ios,
                   color: theme.colorScheme.onSurface,
                 ),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surface.withOpacity(0.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: compact ? 4 : 8),
         ],
         
         if (showLogo) ...[
           // App Logo
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.home_rounded,
-              color: Colors.white,
-              size: 32,
+          Align(
+            alignment: centered ? Alignment.center : Alignment.centerLeft,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.home_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: compact ? 12 : 32),
         ],
         
         // Welcome Title
-        Text(
-          title,
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
+        Align(
+          alignment: centered ? Alignment.center : Alignment.centerLeft,
+          child: Text(
+            title,
+            textAlign: centered ? TextAlign.center : TextAlign.start,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
         ),
         
-        const SizedBox(height: 8),
+        SizedBox(height: compact ? 2 : 8),
         
         // Subtitle
-        Text(
-          subtitle,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-            height: 1.5,
+        Align(
+          alignment: centered ? Alignment.center : Alignment.centerLeft,
+          child: Text(
+            subtitle,
+            textAlign: centered ? TextAlign.center : TextAlign.start,
+            style: (compact ? theme.textTheme.bodyMedium : theme.textTheme.bodyLarge)?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              height: 1.5,
+            ),
           ),
         ),
       ],

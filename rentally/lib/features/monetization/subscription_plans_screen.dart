@@ -172,8 +172,8 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           borderRadius: BorderRadius.circular(25),
           boxShadow: isSelected
               ? [BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 3,
                   offset: const Offset(0, 2),
                 )]
               : null,

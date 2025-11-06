@@ -301,8 +301,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 3,
             offset: const Offset(0, 2),
           ),
         ],
@@ -706,8 +706,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
         color: theme.scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 3,
             offset: const Offset(0, -2),
           ),
         ],

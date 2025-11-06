@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../services/wishlist_service.dart';
 import '../../services/listing_service.dart';
-import '../../core/utils/currency_formatter.dart';
+import '../../core/widgets/listing_vm_factory.dart';
 import '../../core/widgets/listing_card.dart';
 import '../../core/widgets/listing_card_list.dart';
+import '../../core/neo/neo.dart';
+import '../../core/theme/enterprise_dark_theme.dart';
+import '../../core/theme/enterprise_light_theme.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Modular Wishlist Screen with Industrial-Grade Features
 class ModularWishlistScreen extends ConsumerStatefulWidget {
@@ -24,11 +28,14 @@ class _ModularWishlistScreenState
   
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  late AnimationController _staggerController;
   
   bool _isLoading = true;
   String? _error;
   bool _isGridView = true; // default to grid view
   String _sortBy = 'recent';
+  bool _showControls = true;
+  double _lastScrollOffset = 0;
   
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey();
   final _scrollController = ScrollController();
@@ -41,6 +48,7 @@ class _ModularWishlistScreenState
   void initState() {
     super.initState();
     _initializeAnimations();
+    _scrollController.addListener(_onScroll);
     // Ensure listings are refreshed once the screen mounts
     Future.microtask(() => ref.read(listingProvider.notifier).refreshListings());
     // Loading is managed by providers; ensure local flag does not block UI
@@ -110,18 +118,26 @@ class _ModularWishlistScreenState
       return state;
     }
 
-    return ListingViewModel(
+    // Determine proper unit based on owner-selected unit (from ListingService.Listing)
+    final bool isVehicle = (type == 'vehicle');
+    final String ru = (item['rentalUnit']?.toString().toLowerCase() ?? '').trim();
+    final String unit = isVehicle ? (ru.isNotEmpty ? ru : 'day') : (ru.isNotEmpty ? ru : 'month');
+    final double amount = (item['price'] is num) ? (item['price'] as num).toDouble() : 0.0;
+
+    return ListingViewModelFactory.fromRaw(
+      ref,
       id: item['id'] as String,
       title: item['title']?.toString() ?? '',
       location: pickLocation(item),
-      priceLabel: CurrencyFormatter.formatPricePerUnit((item['price'] as num).toDouble(), 'night'),
+      price: amount,
+      rentalUnit: unit,
       imageUrl: pickImage(item),
       rating: (item['rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (item['reviews'] ?? item['reviewCount']) as int?,
       chips: [cap(type)],
       metaItems: metas,
-      isVehicle: (type == 'vehicle'),
-      badges: const [],
+      fallbackIcon: isVehicle ? Icons.directions_car : Icons.home,
+      isVehicle: isVehicle,
       isFavorite: true,
     );
   }
@@ -134,63 +150,225 @@ class _ModularWishlistScreenState
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
+    _staggerController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
     _fadeController.forward();
+    _staggerController.forward();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    
+    final currentOffset = _scrollController.offset;
+    
+    // Always show controls when near the top (extended comfort zone)
+    if (currentOffset < 100) {
+      if (!_showControls) {
+        setState(() {
+          _showControls = true;
+        });
+      }
+      _lastScrollOffset = currentOffset;
+      return;
+    }
+    
+    final delta = currentOffset - _lastScrollOffset;
+    
+    // Ultra-responsive threshold (6px) with smooth triggering
+    if (delta.abs() > 6) {
+      // Scrolling down (offset increasing) = gracefully hide controls
+      // Scrolling up (offset decreasing) = instantly reveal controls
+      final shouldShow = delta < 0;
+      
+      // Only trigger state change if needed (prevents unnecessary rebuilds)
+      if (shouldShow != _showControls) {
+        setState(() {
+          _showControls = shouldShow;
+        });
+      }
+      
+      // Continuous offset tracking for buttery-smooth transitions
+      _lastScrollOffset = currentOffset;
+    }
   }
 
   // _loadWishlist() removed: wishlist now derives from providers (listingProvider, wishlistProvider)
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: _isLoading ? _buildLoadingState() : _buildContent(),
+      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildModernHeader(theme, isDark),
+            Container(
+              height: 1,
+              color: isDark ? theme.colorScheme.background : Colors.white,
+            ),
+            Expanded(
+              child: _isLoading ? _buildLoadingState() : _buildContent(),
+            ),
+          ],
+        ),
+      ),
       bottomNavigationBar: _selectedItems.isNotEmpty
-          ? _buildSelectionBar(Theme.of(context))
+          ? _buildSelectionBar(theme)
           : null,
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    final theme = Theme.of(context);
-    return AppBar(
-      title: const Text('Wishlist'),
-      backgroundColor: theme.colorScheme.surface,
-      elevation: 0,
-      toolbarHeight: 44,
-      actions: [
-        IconButton(
-          tooltip: _isGridView ? 'List view' : 'Grid view',
-          icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-          onPressed: () => setState(() => _isGridView = !_isGridView),
-        ),
-        PopupMenuButton<String>(
-          tooltip: 'Sort',
-          initialValue: _sortBy,
-          onSelected: (value) => setState(() => _sortBy = value),
-          itemBuilder: (context) => const [
-            PopupMenuItem(value: 'recent', child: Text('Recently Added')),
-            PopupMenuItem(value: 'price_low', child: Text('Price: Low to High')),
-            PopupMenuItem(value: 'price_high', child: Text('Price: High to Low')),
-            PopupMenuItem(value: 'rating', child: Text('Highest Rated')),
-          ],
-          child: const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Icon(Icons.sort),
+  Widget _buildModernHeader(ThemeData theme, bool isDark) {
+    final wishlistCount = ref.watch(wishlistProvider).wishlistIds.length;
+    // Compute counts to render filter chips inside the pinned header
+    final listingState = ref.watch(listingProvider);
+    final wishlistState = ref.watch(wishlistProvider);
+    final items = _computeBaseItems(listingState, wishlistState);
+    final int allCount = items.length;
+    final int propertyCount = items
+        .where((i) => (i['type'] ?? '').toString().toLowerCase() != 'vehicle')
+        .length;
+    final int vehicleCount = items
+        .where((i) => (i['type'] ?? '').toString().toLowerCase() == 'vehicle')
+        .length;
+    
+    return NeoGlass(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      margin: EdgeInsets.zero,
+      borderRadius: BorderRadius.zero,
+      backgroundColor: isDark
+          ? Colors.white.withOpacity(0.08)
+          : Colors.white,
+      borderColor: Colors.transparent,
+      borderWidth: 0,
+      blur: isDark ? 12 : 0,
+      boxShadow: isDark
+          ? [
+              ...NeoDecoration.shadows(
+                context,
+                distance: 5,
+                blur: 14,
+                spread: 0.2,
+              ),
+              BoxShadow(
+                color: (isDark
+                        ? EnterpriseDarkTheme.primaryAccent
+                        : EnterpriseLightTheme.primaryAccent)
+                    .withOpacity(isDark ? 0.16 : 0.10),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+                spreadRadius: 0.1,
+              ),
+            ]
+          : const [],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title Row
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.wishlist,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    if (wishlistCount > 0)
+                      Text(
+                        '$wishlistCount ${wishlistCount == 1 ? "item" : "items"}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? Colors.white60 : Colors.grey[600],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildControlButton(
+                    icon: _isGridView ? Icons.view_list : Icons.grid_view,
+                    label: _isGridView ? 'List' : 'Grid',
+                    onTap: () => setState(() => _isGridView = !_isGridView),
+                    theme: theme,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildSortButton(theme, isDark),
+                  const SizedBox(width: 8),
+                  if (wishlistCount > 0)
+                    IconButton(
+                      tooltip: AppLocalizations.of(context)!.clearAll,
+                      icon: const Icon(Icons.delete_sweep_outlined, size: 22),
+                      onPressed: _clearAll,
+                      color: isDark ? Colors.white70 : theme.primaryColor,
+                    ),
+                ],
+              ),
+            ],
           ),
-        ),
-        if (ref.watch(wishlistProvider).wishlistIds.isNotEmpty)
-          IconButton(
-            tooltip: 'Clear all',
-            icon: const Icon(Icons.delete_sweep_outlined),
-            onPressed: _clearAll,
+          const SizedBox(height: 4),
+          // Pinned filter chips row (moved from scrolling content)
+          Row(
+            children: [
+              Expanded(child: _buildModernFilterChip('All', 'all', allCount, theme, isDark)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildModernFilterChip('Properties', 'property', propertyCount, theme, isDark)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildModernFilterChip('Vehicles', 'vehicle', vehicleCount, theme, isDark)),
+            ],
           ),
-        if (_selectedItems.isNotEmpty)
-          IconButton(
-            tooltip: 'Remove selected',
-            icon: const Icon(Icons.delete),
-            onPressed: _showDeleteDialog,
-          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    return IconButton(
+      tooltip: label,
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        size: 20,
+        color: isDark ? Colors.white70 : theme.primaryColor,
+      ),
+    );
+  }
+
+  Widget _buildSortButton(ThemeData theme, bool isDark) {
+    return PopupMenuButton<String>(
+      tooltip: 'Sort',
+      initialValue: _sortBy,
+      onSelected: (value) => setState(() => _sortBy = value),
+      offset: const Offset(0, 40),
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: 'recent', child: Text('Recently Added')),
+        PopupMenuItem(value: 'price_low', child: Text('Price: Low → High')),
+        PopupMenuItem(value: 'price_high', child: Text('Price: High → Low')),
+        PopupMenuItem(value: 'rating', child: Text('Highest Rated')),
       ],
+      icon: Icon(
+        Icons.sort,
+        size: 20,
+        color: isDark ? Colors.white70 : theme.primaryColor,
+      ),
     );
   }
 
@@ -220,9 +398,9 @@ class _ModularWishlistScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildTopBar(Theme.of(context)),
+              // Filter chips are now pinned in the header; removed top bar from scroll content
               ResponsiveLayout(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+                padding: const EdgeInsets.only(left: 10, right: 10, top: 8, bottom: 12),
                 child: sortedItems.isEmpty
                     ? _buildEmptyState()
                     : _isGridView
@@ -247,6 +425,7 @@ class _ModularWishlistScreenState
           'title': l.title,
           'location': '${l.city}, ${l.state}',
           'price': l.price,
+          'rentalUnit': l.rentalUnit,
           'rating': l.rating ?? 0.0,
           'reviews': l.reviewCount,
           'image': l.images.isNotEmpty ? l.images.first : null,
@@ -262,70 +441,140 @@ class _ModularWishlistScreenState
   }
 
 Widget _buildTopBar(ThemeData theme) {
-  return MediaQuery.removePadding(
-    context: context,
-    removeLeft: true,
-    removeRight: true,
-    removeTop: false,
-    removeBottom: false,
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(0, 6, 0, 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: theme.dividerColor.withOpacity(0.4)),
+  final isDark = theme.brightness == Brightness.dark;
+  final listingState = ref.watch(listingProvider);
+  final wishlistState = ref.watch(wishlistProvider);
+  final items = _computeBaseItems(listingState, wishlistState);
+  
+  // Count items by category
+  int allCount = items.length;
+  int propertyCount = items.where((i) => (i['type'] ?? '').toString().toLowerCase() != 'vehicle').length;
+  int vehicleCount = items.where((i) => (i['type'] ?? '').toString().toLowerCase() == 'vehicle').length;
+  
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+    decoration: BoxDecoration(
+      color: isDark ? theme.colorScheme.background : Colors.white,
+      border: Border(
+        bottom: BorderSide(
+          color: isDark 
+              ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.3)
+              : theme.dividerColor.withOpacity(0.2),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Center(child: _buildFilterChip('All', 'all'))),
-              Expanded(child: Center(child: _buildFilterChip('Properties', 'property'))),
-              Expanded(child: Center(child: _buildFilterChip('Vehicles', 'vehicle'))),
-            ],
-          ),
-          const SizedBox(height: 4),
-        ],
-      ),
+    ),
+    child: Row(
+      children: [
+        Expanded(child: _buildModernFilterChip('All', 'all', allCount, theme, isDark)),
+        const SizedBox(width: 8),
+        Expanded(child: _buildModernFilterChip('Properties', 'property', propertyCount, theme, isDark)),
+        const SizedBox(width: 8),
+        Expanded(child: _buildModernFilterChip('Vehicles', 'vehicle', vehicleCount, theme, isDark)),
+      ],
     ),
   );
   }
 
-  Widget _buildFilterChip(String label, String value) {
-    final theme = Theme.of(context);
+  Widget _buildModernFilterChip(String label, String value, int count, ThemeData theme, bool isDark) {
     final selected = _category == value;
-    return ChoiceChip(
-      label: Text(label, style: theme.textTheme.bodySmall),
-      selected: selected,
-      onSelected: (_) => setState(() => _category = value),
-      selectedColor: theme.colorScheme.primary.withOpacity(0.15),
-      labelStyle: theme.textTheme.bodySmall?.copyWith(
-        color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-        fontWeight: FontWeight.w600,
+    
+    return AnimatedScale(
+      scale: selected ? 1.0 : 0.96,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      child: GestureDetector(
+        onTap: () => setState(() => _category = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? theme.colorScheme.primary
+                : (isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? theme.colorScheme.primary
+                  : (isDark
+                      ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
+                      : theme.colorScheme.outline.withOpacity(0.2)),
+              width: 1.2,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+                      blurRadius: 8,
+                      offset: const Offset(-4, -4),
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: (isDark
+                              ? EnterpriseDarkTheme.primaryAccent
+                              : EnterpriseLightTheme.primaryAccent)
+                          .withOpacity(isDark ? 0.15 : 0.10),
+                      blurRadius: 8,
+                      offset: const Offset(4, 4),
+                      spreadRadius: 0,
+                    ),
+                  ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: selected ? Colors.white : (isDark ? Colors.white70 : theme.colorScheme.onSurface),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              if (count > 0) ...[
+                const SizedBox(width: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withOpacity(0.25)
+                        : theme.colorScheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: TextStyle(
+                      color: selected ? Colors.white : theme.colorScheme.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
-      side: BorderSide(
-        color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.5),
-        width: 1.2,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
   Widget _buildLoadingState() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: ListView.builder(
-        itemCount: 6,
-        itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: LoadingStates.propertyCardSkeleton(context),
-        ),
-      ),
-    );
+    return LoadingStates.listShimmer(context, itemCount: 6);
   }
 
   Widget _buildErrorState() {
@@ -338,7 +587,7 @@ Widget _buildTopBar(ThemeData theme) {
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Error Loading Wishlist',
+              AppLocalizations.of(context)!.error,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
@@ -357,7 +606,7 @@ Widget _buildTopBar(ThemeData theme) {
                 ref.read(listingProvider.notifier).refreshListings();
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context)!.retry),
             ),
           ],
         ),
@@ -366,30 +615,78 @@ Widget _buildTopBar(ThemeData theme) {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.favorite_border, size: 64),
-            const SizedBox(height: 16),
-            Text(
-              'Your Wishlist is Empty',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Start exploring and save your favorite properties',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/search'),
-              icon: const Icon(Icons.search),
-              label: const Text('Explore Properties'),
-            ),
-          ],
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.favorite_border,
+                        size: 64,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                AppLocalizations.of(context)!.emptyWishlist,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                AppLocalizations.of(context)!.emptyWishlistDesc,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: isDark ? Colors.white60 : Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              AnimatedScale(
+                scale: 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: ElevatedButton.icon(
+                  onPressed: () => context.push('/search'),
+                  icon: const Icon(Icons.search, size: 20),
+                  label: Text(AppLocalizations.of(context)!.startExploring),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -403,32 +700,82 @@ Widget _buildTopBar(ThemeData theme) {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return _buildListCard(item);
+        final progress = index / items.length;
+        final delay = (progress * 400).toInt();
+        
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 600 + delay),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: child,
+              ),
+            );
+          },
+          child: Dismissible(
+            key: Key(item['id'] as String),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete, color: Colors.white, size: 28),
+            ),
+            confirmDismiss: (direction) async {
+              return await _showRemoveDialog(item['id'] as String);
+            },
+            onDismissed: (direction) {
+              ref.read(wishlistProvider.notifier).removeFromWishlist(item['id'] as String);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Removed from wishlist'),
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    onPressed: () {
+                      ref.read(wishlistProvider.notifier).addToWishlist(item['id'] as String);
+                    },
+                  ),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
+            child: _buildListCard(item),
+          ),
+        );
       },
     );
   }
 
   Widget _buildGridView(List<Map<String, dynamic>> items) {
     return LayoutBuilder(builder: (context, constraints) {
-      // Use 2 columns on desktop/tablet widths, 1 on phones
-      final bool isPhoneWidth = constraints.maxWidth < 600;
-      final int crossAxisCount = isPhoneWidth ? 1 : 2;
-      const spacing = 12.0; // consistent with search grid spacing
-      final cellWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
-
-      // Match ListingCard's image (2:1) + info base heights
-      final imageHeight = cellWidth / 2; // AspectRatio 2.0 -> height = width/2
+      final double w = constraints.maxWidth;
+      // 1-up grid: always a single column regardless of width
+      const int crossAxisCount = 1;
+      const spacing = 12.0;
+      final cellWidth = (w - spacing * (crossAxisCount - 1)) / crossAxisCount;
+      final imageAspect = cellWidth > 280 ? 2.2 : 2.4;
+      final imageHeight = cellWidth / imageAspect;
       double infoBase;
       if (cellWidth >= 260) {
-        infoBase = 104.0;
+        infoBase = 86.0;
       } else if (cellWidth >= 220) {
-        infoBase = 96.0;
+        infoBase = 80.0;
       } else {
-        infoBase = 90.0;
+        infoBase = 74.0;
       }
-      const contentAllowance = 48.0; // increased to prevent bottom overflow (meta row + share + spacing buffer)
+      const contentAllowance = 20.0;
       const borderExtra = 8.0;
-      final itemHeight = imageHeight + infoBase + contentAllowance + borderExtra;
+      final textScale = MediaQuery.textScalerOf(context).scale(16.0) / 16.0;
+      final textScalePad = textScale > 1.0 ? (textScale - 1.0) * 16.0 : 0.0;
+      final itemHeight = imageHeight + infoBase + contentAllowance + borderExtra + textScalePad;
 
       return GridView.builder(
         shrinkWrap: true,
@@ -443,10 +790,100 @@ Widget _buildTopBar(ThemeData theme) {
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
-          return _buildGridCard(item);
+          final progress = index / items.length;
+          final delay = (progress * 400).toInt();
+          
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 600 + delay),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.scale(
+                  scale: 0.8 + (0.2 * value),
+                  child: child,
+                ),
+              );
+            },
+            child: _buildGridCard(item),
+          );
         },
       );
     });
+  }
+
+  Future<bool?> _showRemoveDialog(String itemId) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.favorite_border_rounded, color: Colors.red, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Remove from Wishlist?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.delete_outline_rounded,
+              size: 60,
+              color: Colors.red.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This item will be removed from your wishlist.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            child: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      ),
+    );
   }
 
   Widget _buildListCard(Map<String, dynamic> item) {
@@ -470,11 +907,11 @@ Widget _buildTopBar(ThemeData theme) {
             isDark: isDark,
             width: w,
             margin: EdgeInsets.zero,
+            onTap: () => _navigateToDetail(item['id'] as String),
+            onLongPress: () => _toggleSelection(item['id'] as String),
             chipOnImage: false,
             showInfoChip: false,
             chipBelowImage: true,
-            onTap: () => _navigateToDetail(item['id'] as String),
-            onLongPress: () => _toggleSelection(item['id'] as String),
           );
         },
       ),
@@ -570,17 +1007,80 @@ Widget _buildTopBar(ThemeData theme) {
   
 
   void _showDeleteDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Selected Items'),
-        content: Text('Remove ${_selectedItems.length} items from your wishlist?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete_sweep_rounded, color: Colors.orange, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Remove Selected Items',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.checklist_rounded, color: theme.colorScheme.primary, size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${_selectedItems.length} items selected',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Remove these items from your wishlist?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
-          TextButton(
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
               final toRemove = List<String>.from(_selectedItems);
@@ -589,14 +1089,32 @@ Widget _buildTopBar(ThemeData theme) {
               }
               _selectedItems.clear();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Selected items removed from wishlist'),
+                SnackBar(
+                  content: const Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text('Selected items removed'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               );
             },
-            child: const Text('Remove'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.delete_sweep_rounded, size: 20),
+            label: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       ),
     );
   }
@@ -604,28 +1122,103 @@ Widget _buildTopBar(ThemeData theme) {
   void _clearAll() {
     final currentIds = ref.read(wishlistProvider).wishlistIds;
     if (currentIds.isEmpty) return;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Wishlist'),
-        content: const Text('Remove all items from your wishlist?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)!.clearWishlist,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.heart_broken_rounded,
+              size: 60,
+              color: Colors.red.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context)!.clearWishlistConfirm,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.white70 : Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This action cannot be undone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.red.withOpacity(0.8),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
-          TextButton(
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
               ref.read(wishlistProvider.notifier).clearWishlist();
               _selectedItems.clear();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Wishlist cleared')),
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.wishlistCleared),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               );
             },
-            child: const Text('Clear'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.delete_forever_rounded, size: 20),
+            label: Text(AppLocalizations.of(context)!.clear, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       ),
     );
   }
@@ -640,7 +1233,7 @@ Widget _buildTopBar(ThemeData theme) {
           color: theme.colorScheme.surface,
           border: Border(top: BorderSide(color: theme.dividerColor.withOpacity(0.4))),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, -2)),
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 3, offset: const Offset(0, -2)),
           ],
         ),
         child: Row(
@@ -650,17 +1243,17 @@ Widget _buildTopBar(ThemeData theme) {
             TextButton.icon(
               onPressed: _showDeleteDialog,
               icon: const Icon(Icons.delete_outline),
-              label: const Text('Remove'),
+              label: Text(AppLocalizations.of(context)!.delete),
             ),
             const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sharing selected items...')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.share)),
                 );
               },
               icon: const Icon(Icons.share_outlined),
-              label: const Text('Share'),
+              label: Text(AppLocalizations.of(context)!.share),
             ),
             const SizedBox(width: 8),
             OutlinedButton(
@@ -677,6 +1270,7 @@ Widget _buildTopBar(ThemeData theme) {
               },
               child: Text(_selectedItems.length == items.length ? 'Clear selection' : 'Select all'),
             ),
+            const SizedBox(width: 8),
           ],
         ),
       ),
@@ -686,6 +1280,7 @@ Widget _buildTopBar(ThemeData theme) {
   @override
   void dispose() {
     _fadeController.dispose();
+    _staggerController.dispose();
     _scrollController.dispose();
     super.dispose();
   }

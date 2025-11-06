@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/validators/form_validators.dart';
-import '../../widgets/loading_states.dart';
+import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/utils/currency_formatter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Industrial-grade payment screen with complete UI flow
 class PaymentScreen extends ConsumerStatefulWidget {
@@ -209,51 +210,47 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Secure Payment'),
+        title: Text(AppLocalizations.of(context)!.payment),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: Stack(
-        children: [
-          ResponsiveLayout(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildBookingSummary(theme, isDark),
-                        const SizedBox(height: 24),
-                        _buildPaymentMethods(theme, isDark),
-                        const SizedBox(height: 24),
-                        if (_selectedPaymentMethod == 'card')
-                          _buildCardPaymentForm(theme, isDark),
-                        if (_selectedPaymentMethod == 'paypal')
-                          _buildPayPalOption(theme, isDark),
-                        if (_selectedPaymentMethod == 'bank')
-                          _buildBankTransferOption(theme, isDark),
-                        const SizedBox(height: 24),
-                        _buildTermsAndConditions(theme),
-                        const SizedBox(height: 24),
-                        _buildPayButton(theme),
-                        const SizedBox(height: 32),
-                        _buildSecurityBadges(theme),
-                      ],
-                    ),
+      body: LoadingOverlay(
+        isLoading: _isProcessing,
+        loadingText: AppLocalizations.of(context)!.loading,
+        child: ResponsiveLayout(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildBookingSummary(theme, isDark),
+                      const SizedBox(height: 24),
+                      _buildPaymentMethods(theme, isDark),
+                      const SizedBox(height: 24),
+                      if (_selectedPaymentMethod == 'card')
+                        _buildCardPaymentForm(theme, isDark),
+                      if (_selectedPaymentMethod == 'paypal')
+                        _buildPayPalOption(theme, isDark),
+                      if (_selectedPaymentMethod == 'bank')
+                        _buildBankTransferOption(theme, isDark),
+                      const SizedBox(height: 24),
+                      _buildTermsAndConditions(theme),
+                      const SizedBox(height: 24),
+                      _buildPayButton(theme),
+                      const SizedBox(height: 32),
+                      _buildSecurityBadges(theme),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-          if (_isProcessing)
-            LoadingStates.fullScreenLoader(
-              message: 'Processing payment...',
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -270,7 +267,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Booking Summary',
+              AppLocalizations.of(context)!.bookingDetails,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -301,7 +298,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Booking ID: ${widget.bookingId}',
+                  '${AppLocalizations.of(context)!.bookingId}: ${widget.bookingId}',
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
@@ -311,7 +308,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total Amount',
+                  AppLocalizations.of(context)!.totalAmount,
                   style: theme.textTheme.titleMedium,
                 ),
                 Text(
@@ -334,7 +331,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Payment Method',
+          AppLocalizations.of(context)!.paymentMethod,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -347,7 +344,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                 theme,
                 'card',
                 Icons.credit_card,
-                'Credit/Debit Card',
+                AppLocalizations.of(context)!.creditCard,
               ),
             ),
             const SizedBox(width: 12),
@@ -356,7 +353,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                 theme,
                 'paypal',
                 Icons.payment,
-                'PayPal',
+                AppLocalizations.of(context)!.paypal,
               ),
             ),
             const SizedBox(width: 12),
@@ -439,7 +436,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
               LengthLimitingTextInputFormatter(16),
             ],
             decoration: InputDecoration(
-              labelText: 'Card Number',
+              labelText: AppLocalizations.of(context)!.cardNumber,
               hintText: '1234 5678 9012 3456',
               prefixIcon: const Icon(Icons.credit_card),
               suffixIcon: _cardType.isNotEmpty
@@ -465,7 +462,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             controller: _cardHolderController,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Card Holder Name',
+              labelText: AppLocalizations.of(context)!.cardholderName,
               hintText: 'John Doe',
               prefixIcon: const Icon(Icons.person),
               border: OutlineInputBorder(
@@ -491,7 +488,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                     LengthLimitingTextInputFormatter(4),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Expiry Date',
+                    labelText: AppLocalizations.of(context)!.expiryDate,
                     hintText: 'MM/YY',
                     prefixIcon: const Icon(Icons.calendar_today),
                     border: OutlineInputBorder(
@@ -512,7 +509,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                     LengthLimitingTextInputFormatter(4),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'CVV',
+                    labelText: AppLocalizations.of(context)!.cvv,
                     hintText: '123',
                     prefixIcon: const Icon(Icons.lock),
                     border: OutlineInputBorder(
@@ -531,7 +528,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              labelText: 'Email Address',
+              labelText: AppLocalizations.of(context)!.email,
               hintText: 'john@example.com',
               prefixIcon: const Icon(Icons.email),
               border: OutlineInputBorder(
@@ -547,7 +544,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             controller: _billingAddressController,
             maxLines: 2,
             decoration: InputDecoration(
-              labelText: 'Billing Address',
+              labelText: AppLocalizations.of(context)!.billingAddress,
               hintText: '123 Main St, City, State',
               prefixIcon: const Icon(Icons.location_on),
               border: OutlineInputBorder(
@@ -563,7 +560,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             controller: _postalCodeController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: 'Postal Code',
+              labelText: AppLocalizations.of(context)!.zipCode,
               hintText: '12345',
               prefixIcon: const Icon(Icons.local_post_office),
               border: OutlineInputBorder(
@@ -706,13 +703,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           _agreeToTerms = value ?? false;
         });
       },
-      title: const Text('I agree to the terms and conditions'),
+      title: Text(AppLocalizations.of(context)!.agreeTerms),
       subtitle: InkWell(
         onTap: () {
           // Show terms and conditions
         },
         child: Text(
-          'Read terms and conditions',
+          AppLocalizations.of(context)!.termsOfService,
           style: TextStyle(
             color: theme.primaryColor,
             decoration: TextDecoration.underline,
@@ -737,7 +734,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           ),
         ),
         child: Text(
-          'Pay ${CurrencyFormatter.formatPrice(widget.amount)}',
+          '${AppLocalizations.of(context)!.payNow} • ${CurrencyFormatter.formatPrice(widget.amount)}',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -789,16 +786,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Payment Successful!',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.paymentCompleted,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Your booking has been confirmed',
+              AppLocalizations.of(context)!.bookingConfirmed,
               style: TextStyle(
                 color: Colors.grey.shade600,
               ),
@@ -817,7 +814,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('View Booking'),
+                child: Text(AppLocalizations.of(context)!.viewBooking),
               ),
             ),
           ],

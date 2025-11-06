@@ -42,6 +42,7 @@ class _PropertyGalleryWidgetState extends ConsumerState<PropertyGalleryWidget> {
           },
         )
         .whenComplete(() {
+      if (!mounted) return;
       ref.read(immersiveRouteOpenProvider.notifier).state = prev;
     });
   }

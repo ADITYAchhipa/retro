@@ -9,6 +9,9 @@ class PropertyModel {
   final double longitude;
   final double pricePerNight;
   final double pricePerDay;
+  final double? pricePerMonth;
+  final double? leasePrice;
+  final double? discountPercent;
   final PropertyType type;
   final String ownerId;
   final String ownerName;
@@ -35,6 +38,9 @@ class PropertyModel {
     required this.longitude,
     required this.pricePerNight,
     required this.pricePerDay,
+    this.pricePerMonth,
+    this.leasePrice,
+    this.discountPercent,
     required this.type,
     required this.ownerId,
     required this.ownerName,
@@ -95,6 +101,15 @@ class PropertyModel {
     final double longitude = toDouble(json['longitude'] ?? json['lng'] ?? json['long']);
     final double pricePerNight = toDouble(json['pricePerNight'] ?? json['price'] ?? json['nightPrice']);
     final double pricePerDay = toDouble(json['pricePerDay'] ?? json['dayPrice'] ?? 0);
+    final double? pricePerMonth = (json.containsKey('pricePerMonth') || json.containsKey('monthlyRent') || json.containsKey('monthlyPrice'))
+        ? toDouble(json['pricePerMonth'] ?? json['monthlyRent'] ?? json['monthlyPrice'])
+        : null;
+    final double? leasePrice = (json.containsKey('leasePrice') || json.containsKey('lease') || json.containsKey('lease_amount'))
+        ? toDouble(json['leasePrice'] ?? json['lease'] ?? json['lease_amount'])
+        : null;
+    final double? discountPercent = (json.containsKey('discountPercent') || json.containsKey('discount'))
+        ? toDouble(json['discountPercent'] ?? json['discount'])
+        : null;
     final PropertyType type = PropertyType.values.firstWhere(
       (e) => e.name == (json['type']?.toString().toLowerCase() ?? ''),
       orElse: () => PropertyType.apartment,
@@ -131,6 +146,9 @@ class PropertyModel {
       longitude: longitude,
       pricePerNight: pricePerNight,
       pricePerDay: pricePerDay,
+      pricePerMonth: pricePerMonth,
+      leasePrice: leasePrice,
+      discountPercent: discountPercent,
       type: type,
       ownerId: ownerId,
       ownerName: ownerName,
@@ -160,6 +178,9 @@ class PropertyModel {
       'longitude': longitude,
       'pricePerNight': pricePerNight,
       'pricePerDay': pricePerDay,
+      if (pricePerMonth != null) 'pricePerMonth': pricePerMonth,
+      if (leasePrice != null) 'leasePrice': leasePrice,
+      if (discountPercent != null) 'discountPercent': discountPercent,
       'type': type.name,
       'ownerId': ownerId,
       'ownerName': ownerName,
@@ -188,6 +209,9 @@ class PropertyModel {
     double? longitude,
     double? pricePerNight,
     double? pricePerDay,
+    double? pricePerMonth,
+    double? leasePrice,
+    double? discountPercent,
     PropertyType? type,
     String? ownerId,
     String? ownerName,
@@ -214,6 +238,9 @@ class PropertyModel {
       longitude: longitude ?? this.longitude,
       pricePerNight: pricePerNight ?? this.pricePerNight,
       pricePerDay: pricePerDay ?? this.pricePerDay,
+      pricePerMonth: pricePerMonth ?? this.pricePerMonth,
+      leasePrice: leasePrice ?? this.leasePrice,
+      discountPercent: discountPercent ?? this.discountPercent,
       type: type ?? this.type,
       ownerId: ownerId ?? this.ownerId,
       ownerName: ownerName ?? this.ownerName,

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as pv;
 import 'app_state.dart' hide UserRole;
-import '../features/listing/modular_listing_detail_screen.dart';
 import '../core/providers/user_provider.dart';
 import '../core/database/models/user_model.dart';
 import '../core/providers/ui_visibility_provider.dart';
@@ -58,6 +57,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         }
 
         final currentRole = (userProvider.currentUser?.role ?? desiredRole);
+        debugPrint('[MainShell] Building with role: ${currentRole.name}, location: $location');
         
         final items = currentRole == UserRole.owner
         ? const [
@@ -76,7 +76,6 @@ class _MainShellState extends ConsumerState<MainShell> {
           ];
 
         int currentIndex = _indexForLocation(currentRole, location);
-        final bool isDetailScreen = widget.child is ModularListingDetailScreen;
         final bool immersiveOpen = ref.watch(immersiveRouteOpenProvider);
         // Only show the bottom bar on the main tab root routes for the active role
         final Set<String> seekerTabs = {
@@ -88,8 +87,11 @@ class _MainShellState extends ConsumerState<MainShell> {
         final bool onPrimaryTab = (currentRole == UserRole.owner)
             ? ownerTabs.contains(location)
             : seekerTabs.contains(location);
-        // Do not auto-clear immersive flag here; overlay routes manage it explicitly.
-        final bool hideBottomBar = immersiveOpen || !onPrimaryTab || isDetailScreen;
+        // On primary tab roots, always show bottom bar regardless of immersive flag.
+        // This prevents cases where an immersive route forgets to reset the flag
+        // and avoids mutating providers during build.
+        final bool effectiveImmersive = onPrimaryTab ? false : immersiveOpen;
+        final bool hideBottomBar = effectiveImmersive || !onPrimaryTab;
 
         // Debug: log route and visibility (debug builds only)
         assert(() {
@@ -103,7 +105,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         return Scaffold(
           extendBody: true,
           appBar: null,
-          body: RepaintBoundary(child: widget.child),
+          body: widget.child,
           floatingActionButton: showChatFab
               ? FloatingActionButton(
                   heroTag: null,

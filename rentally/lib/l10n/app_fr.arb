@@ -116,5 +116,6 @@
   "fieldRequired": "Ce champ est obligatoire",
   "invalidInput": "Saisie invalide",
   "selectAtLeastOneImage": "Veuillez sélectionner au moins une image",
-  "maxImagesExceeded": "Maximum {count} images autorisées"
+  "maxImagesExceeded": "Maximum {count} images autorisées",
+  "checkAvailability": "Vérifier la disponibilité"
 }

@@ -17,6 +17,7 @@ class KYCVerificationScreen extends ConsumerStatefulWidget {
 class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
+  int _furthestStep = 0; // highest index user has reached
   bool _isLoading = false;
   
   // Document verification
@@ -97,7 +98,11 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
               Expanded(
                 child: PageView(
                   controller: _pageController,
-                  onPageChanged: (index) => setState(() => _currentStep = index),
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (index) => setState(() {
+                    _currentStep = index;
+                    if (_furthestStep < index) _furthestStep = index;
+                  }),
                   children: [
                     _buildWelcomeStep(theme),
                     _buildPersonalInfoStep(theme),
@@ -119,58 +124,112 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   }
 
   Widget _buildProgressIndicator(ThemeData theme) {
+    // Modern chip-based horizontal step header
+    final labels = ['Welcome', 'Info', 'Document', 'Photos', 'Selfie', 'Review', 'Submit'];
+    final icons = <IconData>[
+      Icons.info_outline,
+      Icons.person_outline,
+      Icons.credit_card,
+      Icons.document_scanner_outlined,
+      Icons.camera_alt_outlined,
+      Icons.fact_check_outlined,
+      Icons.check_circle_outline,
+    ];
+
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: List.generate(7, (index) {
-          final isActive = index <= _currentStep;
-          final isCompleted = index < _currentStep;
-          
-          return Expanded(
-            child: Container(
-              height: 4,
-              margin: EdgeInsets.only(right: index < 6 ? 8 : 0),
-              decoration: BoxDecoration(
-                color: isCompleted 
-                  ? theme.colorScheme.primary
-                  : isActive 
-                    ? theme.colorScheme.primary.withOpacity(0.5)
-                    : theme.colorScheme.outline.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(bottom: BorderSide(color: theme.dividerColor.withOpacity(0.4))),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(labels.length, (i) {
+            final bool isActive = i == _currentStep;
+            final bool isCompleted = i < _currentStep;
+            final bool canTap = i <= _furthestStep;
+            final Color bg = isActive
+                ? theme.colorScheme.primary.withOpacity(0.12)
+                : (isCompleted
+                    ? theme.colorScheme.primary.withOpacity(0.08)
+                    : theme.colorScheme.surfaceVariant.withOpacity(0.5));
+            final Color fg = (isActive || isCompleted)
+                ? theme.colorScheme.primary
+                : (theme.textTheme.bodySmall?.color ?? Colors.black87);
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: canTap
+                    ? () {
+                        if (_pageController.hasClients) {
+                          _pageController.animateToPage(
+                            i,
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      }
+                    : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: isActive ? theme.colorScheme.primary : theme.dividerColor.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icons[i], size: 14, color: fg.withOpacity(canTap ? 1 : 0.6)),
+                      const SizedBox(width: 6),
+                      Text(
+                        labels[i],
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: fg.withOpacity(canTap ? 1 : 0.6),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
 
   Widget _buildWelcomeStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.verified_user,
-            size: 80,
+            size: 56,
             color: theme.colorScheme.primary,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Text(
             'Verify Your Identity',
-            style: theme.textTheme.headlineMedium?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Text(
             'To ensure the safety and security of our platform, we need to verify your identity. This process typically takes 2-3 minutes.',
-            style: theme.textTheme.bodyLarge,
+            style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
           _buildFeatureList(theme),
         ],
       ),
@@ -187,13 +246,13 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
     return Column(
       children: features.map((feature) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
             Icon(
               Icons.check_circle,
               color: theme.colorScheme.primary,
-              size: 20,
+              size: 16,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -210,26 +269,27 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildPersonalInfoStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Personal Information',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               'Please enter your personal details as they appear on your ID document.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -239,80 +299,131 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _firstNameController,
-                            decoration: const InputDecoration(
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
                               labelText: 'First Name',
-                              border: OutlineInputBorder(),
+                              hintText: 'As on your ID',
+                              helperText: 'Enter your legal first name',
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.person_outline),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              filled: true,
+                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextFormField(
                             controller: _lastNameController,
-                            decoration: const InputDecoration(
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
                               labelText: 'Last Name',
-                              border: OutlineInputBorder(),
+                              hintText: 'As on your ID',
+                              helperText: 'Enter your legal last name',
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.person_outline),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              filled: true,
+                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     TextFormField(
                       controller: _dobController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Date of Birth',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.calendar_today),
+                        hintText: 'DD/MM/YYYY',
+                        helperText: 'You must be at least 18 years old',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.calendar_today_outlined),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                       ),
                       readOnly: true,
                       onTap: _selectDateOfBirth,
                       validator: (value) => value?.isEmpty == true ? 'Required' : null,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     TextFormField(
                       controller: _addressController,
-                      decoration: const InputDecoration(
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
                         labelText: 'Street Address',
-                        border: OutlineInputBorder(),
+                        hintText: 'House number, street, apt/suite',
+                        helperText: 'As on your ID document',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.home_outlined),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                       ),
                       validator: (value) => value?.isEmpty == true ? 'Required' : null,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
                             controller: _cityController,
-                            decoration: const InputDecoration(
+                            textInputAction: TextInputAction.next,
+                            decoration: InputDecoration(
                               labelText: 'City',
-                              border: OutlineInputBorder(),
+                              hintText: 'City / Town',
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              filled: true,
+                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextFormField(
                             controller: _postalCodeController,
-                            decoration: const InputDecoration(
+                            textInputAction: TextInputAction.next,
+                            keyboardType: TextInputType.text,
+                            decoration: InputDecoration(
                               labelText: 'Postal Code',
-                              border: OutlineInputBorder(),
+                              hintText: 'ZIP / Postal code',
+                              border: const OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.local_post_office_outlined),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              filled: true,
+                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     TextFormField(
                       controller: _countryController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Country',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.arrow_drop_down),
+                        helperText: 'Tap to select your country',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.public),
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
                       ),
                       readOnly: true,
                       onTap: _selectCountry,
@@ -330,24 +441,24 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildDocumentSelectionStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Select Document Type',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'Choose the type of government-issued ID you want to use for verification.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 8),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -359,7 +470,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     'International travel document',
                     Icons.book,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildDocumentOption(
                     theme,
                     'drivers_license',
@@ -367,7 +478,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     'Government-issued driving permit',
                     Icons.credit_card,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildDocumentOption(
                     theme,
                     'national_id',
@@ -392,15 +503,15 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
         setState(() => _selectedDocumentType = value);
         await KycService.instance.saveDocumentType(value);
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outline,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : null,
         ),
         child: Row(
@@ -408,16 +519,16 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
             Icon(
               icon,
               color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-              size: 32,
+              size: 20,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: isSelected ? theme.colorScheme.primary : null,
                     ),
@@ -444,24 +555,52 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildDocumentUploadStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Upload Document Photos',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'Take clear photos of both sides of your ${_getDocumentName()}. Ensure all text is readable.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 6),
+          Card(
+            elevation: 0,
+            color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: theme.colorScheme.tertiary.withOpacity(0.4)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 12, color: theme.colorScheme.tertiary),
+                      const SizedBox(width: 6),
+                      Text('Photo tips', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.tertiary)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text('• Good lighting, no glare', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                  Text('• Entire document in frame', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                  Text('• Text and photo clearly visible', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -473,7 +612,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     _frontIdImage,
                     () => _pickImage(ImageSource.camera, 'front'),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   if (_selectedDocumentType != 'passport')
                     _buildDocumentUploadCard(
                       theme,
@@ -494,28 +633,28 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   Widget _buildDocumentUploadCard(ThemeData theme, String title, String subtitle, File? image, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        height: 132,
-        padding: const EdgeInsets.all(16),
+        height: 96,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           border: Border.all(color: theme.colorScheme.outline),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           color: image != null ? theme.colorScheme.primary.withOpacity(0.1) : null,
         ),
         child: image != null
           ? Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   child: Image.file(
                     image,
-                    width: 80,
-                    height: 80,
+                    width: 56,
+                    height: 56,
                     fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,19 +665,19 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                           Icon(
                             Icons.check_circle,
                             color: theme.colorScheme.primary,
-                            size: 20,
+                            size: 16,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             '$title Uploaded',
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.primary,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         'Tap to retake photo',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -555,13 +694,13 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
               children: [
                 Icon(
                   Icons.camera_alt,
-                  size: 32,
+                  size: 20,
                   color: theme.colorScheme.primary,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   title,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -584,93 +723,125 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildSelfieStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Take a Selfie',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'Take a clear selfie to verify your identity matches your document.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          const SizedBox(height: 32),
-          Expanded(
-            child: Center(
-              child: _selfieImage != null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 6),
+          Card(
+            elevation: 0,
+            color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: theme.colorScheme.tertiary.withOpacity(0.4)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      ClipOval(
-                        child: Image.file(
-                          _selfieImage!,
-                          width: 200,
-                          height: 200,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
+                      Icon(Icons.info_outline, size: 12, color: theme.colorScheme.tertiary),
+                      const SizedBox(width: 6),
+                      Text('Selfie tips', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.tertiary)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text('• Face centered, well-lit background', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                  Text('• No hats, sunglasses, or filters', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                  Text('• Keep a neutral expression', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Center(
+                child: _selfieImage != null
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: theme.colorScheme.primary,
+                          ClipOval(
+                            child: Image.file(
+                              _selfieImage!,
+                              width: 128,
+                              height: 128,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Selfie captured successfully',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Selfie captured successfully',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => _pickImage(ImageSource.camera, 'selfie'),
+                            child: const Text('Retake Selfie'),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 128,
+                            height: 128,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: theme.colorScheme.primary,
+                                width: 2,
+                                style: BorderStyle.solid,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.person,
+                              size: 48,
+                              color: theme.colorScheme.primary.withOpacity(0.5),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () => _pickImage(ImageSource.camera, 'selfie'),
+                            icon: const Icon(Icons.camera_alt),
+                            label: const Text('Take Selfie'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => _pickImage(ImageSource.camera, 'selfie'),
-                        child: const Text('Retake Selfie'),
-                      ),
-                    ],
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: theme.colorScheme.primary,
-                            width: 3,
-                            style: BorderStyle.solid,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          size: 80,
-                          color: theme.colorScheme.primary.withOpacity(0.5),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.camera, 'selfie'),
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Take Selfie'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        ),
-                      ),
-                    ],
-                  ),
+              ),
             ),
           ),
         ],
@@ -680,24 +851,24 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildReviewStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Review Your Information',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'Please review all information before submitting for verification.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -713,13 +884,13 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                       'Country: ${_countryController.text}',
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildReviewSection(
                     theme,
                     'Document Type',
                     [_getDocumentName()],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildReviewSection(
                     theme,
                     'Uploaded Documents',
@@ -742,19 +913,19 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   Widget _buildReviewSection(ThemeData theme, String title, List<String> items) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(
+              style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
             ...items.map((item) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.only(bottom: 2),
               child: Text(
                 item,
                 style: theme.textTheme.bodyMedium,
@@ -768,18 +939,18 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildSubmissionStep(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (_isLoading) ...[
             const CircularProgressIndicator(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             Text(
               'Submitting for Verification...',
-              style: theme.textTheme.titleLarge,
+              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               'Please wait while we process your documents',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -789,25 +960,28 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           ] else ...[
             Icon(
               Icons.check_circle,
-              size: 80,
+              size: 48,
               color: theme.colorScheme.primary,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             Text(
               'Verification Submitted!',
-              style: theme.textTheme.headlineMedium?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
               'Your documents have been submitted for review. We\'ll notify you within 24-48 hours once verification is complete.',
-              style: theme.textTheme.bodyLarge,
+              style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
               child: const Text('Continue to App'),
             ),
           ],
@@ -818,24 +992,51 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
 
   Widget _buildNavigationButtons(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (_currentStep > 0 && _currentStep < 6)
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _previousStep,
-                child: const Text('Back'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.timeline, size: 14, color: theme.colorScheme.primary),
+              const SizedBox(width: 4),
+              Text(
+                'Step ${_currentStep + 1} of 7',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                ),
               ),
-            ),
-          if (_currentStep > 0 && _currentStep < 6) const SizedBox(width: 16),
-          if (_currentStep < 6)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _canProceed() ? _nextStep : null,
-                child: Text(_currentStep == 5 ? 'Submit' : 'Continue'),
-              ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (_currentStep > 0)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _previousStep,
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Back'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                  ),
+                ),
+              if (_currentStep > 0 && _currentStep < 6) const SizedBox(width: 12),
+              if (_currentStep < 6)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _canProceed() ? _nextStep : null,
+                    icon: Icon(_currentStep == 5 ? Icons.check : Icons.arrow_forward),
+                    label: Text(_currentStep == 5 ? 'Submit' : 'Continue'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -928,27 +1129,49 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
       lastDate: DateTime.now().subtract(const Duration(days: 6570)),
     );
     if (picked != null) {
+      if (!mounted) return;
       _dobController.text = '${picked.day}/${picked.month}/${picked.year}';
     }
   }
 
   void _selectCountry() {
-    // In a real app, this would show a country picker
-    showDialog(
+    const options = [
+      'United States',
+      'United Kingdom',
+      'Canada',
+      'India',
+      'Australia',
+    ];
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Select Country'),
-        content: const Text('Country picker would be implemented here'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _countryController.text = 'United States';
-              Navigator.of(context).pop();
-            },
-            child: const Text('OK'),
-          ),
-        ],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: options.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+            itemBuilder: (context, index) {
+              final country = options[index];
+              return ListTile(
+                title: Text(country),
+                trailing: _countryController.text == country
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    _countryController.text = country;
+                  });
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -966,14 +1189,16 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   }
 
   Future<void> _submitVerification() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    
+
     // Simulate API submission
     await Future.delayed(const Duration(seconds: 3));
     try {
       await KycService.instance.submit();
     } catch (_) {}
-    
+
+    if (!mounted) return;
     // Mark user as KYC-verified in auth state
     try {
       final auth = ref.read(authProvider);
@@ -985,10 +1210,13 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
       }
     } catch (_) {}
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (_pageController.hasClients) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 }
