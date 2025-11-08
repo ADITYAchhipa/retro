@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/providers/ui_visibility_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
@@ -169,16 +168,6 @@ class _ModularBookingManagementScreenState
         onPressed: () => context.pop(),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.calendar_today),
-          onPressed: () {
-            // Open calendar sync (immersive route) above Shell and toggle immersive flag
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            context.push('/calendar-sync').whenComplete(() {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            });
-          },
-        ),
         if (_selectedBookings.isNotEmpty)
           IconButton(
             icon: const Icon(Icons.more_vert),

@@ -313,8 +313,17 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isPhone = MediaQuery.sizeOf(context).width < 600;
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Rent Reminders')),
+      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.background : Colors.grey.shade50,
+      appBar: AppBar(
+        title: const Text('Rent Reminders'),
+        elevation: 0,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -324,20 +333,148 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('No reminders found'),
-                          const SizedBox(height: 12),
-                          FilledButton.icon(
-                            onPressed: _createSampleReminder,
-                            icon: const Icon(Icons.add_alert),
-                            label: const Text('Create Sample Reminder'),
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary.withOpacity(0.1),
+                                  theme.colorScheme.secondary.withOpacity(0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              Icons.notifications_none,
+                              size: 64,
+                              color: theme.colorScheme.primary.withOpacity(0.5),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No reminders found',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Create a sample to test reminder system',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary,
+                                  theme.colorScheme.secondary,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton.icon(
+                              onPressed: _createSampleReminder,
+                              icon: const Icon(Icons.add_alert),
+                              label: const Text('Create Sample Reminder'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(16),
+                  : Column(
+                      children: [
+                        // Modern Header
+                        Container(
+                          margin: EdgeInsets.all(isPhone ? 16 : 24),
+                          padding: EdgeInsets.all(isPhone ? 16 : 20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary.withOpacity(0.1),
+                                theme.colorScheme.secondary.withOpacity(0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      theme.colorScheme.primary,
+                                      theme.colorScheme.secondary,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.alarm,
+                                  color: Colors.white,
+                                  size: isPhone ? 24 : 28,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Active Rent Reminders',
+                                      style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${_reminders.length} reminder${_reminders.length == 1 ? '' : 's'} configured',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // List
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _load,
+                            child: ListView.separated(
+                        padding: EdgeInsets.symmetric(horizontal: isPhone ? 16 : 24, vertical: 8),
                         itemCount: _reminders.length + ((_shouldShowBanner()) ? 1 : 0),
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
@@ -347,45 +484,163 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                           }
                           final r = _reminders[index - (hasBanner ? 1 : 0)];
                           final termination = _terminationMap[r.listingId];
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
+                          final primaryColor = r.active ? const Color(0xFF10B981) : Colors.grey.shade600;
+                          final secondaryColor = r.active ? const Color(0xFF059669) : Colors.grey.shade400;
+                          
+                          return Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: primaryColor.withOpacity(0.15),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                                BoxShadow(
+                                  color: secondaryColor.withOpacity(0.1),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Card(
+                              elevation: 0,
+                              margin: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: BorderSide(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                              ),
+                              color: Colors.white,
+                              child: Padding(
+                                padding: EdgeInsets.all(isPhone ? 14 : 16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(Icons.apartment),
-                                      const SizedBox(width: 8),
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [primaryColor, secondaryColor],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: primaryColor.withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(Icons.apartment, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 12),
                                       Expanded(
-                                        child: Text(
-                                          'Listing ${r.listingId}',
-                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Listing ${r.listingId}',
+                                              style: theme.textTheme.titleMedium?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            if (r.monthlyAmount != null)
+                                              Text(
+                                                '${r.currency} ${r.monthlyAmount!.toStringAsFixed(2)}/month',
+                                                style: theme.textTheme.bodySmall?.copyWith(
+                                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                         decoration: BoxDecoration(
-                                          color: r.active ? Colors.green.withOpacity(0.12) : Colors.grey.withOpacity(0.12),
-                                          borderRadius: BorderRadius.circular(12),
+                                          gradient: LinearGradient(
+                                            colors: [primaryColor, secondaryColor],
+                                          ),
+                                          borderRadius: BorderRadius.circular(999),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: primaryColor.withOpacity(0.3),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
-                                        child: Text(r.active ? 'Active' : 'Paused', style: TextStyle(color: r.active ? Colors.green[800] : Colors.grey[800], fontSize: 12)),
-                                      )
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              r.active ? Icons.check_circle : Icons.pause_circle,
+                                              size: 12,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              r.active ? 'Active' : 'Paused',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: primaryColor.withOpacity(0.1),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(Icons.event, size: 18, color: primaryColor),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Billing Day: ${r.billingDay}',
+                                              style: theme.textTheme.bodyMedium?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.schedule, size: 18, color: primaryColor),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Next Due: ${r.nextDueAt.toLocal()}',
+                                              style: theme.textTheme.bodySmall,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.event, size: 18),
-                                      const SizedBox(width: 6),
-                                      Text('Billing day: ${r.billingDay}'),
-                                      const SizedBox(width: 16),
-                                      const Icon(Icons.schedule, size: 18),
-                                      const SizedBox(width: 6),
-                                      Text('Next: ${r.nextDueAt.toLocal()}')
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
                                   if (termination != null)
                                     Row(
                                       children: [
@@ -400,62 +655,70 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                       ],
                                     ),
                                   if (termination != null) const SizedBox(height: 6),
-                                  if (r.monthlyAmount != null)
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.currency_exchange, size: 18),
-                                        const SizedBox(width: 6),
-                                        Text('Amount: ${r.currency} ${r.monthlyAmount!.toStringAsFixed(2)}'),
-                                      ],
-                                    ),
-                                  const SizedBox(height: 12),
-                                  Row(
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
                                     children: [
                                       OutlinedButton.icon(
                                         onPressed: () => _toggleActive(r),
-                                        icon: Icon(r.active ? Icons.pause_circle_outline : Icons.play_circle_outline),
+                                        icon: Icon(r.active ? Icons.pause_circle_outline : Icons.play_circle_outline, size: 18),
                                         label: Text(r.active ? 'Pause' : 'Resume'),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        ),
                                       ),
-                                      const SizedBox(width: 8),
                                       OutlinedButton.icon(
                                         onPressed: () => _reschedule(r),
-                                        icon: const Icon(Icons.update),
+                                        icon: const Icon(Icons.update, size: 18),
                                         label: const Text('Reschedule'),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      OutlinedButton.icon(
-                                        onPressed: () => _debugFireIn60s(r),
-                                        icon: const Icon(Icons.bug_report_outlined),
-                                        label: const Text('Debug: +60s'),
-                                      ),
-                                      const SizedBox(width: 8),
                                       if (termination == null)
                                         OutlinedButton.icon(
                                           onPressed: () => _requestTermination(r),
-                                          icon: const Icon(Icons.gavel_outlined),
-                                          label: const Text('Request Termination'),
+                                          icon: const Icon(Icons.gavel_outlined, size: 18),
+                                          label: const Text('Termination'),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          ),
                                         )
                                       else
-                                        TextButton.icon(
+                                        OutlinedButton.icon(
                                           onPressed: () => _cancelTermination(r),
-                                          icon: const Icon(Icons.undo, color: Colors.red),
-                                          label: const Text('Cancel Termination', style: TextStyle(color: Colors.red)),
+                                          icon: const Icon(Icons.undo, size: 18),
+                                          label: const Text('Cancel Term'),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.red,
+                                            side: const BorderSide(color: Colors.red),
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          ),
                                         ),
-                                      const SizedBox(width: 8),
-                                      TextButton.icon(
+                                      OutlinedButton.icon(
                                         onPressed: () => _cancel(r),
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                        label: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                                        icon: const Icon(Icons.delete_outline, size: 18),
+                                        label: const Text('Delete'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.red,
+                                          side: const BorderSide(color: Colors.red),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        ),
                                       ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
+                            ),
                             ),
                           );
                         },
                       ),
-                    ),
+                            ),
+                          ),
+                        ],
+                      ),
     );
   }
 }

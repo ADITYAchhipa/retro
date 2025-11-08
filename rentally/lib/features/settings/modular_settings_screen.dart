@@ -11,7 +11,8 @@ import '../../utils/snackbar_utils.dart';
 import '../../core/widgets/role_switcher.dart';
 import '../../core/providers/user_provider.dart';
 import '../../app/app_state.dart' show AppNotifiers;
-import '../../l10n/app_localizations.dart';
+import '../../app/app_state.dart' as app;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/database/models/user_model.dart';
 // Navigations now use GoRouter Routes; direct screen imports removed
@@ -1126,8 +1127,12 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                             onPressed: () async {
                               final ok = await userProvider.switchRole(UserRole.owner);
                               if (mounted && ok) {
+                                try {
+                                  final container = ProviderScope.containerOf(context);
+                                  container.read(app.authProvider.notifier).switchRole(app.UserRole.owner);
+                                } catch (_) {}
                                 SnackBarUtils.showSuccess(context, 'Switched to Owner mode');
-                                context.go('/');
+                                context.go('/owner-dashboard');
                               }
                             },
                             icon: const Icon(Icons.swap_horiz, size: 16),
@@ -1149,8 +1154,12 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                             onPressed: () async {
                               final ok = await userProvider.switchRole(UserRole.seeker);
                               if (mounted && ok) {
+                                try {
+                                  final container = ProviderScope.containerOf(context);
+                                  container.read(app.authProvider.notifier).switchRole(app.UserRole.seeker);
+                                } catch (_) {}
                                 SnackBarUtils.showSuccess(context, 'Switched to Seeker mode');
-                                context.go('/');
+                                context.go('/home');
                               }
                             },
                             icon: const Icon(Icons.swap_horiz, size: 16),
@@ -1177,8 +1186,12 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                           onPressed: () async {
                             final ok = await userProvider.switchRole(UserRole.owner);
                             if (mounted && ok) {
+                              try {
+                                final container = ProviderScope.containerOf(context);
+                                container.read(app.authProvider.notifier).switchRole(app.UserRole.owner);
+                              } catch (_) {}
                               SnackBarUtils.showSuccess(context, 'Switched to Owner mode');
-                              context.go('/');
+                              context.go('/owner-dashboard');
                             }
                           },
                           icon: const Icon(Icons.swap_horiz, size: 16),
@@ -1197,8 +1210,12 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                           onPressed: () async {
                             final ok = await userProvider.switchRole(UserRole.seeker);
                             if (mounted && ok) {
+                              try {
+                                final container = ProviderScope.containerOf(context);
+                                container.read(app.authProvider.notifier).switchRole(app.UserRole.seeker);
+                              } catch (_) {}
                               SnackBarUtils.showSuccess(context, 'Switched to Seeker mode');
-                              context.go('/');
+                              context.go('/home');
                             }
                           },
                           icon: const Icon(Icons.swap_horiz, size: 16),
@@ -1406,28 +1423,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           onTap: () async {
             ref.read(immersiveRouteOpenProvider.notifier).state = true;
             await context.push(Routes.paymentMethods);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.cyan.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.event_available, color: Colors.cyan),
-          ),
-          title: const Text('Calendar Sync'),
-          subtitle: const Text('Google / Outlook / ICS'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.calendarSync);
             if (mounted) {
               ref.read(immersiveRouteOpenProvider.notifier).state = false;
             }

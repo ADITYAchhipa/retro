@@ -217,6 +217,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                         onPressed: () {
                           ref.read(immersiveRouteOpenProvider.notifier).state = true;
                           context.push('/transactions').whenComplete(() {
+                            if (!mounted) return;
                             ref.read(immersiveRouteOpenProvider.notifier).state = false;
                           });
                         },
@@ -228,6 +229,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                         onPressed: () {
                           ref.read(immersiveRouteOpenProvider.notifier).state = true;
                           context.push('/transactions').whenComplete(() {
+                            if (!mounted) return;
                             ref.read(immersiveRouteOpenProvider.notifier).state = false;
                           });
                         },
@@ -1087,6 +1089,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
               onPressed: () {
                 ref.read(immersiveRouteOpenProvider.notifier).state = true;
                 context.push('/subscription-plans').whenComplete(() {
+                  if (!mounted) return;
                   ref.read(immersiveRouteOpenProvider.notifier).state = false;
                 });
               },
@@ -1496,6 +1499,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
               onPressed: () {
                 ref.read(immersiveRouteOpenProvider.notifier).state = true;
                 context.push('/subscription-plans').whenComplete(() {
+                  if (!mounted) return;
                   ref.read(immersiveRouteOpenProvider.notifier).state = false;
                 });
               },
@@ -1739,6 +1743,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                       }
                       ref.read(immersiveRouteOpenProvider.notifier).state = true;
                       await context.push('/kyc').whenComplete(() {
+                        if (!mounted) return;
                         ref.read(immersiveRouteOpenProvider.notifier).state = false;
                       });
                       return;
@@ -1762,6 +1767,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   onTap: () {
                     ref.read(immersiveRouteOpenProvider.notifier).state = true;
                     context.push('/payouts').whenComplete(() {
+                      if (!mounted) return;
                       ref.read(immersiveRouteOpenProvider.notifier).state = false;
                     });
                   },
@@ -1773,6 +1779,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   onTap: () {
                     ref.read(immersiveRouteOpenProvider.notifier).state = true;
                     context.push('/payouts/withdraw').whenComplete(() {
+                      if (!mounted) return;
                       ref.read(immersiveRouteOpenProvider.notifier).state = false;
                     });
                   },
@@ -2454,6 +2461,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                   onPressed: () {
                     ref.read(immersiveRouteOpenProvider.notifier).state = true;
                     context.push('/payouts').whenComplete(() {
+                      if (!mounted) return;
                       ref.read(immersiveRouteOpenProvider.notifier).state = false;
                     });
                   },
@@ -3460,6 +3468,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
               onPressed: () {
                 ref.read(immersiveRouteOpenProvider.notifier).state = true;
                 context.push('/subscription-plans').whenComplete(() {
+                  if (!mounted) return;
                   ref.read(immersiveRouteOpenProvider.notifier).state = false;
                 });
               },
@@ -3661,6 +3670,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                   }
                   ref.read(immersiveRouteOpenProvider.notifier).state = true;
                   await context.push('/kyc').whenComplete(() {
+                    if (!mounted) return;
                     ref.read(immersiveRouteOpenProvider.notifier).state = false;
                   });
                   return;

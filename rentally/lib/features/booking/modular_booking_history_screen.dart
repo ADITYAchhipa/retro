@@ -302,7 +302,10 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
                 curve: Curves.easeInOutCubic,
                 opacity: _showControls ? 1.0 : 0.0,
                 child: _showControls
-                    ? _buildModernTabs(theme, isDark, activeCount, completedCount, cancelledCount)
+                    ? AnimatedBuilder(
+                        animation: _tabController,
+                        builder: (context, _) => _buildModernTabs(theme, isDark, activeCount, completedCount, cancelledCount),
+                      )
                     : const SizedBox.shrink(),
               ),
             ),
@@ -510,6 +513,13 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
     final isSelected = _tabController.index == index;
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     
+    // Use darker shade for better readability when selected
+    final textColor = isSelected
+        ? (accentColor == Colors.green 
+            ? (isDark ? Colors.green.shade400 : Colors.green.shade700)
+            : accentColor)
+        : (isDark ? Colors.white60 : Colors.grey[600]);
+    
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -522,7 +532,7 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
-            horizontal: isPhone ? 8 : 12,
+            horizontal: isPhone ? 6 : 12,
             vertical: isPhone ? 6 : 8,
           ),
           decoration: BoxDecoration(
@@ -547,32 +557,33 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedScale(
-                scale: isSelected ? 1.0 : 0.9,
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  icon,
-                  size: isPhone ? 16 : 18,
-                  color: isSelected
-                      ? accentColor
-                      : (isDark ? Colors.white60 : Colors.grey[600]),
+              // Show icon only when NOT selected (to save space)
+              if (!isSelected)
+                AnimatedScale(
+                  scale: 0.9,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    icon,
+                    size: isPhone ? 15 : 18,
+                    color: textColor,
+                  ),
                 ),
-              ),
-              if (isPhone && isSelected) const SizedBox(width: 4)
-              else if (!isPhone) const SizedBox(width: 6),
+              if (!isSelected && !isPhone) const SizedBox(width: 6),
+              // Always show text when selected, or on desktop for unselected
               if (!isPhone || isSelected)
                 Flexible(
+                  fit: FlexFit.loose,
                   child: Text(
                     label,
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      fontSize: isPhone ? 12 : 13,
-                      color: isSelected
-                          ? accentColor
-                          : (isDark ? Colors.white70 : Colors.grey[700]),
+                      fontSize: isPhone ? (isSelected ? 12 : 11.5) : 13,
+                      color: textColor,
+                      height: 1.2,
                     ),
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.clip,
+                    softWrap: false,
                   ),
                 ),
               if (count > 0 && isSelected) ...[

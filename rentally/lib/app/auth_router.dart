@@ -42,7 +42,6 @@ import '../features/kyc/kyc_verification_screen.dart';
 import '../features/monetization/clean_wallet_screen.dart';
 import '../features/referral/referral_dashboard_screen.dart';
 import '../features/payouts/payout_methods_screen.dart';
-import '../features/calendar/calendar_sync_screen.dart';
 import '../features/owner/promote_listing_screen.dart';
 import '../features/security/two_factor_setup_screen.dart';
 import '../features/booking/modular_booking_screen.dart';
@@ -129,7 +128,6 @@ class Routes {
   static const String referrals = '/referrals';
   static const String trips = '/trips';
   static const String payoutMethods = '/payouts';
-  static const String calendarSync = '/calendar-sync';
   static const String promoteListing = '/promote-listing';
   static const String twoFactor = '/security/2fa';
   static const String contactSupport = '/support/contact';
@@ -485,12 +483,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           final propertyId = state.pathParameters['listingId'] ?? '';
           return _fadeSlidePage(child: ModularReviewsScreen(propertyId: propertyId));
         },
-      ),
-      // Calendar Sync as immersive (root navigator)
-      GoRoute(
-        path: Routes.calendarSync,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const CalendarSyncScreen()),
       ),
       // Settings & Monetization flows (immersive, outside Shell)
       GoRoute(

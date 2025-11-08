@@ -1089,6 +1089,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
           },
         )
         .whenComplete(() {
+      if (!mounted) return;
       ref.read(immersiveRouteOpenProvider.notifier).state = prev;
     });
   }
