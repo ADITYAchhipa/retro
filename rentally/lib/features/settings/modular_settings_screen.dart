@@ -1428,28 +1428,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             }
           },
         ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.cyan.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.event_available, color: Colors.cyan),
-          ),
-          title: const Text('Calendar Sync'),
-          subtitle: const Text('Google / Outlook / ICS'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            ref.read(immersiveRouteOpenProvider.notifier).state = true;
-            await context.push(Routes.calendarSync);
-            if (mounted) {
-              ref.read(immersiveRouteOpenProvider.notifier).state = false;
-            }
-          },
-        ),
         
       ],
     );
