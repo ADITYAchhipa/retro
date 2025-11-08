@@ -532,7 +532,7 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
-            horizontal: isPhone ? 8 : 12,
+            horizontal: isPhone ? 6 : 12,
             vertical: isPhone ? 6 : 8,
           ),
           decoration: BoxDecoration(
@@ -562,23 +562,26 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
                 duration: const Duration(milliseconds: 200),
                 child: Icon(
                   icon,
-                  size: isPhone ? 16 : 18,
+                  size: isPhone ? 15 : 18,
                   color: textColor,
                 ),
               ),
-              if (isPhone && isSelected) const SizedBox(width: 4)
+              if (isPhone && isSelected) const SizedBox(width: 3)
               else if (!isPhone) const SizedBox(width: 6),
               if (!isPhone || isSelected)
                 Flexible(
+                  fit: FlexFit.loose,
                   child: Text(
                     label,
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      fontSize: isPhone ? 12 : 13,
+                      fontSize: isPhone ? 11.5 : 13,
                       color: textColor,
+                      height: 1.2,
                     ),
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.clip,
+                    softWrap: false,
                   ),
                 ),
               if (count > 0 && isSelected) ...[
