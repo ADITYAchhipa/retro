@@ -513,6 +513,13 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
     final isSelected = _tabController.index == index;
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     
+    // Use darker shade for better readability when selected
+    final textColor = isSelected
+        ? (accentColor == Colors.green 
+            ? (isDark ? Colors.green.shade400 : Colors.green.shade700)
+            : accentColor)
+        : (isDark ? Colors.white60 : Colors.grey[600]);
+    
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -556,9 +563,7 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
                 child: Icon(
                   icon,
                   size: isPhone ? 16 : 18,
-                  color: isSelected
-                      ? accentColor
-                      : (isDark ? Colors.white60 : Colors.grey[600]),
+                  color: textColor,
                 ),
               ),
               if (isPhone && isSelected) const SizedBox(width: 4)
@@ -570,9 +575,7 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                       fontSize: isPhone ? 12 : 13,
-                      color: isSelected
-                          ? accentColor
-                          : (isDark ? Colors.white70 : Colors.grey[700]),
+                      color: textColor,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
