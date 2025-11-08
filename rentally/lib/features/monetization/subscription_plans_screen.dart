@@ -17,7 +17,7 @@ class SubscriptionPlansScreen extends ConsumerStatefulWidget {
   ConsumerState<SubscriptionPlansScreen> createState() => _SubscriptionPlansScreenState();
 }
 
-class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScreen> {
+class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScreen> with TickerProviderStateMixin {
   SubscriptionDuration _selectedDuration = SubscriptionDuration.monthly;
   final ScrollController _scrollController = ScrollController();
   bool _showHeader = true;
@@ -89,58 +89,66 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Header Section with auto-hide on scroll
+                // Header Section with auto-hide on scroll (collapses space)
                 ClipRect(
-                  child: AnimatedSlide(
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeInOutCubicEmphasized,
-                    offset: _showHeader ? Offset.zero : const Offset(0, -1),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                      opacity: _showHeader ? 1.0 : 0.0,
-                      child: Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(isPhone ? 16 : 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              theme.colorScheme.primary,
-                              theme.colorScheme.secondary.withOpacity(0.85),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      heightFactor: _showHeader ? 1 : 0,
+                      child: AnimatedSlide(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOutCubicEmphasized,
+                        offset: _showHeader ? Offset.zero : const Offset(0, -0.15),
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                          opacity: _showHeader ? 1.0 : 0.0,
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(isPhone ? 16 : 24),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary,
+                                  theme.colorScheme.secondary.withOpacity(0.85),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  widget.isHost ? Icons.business : Icons.star,
+                                  size: isPhone ? 34 : 48,
+                                  color: theme.colorScheme.onPrimary,
+                                ),
+                                SizedBox(height: isPhone ? 10 : 16),
+                                Text(
+                                  widget.isHost 
+                                      ? 'Grow Your Hosting Business'
+                                      : 'Unlock Premium Features',
+                                  style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                SizedBox(height: isPhone ? 6 : 8),
+                                Text(
+                                  widget.isHost
+                                      ? 'Choose the perfect plan to maximize your earnings and reach more guests'
+                                      : 'Get early access, advanced filters, and exclusive deals',
+                                  style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
+                                    color: theme.colorScheme.onPrimary.withOpacity(0.92),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              widget.isHost ? Icons.business : Icons.star,
-                              size: isPhone ? 34 : 48,
-                              color: theme.colorScheme.onPrimary,
-                            ),
-                            SizedBox(height: isPhone ? 10 : 16),
-                            Text(
-                              widget.isHost 
-                                  ? 'Grow Your Hosting Business'
-                                  : 'Unlock Premium Features',
-                              style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
-                                color: theme.colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: isPhone ? 6 : 8),
-                            Text(
-                              widget.isHost
-                                  ? 'Choose the perfect plan to maximize your earnings and reach more guests'
-                                  : 'Get early access, advanced filters, and exclusive deals',
-                              style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
-                                color: theme.colorScheme.onPrimary.withOpacity(0.92),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
                         ),
                       ),
                     ),
