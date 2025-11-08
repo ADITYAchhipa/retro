@@ -175,6 +175,7 @@ class _ModularBookingManagementScreenState
             // Open calendar sync (immersive route) above Shell and toggle immersive flag
             ref.read(immersiveRouteOpenProvider.notifier).state = true;
             context.push('/calendar-sync').whenComplete(() {
+              if (!mounted) return;
               ref.read(immersiveRouteOpenProvider.notifier).state = false;
             });
           },

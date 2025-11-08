@@ -601,6 +601,7 @@ class _ModularBookingRequestsScreenState
     final guestId = booking.userId;
     ref.read(immersiveRouteOpenProvider.notifier).state = true;
     context.push('/guest-profile/$guestId').whenComplete(() {
+      if (!mounted) return;
       ref.read(immersiveRouteOpenProvider.notifier).state = false;
     });
   }

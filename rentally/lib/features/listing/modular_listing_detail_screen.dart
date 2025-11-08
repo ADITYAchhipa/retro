@@ -2342,6 +2342,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
           },
         )
         .whenComplete(() {
+      if (!mounted) return;
       ref.read(immersiveRouteOpenProvider.notifier).state = false;
     });
   }

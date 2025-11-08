@@ -821,6 +821,7 @@ class _ModularManageListingsScreenState
         .push('/listing/$listingId')
         .whenComplete(() {
       // Restore immersive flag on return
+      if (!mounted) return;
       ref.read(immersiveRouteOpenProvider.notifier).state = false;
     });
   }

@@ -142,6 +142,7 @@ class _PromoteListingScreenState extends ConsumerState<PromoteListingScreen> {
       // Transactions is an immersive route rendered above the Shell
       ref.read(immersiveRouteOpenProvider.notifier).state = true;
       context.push('/transactions').whenComplete(() {
+        if (!mounted) return;
         ref.read(immersiveRouteOpenProvider.notifier).state = false;
       });
     } else {

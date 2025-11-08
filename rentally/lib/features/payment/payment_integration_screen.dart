@@ -762,10 +762,11 @@ class PaymentMethodsScreen extends ConsumerWidget {
   }
 
   void _showAddCardDialog(BuildContext context, WidgetRef ref) {
-    // Pre-toggle immersive state to avoid bottom bar flicker
+    // Pre-toggle immersive state to avoid flicker
     ref.read(immersiveRouteOpenProvider.notifier).state = true;
     context.push(Routes.paymentIntegration).whenComplete(() {
       // Ensure immersive flag is cleared when returning
+      if (!context.mounted) return;
       ref.read(immersiveRouteOpenProvider.notifier).state = false;
     });
   }
