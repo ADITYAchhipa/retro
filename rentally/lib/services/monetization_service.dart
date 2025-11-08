@@ -282,55 +282,6 @@ class MonetizationService extends StateNotifier<MonetizationState> {
           'Unlock Seeker premium features',
         ],
       ),
-      // Seeker Plans
-      const SubscriptionPlan(
-        id: 'seeker_basic',
-        tier: SubscriptionTier.basic,
-        name: 'Basic (Seeker)',
-        description: 'Explore listings and start booking',
-        monthlyPrice: 0,
-        yearlyPrice: 0,
-        features: [
-          'Search & browse listings',
-          'Book properties/vehicles',
-          'Access reviews & ratings',
-          'Standard support',
-          'Limited saved searches (max 5)',
-        ],
-      ),
-      const SubscriptionPlan(
-        id: 'seeker_pro',
-        tier: SubscriptionTier.pro,
-        name: 'Pro (Seeker)',
-        description: 'Book faster with smarter search & perks',
-        monthlyPrice: 99,
-        yearlyPrice: 990,
-        isPopular: true,
-        features: [
-          'Unlimited saved searches',
-          'Priority booking (faster confirmation)',
-          'Premium support (priority ticket resolution)',
-          'AI-powered recommendations',
-          'Discounts on service fees',
-          'Price drop alerts',
-        ],
-      ),
-      const SubscriptionPlan(
-        id: 'seeker_elite',
-        tier: SubscriptionTier.elite,
-        name: 'Elite (Seeker)',
-        description: 'VIP access, concierge assistance & best deals',
-        monthlyPrice: 299,
-        yearlyPrice: 2990,
-        features: [
-          'All Pro features +',
-          'VIP booking with early access to premium listings',
-          'Dedicated travel/property concierge',
-          'Insurance coverage discounts',
-          'Free cancellation window',
-          'Unlock Owner features (post your listings)',
-        ],
-      ),
     ];
 
     final microtransactions = [
@@ -446,33 +397,47 @@ class MonetizationService extends StateNotifier<MonetizationState> {
       // Simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
       
+      // All owner plans get 7-day free trial
+      final now = DateTime.now();
+      final isProTier = plan.tier == SubscriptionTier.pro;
+
+      // Apply 7-day free trial for all owner plans
+      const trialDays = 7;
+      bool inTrial = true;
+      DateTime trialEndsAt = now.add(const Duration(days: trialDays));
+      double amountToCharge = 0.0; // No charge during trial
+
+      // Intro offer discount applies to Pro tiers (after trial ends)
+      bool introApplied = isProTier;
+
       final subscription = UserSubscription(
         id: 'sub_${DateTime.now().millisecondsSinceEpoch}',
         userId: 'current_user', // Replace with actual user ID
         plan: plan,
         duration: duration,
-        startDate: DateTime.now(),
-        endDate: DateTime.now().add(
-          duration == SubscriptionDuration.monthly 
-            ? const Duration(days: 30)
-            : const Duration(days: 365)
-        ),
+        startDate: now,
+        endDate: now.add(const Duration(days: trialDays)), // Trial period
         isActive: true,
         stripeSubscriptionId: 'stripe_${Random().nextInt(999999)}',
+        inTrial: inTrial,
+        trialEndsAt: trialEndsAt,
+        introDiscountApplied: introApplied,
       );
 
       final transaction = Transaction(
         id: 'txn_${DateTime.now().millisecondsSinceEpoch}',
         userId: 'current_user',
         type: TransactionType.subscription,
-        amount: plan.getPrice(duration),
+        amount: amountToCharge,
         status: TransactionStatus.completed,
-        description: 'Subscription: ${plan.name} (${duration.name})',
-        createdAt: DateTime.now(),
-        completedAt: DateTime.now(),
+        description: 'Free Trial: ${plan.name} (7 days)',
+        createdAt: now,
+        completedAt: now,
         metadata: {
           'plan_id': plan.id,
           'duration': duration.name,
+          'trial_days': trialDays,
+          if (introApplied) 'intro_discount_pct': 20,
         },
       );
 

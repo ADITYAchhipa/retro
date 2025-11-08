@@ -20,17 +20,86 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.background : Colors.white,
+      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.background : Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('Payment Methods'),
-        centerTitle: true,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isPhone ? 16 : 24),
         children: [
+          // Modern Header Section
+          Container(
+            padding: EdgeInsets.all(isPhone ? 16 : 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary.withOpacity(0.1),
+                  theme.colorScheme.secondary.withOpacity(0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.payment,
+                    color: Colors.white,
+                    size: isPhone ? 24 : 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Manage Payment Methods',
+                        style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Add or manage cards and payment options',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
           _sectionHeader(theme, 'Your Cards', Icons.credit_card, isPhone),
           const SizedBox(height: 12),
           ..._cards
@@ -52,7 +121,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           const SizedBox(height: 12),
           _animateIn(_walletTile(context, 'PayPal', Icons.account_balance_wallet, Colors.indigo, theme), _cards.length),
           const SizedBox(height: 10),
-          _animateIn(_walletTile(context, 'Cash on Arrival', Icons.payments, Colors.green, theme), _cards.length + 1),
+          _animateIn(_walletTile(context, 'UPI', Icons.qr_code_2, const Color(0xFF10B981), theme), _cards.length + 1),
         ],
       ),
     );
@@ -151,9 +220,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final brand = c.brand.toLowerCase();
     final color = _brandColor(brand, theme);
     final isDark = theme.brightness == Brightness.dark;
-    final softBorder = isDark
-        ? theme.colorScheme.outlineVariant.withOpacity(0.25)
-        : theme.colorScheme.outlineVariant.withOpacity(0.4);
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
@@ -167,150 +233,229 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         });
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surface : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: c.isDefault
-                ? theme.colorScheme.primary.withOpacity(0.35)
-                : softBorder,
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            if (Theme.of(context).brightness == Brightness.light)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
+            BoxShadow(
+              color: c.isDefault ? color.withOpacity(0.2) : Colors.black.withOpacity(0.08),
+              blurRadius: c.isDefault ? 15 : 12,
+              offset: const Offset(0, 4),
+              spreadRadius: c.isDefault ? 1 : 0,
+            ),
+            BoxShadow(
+              color: c.isDefault ? _brandColorSecondary(brand).withOpacity(0.15) : Colors.black.withOpacity(0.04),
+              blurRadius: c.isDefault ? 20 : 16,
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: _brandGlyph(brand, color, theme),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: c.isDefault
+                  ? color.withOpacity(0.3)
+                  : Colors.grey.shade200,
+              width: c.isDefault ? 2 : 1,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${c.brand} •••• ${c.last4}',
-                          style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (c.isDefault)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
-                          ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, _brandColorSecondary(brand)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: _brandGlyph(brand, Colors.white, theme),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            'Default',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                            '${c.brand} •••• ${c.last4}',
+                            style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (c.isDefault)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [color, _brandColorSecondary(brand)],
+                              ),
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Default',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Expires ${c.expiry}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Expires ${c.expiry}',
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'default':
+                      setState(() {
+                        _cards = _cards
+                            .map((cc) => cc == c ? cc.copyWith(isDefault: true) : cc.copyWith(isDefault: false))
+                            .toList();
+                      });
+                      break;
+                    case 'remove':
+                      setState(() => _cards = _cards.where((cc) => cc != c).toList());
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  if (!c.isDefault)
+                    const PopupMenuItem(value: 'default', child: Text('Set as default')),
+                  const PopupMenuItem(value: 'remove', child: Text('Remove')),
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (value) {
-                switch (value) {
-                  case 'default':
-                    setState(() {
-                      _cards = _cards
-                          .map((cc) => cc == c ? cc.copyWith(isDefault: true) : cc.copyWith(isDefault: false))
-                          .toList();
-                    });
-                    break;
-                  case 'remove':
-                    setState(() => _cards = _cards.where((cc) => cc != c).toList());
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                if (!c.isDefault)
-                  const PopupMenuItem(value: 'default', child: Text('Set as default')),
-                const PopupMenuItem(value: 'remove', child: Text('Remove')),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _walletTile(BuildContext context, String title, IconData icon, Color color, ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    final softBorder = isDark
-        ? theme.colorScheme.outlineVariant.withOpacity(0.25)
-        : theme.colorScheme.outlineVariant.withOpacity(0.4);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      splashColor: theme.colorScheme.primary.withOpacity(isDark ? 0.12 : 0.08),
+      splashColor: theme.colorScheme.primary.withOpacity(0.08),
       highlightColor: Colors.transparent,
       onTap: () => SnackBarUtils.showInfo(context, '$title setup coming soon'),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surface : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: softBorder),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, color: color),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text('Tap to configure', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
           ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      color,
+                      color == Colors.indigo 
+                          ? const Color(0xFF6366F1) 
+                          : color == const Color(0xFF10B981) 
+                              ? const Color(0xFF059669) 
+                              : color,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text('Tap to configure', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -451,13 +596,26 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   Color _brandColor(String brand, ThemeData theme) {
     switch (brand) {
       case 'visa':
-        return Colors.blue;
+        return const Color(0xFF1A1F71);
       case 'mastercard':
-        return Colors.deepOrange;
+        return const Color(0xFFEB001B);
       case 'amex':
-        return Colors.indigo;
+        return const Color(0xFF006FCF);
       default:
         return theme.colorScheme.primary;
+    }
+  }
+
+  Color _brandColorSecondary(String brand) {
+    switch (brand) {
+      case 'visa':
+        return const Color(0xFF0066B2);
+      case 'mastercard':
+        return const Color(0xFFF79E1B);
+      case 'amex':
+        return const Color(0xFF009DDC);
+      default:
+        return const Color(0xFF6366F1);
     }
   }
 }
