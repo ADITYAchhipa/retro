@@ -557,17 +557,19 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedScale(
-                scale: isSelected ? 1.0 : 0.9,
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  icon,
-                  size: isPhone ? 15 : 18,
-                  color: textColor,
+              // Show icon only when NOT selected (to save space)
+              if (!isSelected)
+                AnimatedScale(
+                  scale: 0.9,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    icon,
+                    size: isPhone ? 15 : 18,
+                    color: textColor,
+                  ),
                 ),
-              ),
-              if (isPhone && isSelected) const SizedBox(width: 3)
-              else if (!isPhone) const SizedBox(width: 6),
+              if (!isSelected && !isPhone) const SizedBox(width: 6),
+              // Always show text when selected, or on desktop for unselected
               if (!isPhone || isSelected)
                 Flexible(
                   fit: FlexFit.loose,
@@ -575,7 +577,7 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
                     label,
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      fontSize: isPhone ? 11.5 : 13,
+                      fontSize: isPhone ? (isSelected ? 12 : 11.5) : 13,
                       color: textColor,
                       height: 1.2,
                     ),
