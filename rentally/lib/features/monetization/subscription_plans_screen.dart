@@ -20,13 +20,15 @@ class SubscriptionPlansScreen extends ConsumerStatefulWidget {
 class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScreen> with TickerProviderStateMixin {
   SubscriptionDuration _selectedDuration = SubscriptionDuration.monthly;
   final ScrollController _scrollController = ScrollController();
-  bool _showHeader = true;
-  double _lastScrollOffset = 0.0;
+  final GlobalKey _headerKey = GlobalKey();
+  double _headerMaxHeight = 0.0;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Measure header height after first layout
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureHeader());
   }
 
   @override
@@ -35,37 +37,22 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     super.dispose();
   }
 
+  void _measureHeader() {
+    final ctx = _headerKey.currentContext;
+    if (ctx != null) {
+      final h = ctx.size?.height ?? 0.0;
+      if (h > 0.0 && (h - _headerMaxHeight).abs() > 1.0) {
+        setState(() {
+          _headerMaxHeight = h;
+        });
+      }
+    }
+  }
+
   void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    
-    final currentOffset = _scrollController.offset;
-    
-    // Always show header when near the top
-    if (currentOffset < 30) {
-      if (!_showHeader) {
-        setState(() {
-          _showHeader = true;
-        });
-      }
-      _lastScrollOffset = currentOffset;
-      return;
-    }
-    
-    final delta = currentOffset - _lastScrollOffset;
-    
-    // Lower threshold for more responsive hide/show
-    if (delta.abs() > 5) {
-      // Scrolling down (delta > 0) = hide header, scrolling up (delta < 0) = show header
-      final shouldShow = delta < 0;
-      
-      if (shouldShow != _showHeader) {
-        setState(() {
-          _showHeader = shouldShow;
-        });
-      }
-      
-      _lastScrollOffset = currentOffset;
-    }
+    if (!mounted) return;
+    // Rebuild so header height instantly reflects current scroll offset
+    setState(() {});
   }
 
   @override
@@ -89,70 +76,79 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Header Section with auto-hide on scroll (collapses space)
-                ClipRect(
-                  child: AnimatedSize(
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      heightFactor: _showHeader ? 1 : 0,
-                      child: AnimatedSlide(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOutCubicEmphasized,
-                        offset: _showHeader ? Offset.zero : const Offset(0, -0.15),
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                          opacity: _showHeader ? 1.0 : 0.0,
-                          child: Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(isPhone ? 16 : 24),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  theme.colorScheme.primary,
-                                  theme.colorScheme.secondary.withOpacity(0.85),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                // Header Section - scroll-synced collapse (matches user scroll speed)
+                Builder(
+                  builder: (context) {
+                    final fallbackMax = isPhone ? 160.0 : 200.0;
+                    final maxH = _headerMaxHeight > 0.0 ? _headerMaxHeight : fallbackMax;
+                    final offset = _scrollController.hasClients ? _scrollController.offset : 0.0;
+                    // Slight resistance: header collapses a bit slower than scroll
+                    const resistance = 0.9;
+                    final effectiveOffset = offset * resistance;
+                    final currentH = (maxH - effectiveOffset).clamp(0.0, maxH);
+                    final opacity = maxH <= 0.0 ? 1.0 : (currentH / maxH);
+                    if (currentH <= 0.0) {
+                      return const SizedBox.shrink();
+                    }
+                    return ClipRect(
+                      child: SizedBox(
+                        height: currentH,
+                        child: Opacity(
+                          opacity: opacity,
+                          child: SingleChildScrollView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            child: Container(
+                              key: _headerKey,
+                              width: double.infinity,
+                              padding: EdgeInsets.all(isPhone ? 16 : 24),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    theme.colorScheme.primary,
+                                    theme.colorScheme.secondary.withOpacity(0.85),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
                               ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  widget.isHost ? Icons.business : Icons.star,
-                                  size: isPhone ? 34 : 48,
-                                  color: theme.colorScheme.onPrimary,
-                                ),
-                                SizedBox(height: isPhone ? 10 : 16),
-                                Text(
-                                  widget.isHost 
-                                      ? 'Grow Your Hosting Business'
-                                      : 'Unlock Premium Features',
-                                  style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    widget.isHost ? Icons.business : Icons.star,
+                                    size: isPhone ? 34 : 48,
                                     color: theme.colorScheme.onPrimary,
-                                    fontWeight: FontWeight.bold,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: isPhone ? 6 : 8),
-                                Text(
-                                  widget.isHost
-                                      ? 'Choose the perfect plan to maximize your earnings and reach more guests'
-                                      : 'Get early access, advanced filters, and exclusive deals',
-                                  style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
-                                    color: theme.colorScheme.onPrimary.withOpacity(0.92),
+                                  SizedBox(height: isPhone ? 10 : 16),
+                                  Text(
+                                    widget.isHost 
+                                        ? 'Grow Your Hosting Business'
+                                        : 'Unlock Premium Features',
+                                    style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
+                                      color: theme.colorScheme.onPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                                  SizedBox(height: isPhone ? 6 : 8),
+                                  Text(
+                                    widget.isHost
+                                        ? 'Choose the perfect plan to maximize your earnings and reach more guests'
+                                        : 'Get early access, advanced filters, and exclusive deals',
+                                    style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
+                                      color: theme.colorScheme.onPrimary.withOpacity(0.92),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 
                 // Duration Toggle
@@ -227,6 +223,92 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildPlanHighlights(SubscriptionPlan plan) {
+    final theme = Theme.of(context);
+    final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final planId = plan.id;
+
+    // Compute yearly savings chip when applicable
+    final annualIfMonthly = plan.monthlyPrice * 12;
+    final yearlySavings = ((annualIfMonthly - plan.yearlyPrice).clamp(0, double.infinity)) as double;
+    final yearlySavingsPct = annualIfMonthly > 0 ? ((yearlySavings / annualIfMonthly) * 100).round() : 0;
+
+    List<Widget> chips = [];
+
+    void addChip(IconData icon, String label, Color color) {
+      chips.add(
+        Chip(
+          visualDensity: VisualDensity.compact,
+          avatar: Icon(icon, size: isPhone ? 14 : 16, color: color),
+          label: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: isPhone ? 11 : 12,
+            ),
+          ),
+          backgroundColor: color.withOpacity(0.10),
+          shape: StadiumBorder(side: BorderSide(color: color.withOpacity(0.25))),
+          padding: EdgeInsets.symmetric(horizontal: isPhone ? 6 : 8),
+        ),
+      );
+    }
+
+    // Popular tag
+    if (plan.isPopular) {
+      addChip(Icons.local_fire_department, 'Most Popular', Colors.amber.shade700);
+    }
+
+    // Yearly savings chip when on yearly toggle
+    if (_selectedDuration == SubscriptionDuration.yearly && yearlySavings > 0) {
+      addChip(Icons.savings, 'Save $yearlySavingsPct% yearly', Colors.green.shade700);
+    }
+
+    // Owner plans
+    if (planId.startsWith('host_')) {
+      if (planId.contains('elite')) {
+        addChip(Icons.monetization_on_outlined, 'Zero Commission', Colors.teal.shade700);
+        addChip(Icons.public, 'Global Reach', Colors.indigo.shade700);
+        addChip(Icons.smart_toy, 'AI Pricing', Colors.purple.shade700);
+        addChip(Icons.support_agent, 'Concierge Support', Colors.orange.shade700);
+      } else if (planId.contains('pro')) {
+        addChip(Icons.trending_up, 'Featured Placement', theme.colorScheme.primary);
+        addChip(Icons.insights, 'Advanced Analytics', Colors.deepPurple);
+        addChip(Icons.headset_mic, 'Priority Support', Colors.blueGrey);
+      } else {
+        addChip(Icons.rocket_launch, 'Start Hosting', theme.colorScheme.primary);
+        addChip(Icons.format_list_bulleted, 'Up to 3 Listings', Colors.grey.shade800);
+      }
+    }
+
+    // Seeker plans
+    if (planId.startsWith('seeker_')) {
+      if (planId.contains('elite')) {
+        addChip(Icons.workspace_premium, 'VIP Access', Colors.amber.shade800);
+        addChip(Icons.support_agent, 'Concierge', Colors.orange.shade700);
+        addChip(Icons.event_available, 'Free Cancellation Window', Colors.green.shade700);
+      } else if (planId.contains('pro')) {
+        addChip(Icons.local_offer, 'Best Value', Colors.pink.shade600);
+        addChip(Icons.speed, 'Priority Booking', Colors.blue.shade700);
+        addChip(Icons.recommend, 'Smart Recommendations', Colors.deepPurple);
+      } else {
+        addChip(Icons.explore, 'Essential Access', Colors.grey.shade800);
+      }
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: isPhone ? 6 : 8,
+        runSpacing: isPhone ? 6 : 8,
+        children: chips,
+      ),
     );
   }
 
@@ -396,6 +478,10 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                   ),
                   
                   SizedBox(height: isPhone ? 14 : 20),
+                  
+                  // Highlights
+                  _buildPlanHighlights(plan),
+                  SizedBox(height: isPhone ? 10 : 14),
                   
                   // Features List
                   ...plan.features.map((feature) => Padding(
