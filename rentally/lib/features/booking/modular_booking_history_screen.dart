@@ -62,11 +62,6 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      if (mounted) {
-        setState(() {}); // Rebuild to update active tab indicator
-      }
-    });
     _initializeAnimations();
     _scrollController.addListener(_onScroll);
     _searchController.addListener(() {
@@ -307,7 +302,10 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
                 curve: Curves.easeInOutCubic,
                 opacity: _showControls ? 1.0 : 0.0,
                 child: _showControls
-                    ? _buildModernTabs(theme, isDark, activeCount, completedCount, cancelledCount)
+                    ? AnimatedBuilder(
+                        animation: _tabController,
+                        builder: (context, _) => _buildModernTabs(theme, isDark, activeCount, completedCount, cancelledCount),
+                      )
                     : const SizedBox.shrink(),
               ),
             ),
