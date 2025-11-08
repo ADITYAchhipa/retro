@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+// import '../../l10n/app_localizations.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../utils/snackbar_utils.dart';
 import 'package:go_router/go_router.dart';

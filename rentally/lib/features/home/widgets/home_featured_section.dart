@@ -51,9 +51,10 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     _propertyPageController = PageController(viewportFraction: 0.86, initialPage: 0);
     _vehiclePageController = PageController(viewportFraction: 0.86, initialPage: 0);
     widget.tabController.addListener(_onTabChanged);
-    // Load featured properties when widget initializes
+    // Load featured properties when widget initializes with default category 'all'
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      pv.Provider.of<PropertyProvider>(context, listen: false).loadFeaturedProperties();
+      pv.Provider.of<PropertyProvider>(context, listen: false)
+          .loadFeaturedProperties(category: widget.selectedCategory);
       // Ensure vehicles are loaded too so the vehicle tab has data
       final vp = pv.Provider.of<VehicleProvider>(context, listen: false);
       vp.loadVehicles();
@@ -61,6 +62,22 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
       // Ensure any previously running timers from hot-reload are cancelled
       _startAutoScroll();
     });
+  }
+
+  @override
+  void didUpdateWidget(HomeFeaturedSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload if category changed
+    if (oldWidget.selectedCategory != widget.selectedCategory) {
+      final isPropertyTab = widget.tabController.index == 0;
+      if (isPropertyTab) {
+        pv.Provider.of<PropertyProvider>(context, listen: false)
+            .loadFeaturedProperties(category: widget.selectedCategory);
+      } else {
+        final vp = pv.Provider.of<VehicleProvider>(context, listen: false);
+        vp.setFilterCategory(widget.selectedCategory);
+      }
+    }
   }
 
   @override

@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import '../constants/api_constants.dart';
 
 /// Mock API Service for development
 class MockApiService {
@@ -106,8 +110,32 @@ class MockApiService {
     return getBookings();
   }
   
-  Future<List<Map<String, dynamic>>> getFeaturedProperties() async {
-    return getProperties();
+  Future<List<Map<String, dynamic>>> getFeaturedProperties({String? category}) async {
+    try {
+      // Build URL with optional category parameter
+      String url = '${ApiConstants.baseUrl}/property/featured';
+      if (category != null && category.isNotEmpty && category.toLowerCase() != 'all') {
+        url += '?category=$category';
+      }
+      
+      debugPrint('🔍 Fetching featured properties from: $url');
+      
+      final response = await http.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          final results = (data['results'] as List).cast<Map<String, dynamic>>();
+          debugPrint('✅ Fetched ${results.length} featured properties');
+          return results;
+        }
+      }
+      debugPrint('❌ Failed to fetch featured properties: ${response.statusCode}');
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error fetching featured properties: $e');
+      return [];
+    }
   }
   
   Future<Map<String, dynamic>> searchProperties(Map<String, dynamic> filters) async {

@@ -20,8 +20,8 @@ class ApiConstants {
   // ========================================
   // 🌐 BACKEND URLs - CHANGE THESE TO YOUR ACTUAL BACKEND
   // ========================================
-  static const String baseUrl = 'https://your-backend-api.com/api/v1';
-  static const String authBaseUrl = 'https://your-backend-api.com/auth';
+  static const String baseUrl = 'http://localhost:4000/api';
+  static const String authBaseUrl = 'http://localhost:4000/api/user';
   
   // ========================================
   // 🔄 DATA SOURCE - NOW USES REAL BACKEND ONLY

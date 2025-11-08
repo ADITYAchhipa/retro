@@ -10,6 +10,7 @@ import '../../widgets/responsive_layout.dart';
 // App state and theme
 import '../../app/app_state.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
+import 'dev_login_helper.dart';
 
 class FixedModernLoginScreen extends ConsumerStatefulWidget {
   const FixedModernLoginScreen({super.key});
@@ -608,6 +609,11 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                   const SizedBox(height: 24),
                   
                   // Biometric Authentication removed
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Development Quick Login Helper
+                  const DevLoginHelper(),
                   
                   const SizedBox(height: 16),
                   

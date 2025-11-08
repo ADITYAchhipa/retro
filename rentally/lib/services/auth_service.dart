@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../app/app_state.dart';
+import '../core/constants/api_constants.dart';
 
 class User {
   final String id;
@@ -66,21 +69,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-      
-      // Mock user data
-      final user = User(
-        id: '1',
-        name: 'John Doe',
-        email: email,
-        role: 'seeker',
-        profileImageUrl: 'https://picsum.photos/seed/profile_john/150',
+      // Make API call to backend
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/login');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
       );
+
+      final data = jsonDecode(response.body);
       
-      state = state.copyWith(user: user, isLoading: false);
+      if (data['success'] == true && data['user'] != null) {
+        // Create user from backend response
+        final user = User(
+          id: data['user']['email'], // Use email as ID if no ID returned
+          name: data['user']['name'] ?? 'User',
+          email: data['user']['email'],
+          role: 'seeker',
+          profileImageUrl: null,
+        );
+        
+        state = state.copyWith(user: user, isLoading: false);
+      } else {
+        // Login failed
+        throw Exception(data['message'] ?? 'Login failed');
+      }
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
+      rethrow;
     }
   }
 

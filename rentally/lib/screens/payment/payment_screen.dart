@@ -6,7 +6,7 @@ import '../../core/validators/form_validators.dart';
 import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/utils/currency_formatter.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Industrial-grade payment screen with complete UI flow
 class PaymentScreen extends ConsumerStatefulWidget {

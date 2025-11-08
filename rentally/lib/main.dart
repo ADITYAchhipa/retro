@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart' as provider;
 import '../services/rent_reminder_service.dart';
@@ -24,6 +24,7 @@ import 'core/providers/booking_provider.dart';
 import '../core/providers/listing_feed_provider.dart';
 import '../services/view_history_service.dart';
 import '../core/providers/vehicle_provider.dart';
+import '../core/providers/featured_cache_provider.dart';
 
 /// ========================================
 /// 🚀 MAIN FUNCTION - APP INITIALIZATION
@@ -48,7 +49,8 @@ void main() async {
   // ========================================
   // 📦 PROVIDER INITIALIZATION
   // Initialize providers before app launch
-  final propertyProvider = PropertyProvider();
+  final cacheProvider = FeaturedCacheProvider();
+  final propertyProvider = PropertyProvider(cacheProvider: cacheProvider);
   final vehicleProvider = VehicleProvider();
   final userProvider = UserProvider();
   final bookingProvider = BookingProvider();
@@ -70,6 +72,7 @@ void main() async {
   runApp(
     provider.MultiProvider(
       providers: [
+        provider.ChangeNotifierProvider.value(value: cacheProvider),
         provider.ChangeNotifierProvider.value(value: propertyProvider),
         provider.ChangeNotifierProvider.value(value: userProvider),
         provider.ChangeNotifierProvider.value(value: bookingProvider),

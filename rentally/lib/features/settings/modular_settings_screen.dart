@@ -11,7 +11,7 @@ import '../../utils/snackbar_utils.dart';
 import '../../core/widgets/role_switcher.dart';
 import '../../core/providers/user_provider.dart';
 import '../../app/app_state.dart' show AppNotifiers;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/database/models/user_model.dart';
 // Navigations now use GoRouter Routes; direct screen imports removed

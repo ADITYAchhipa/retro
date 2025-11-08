@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../services/mock_api_service.dart';
 import '../database/models/property_model.dart';
+import 'featured_cache_provider.dart';
 
 /// ========================================
 /// 🏠 PROPERTY PROVIDER - REAL BACKEND INTEGRATION
@@ -17,6 +18,10 @@ import '../database/models/property_model.dart';
 /// 
 class PropertyProvider with ChangeNotifier {
   final RealApiService _realApiService = RealApiService();
+  final FeaturedCacheProvider? _cacheProvider;
+  
+  PropertyProvider({FeaturedCacheProvider? cacheProvider}) 
+      : _cacheProvider = cacheProvider;
 
   List<PropertyModel> _properties = [];
   List<PropertyModel> _featuredProperties = [];
@@ -27,6 +32,7 @@ class PropertyProvider with ChangeNotifier {
   bool _isSearching = false;
   String? _error;
   PropertyType? _filterType;
+  String _currentCategory = 'all'; // Track current category
 
   // Getters
   List<PropertyModel> get properties => _properties;
@@ -43,8 +49,8 @@ class PropertyProvider with ChangeNotifier {
   List<PropertyModel> get filteredProperties =>
       _filterType == null ? _properties : _properties.where((p) => p.type == _filterType).toList();
 
-  List<PropertyModel> get filteredFeaturedProperties =>
-      _filterType == null ? _featuredProperties : _featuredProperties.where((p) => p.type == _filterType).toList();
+  // Featured properties are already filtered by category on backend, so return as-is
+  List<PropertyModel> get filteredFeaturedProperties => _featuredProperties;
 
   void setFilterType(PropertyType? type) {
     _filterType = type;
@@ -74,17 +80,38 @@ class PropertyProvider with ChangeNotifier {
     }
   }
 
-  /// Load featured properties for home screen from real backend
-  Future<void> loadFeaturedProperties() async {
+  /// Load featured properties for home screen from real backend with caching
+  Future<void> loadFeaturedProperties({String category = 'all'}) async {
+    _currentCategory = category;
+    
+    // Check cache first
+    if (_cacheProvider != null) {
+      final cached = _cacheProvider!.getPropertyCache(category);
+      if (cached != null) {
+        debugPrint('📦 Loading properties from cache for category: $category');
+        _featuredProperties = cached.map((p) => PropertyModel.fromJson(p)).toList();
+        notifyListeners();
+        return;
+      }
+    }
+    
+    // Cache miss - load from backend
     _isFeaturedLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await _realApiService.getFeaturedProperties();
+      debugPrint('🌐 Fetching properties from backend for category: $category');
+      final response = await _realApiService.getFeaturedProperties(category: category);
       _featuredProperties = response.map((p) => PropertyModel.fromJson(p)).toList();
-        } catch (e) {
+      
+      // Cache the result
+      if (_cacheProvider != null) {
+        _cacheProvider!.setPropertyCache(category, response);
+      }
+    } catch (e) {
       _error = 'Failed to load featured properties: $e';
+      debugPrint('❌ Error loading featured properties: $e');
     } finally {
       _isFeaturedLoading = false;
       notifyListeners();

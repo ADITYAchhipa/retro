@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../app/auth_router.dart';
+import '../../app/app_state.dart';
 import '../../services/error_handling_service.dart';
 import '../../services/loading_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
+import '../../core/constants/api_constants.dart';
 
 class FixedModernRegisterScreen extends ConsumerStatefulWidget {
   const FixedModernRegisterScreen({super.key, this.referralCode});
@@ -90,25 +94,84 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
         'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
         'password': _passwordController.text,
-        if (_referralController.text.trim().isNotEmpty)
-          'referralCode': _referralController.text.trim().toUpperCase(),
       };
+      
+      // Add referral code to user model if provided (backend will handle it)
+      if (_referralController.text.trim().isNotEmpty) {
+        registrationData['referralCode'] = _referralController.text.trim().toUpperCase();
+      }
+      
       debugPrint('Registration payload: $registrationData');
 
-      // TODO: Implement actual registration logic with registrationData
-      await Future.delayed(const Duration(seconds: 1));
+      // Call backend registration API using AuthNotifier
+      await ref.read(authProvider.notifier).signUp(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
+        UserRole.seeker, // Default role, can be changed later
+        phone: _phoneController.text.trim(),
+      );
 
-      if (mounted) {
-        final code = _referralController.text.trim();
-        final msg = code.isNotEmpty
-            ? 'Account created successfully with referral code.'
-            : 'Account created successfully!';
-        context.showSuccess(msg);
-        context.go(Routes.role);
+      // Check if registration was successful
+      final authState = ref.read(authProvider);
+      if (authState.status == AuthStatus.authenticated && authState.user != null) {
+        if (mounted) {
+          final code = _referralController.text.trim();
+          final msg = code.isNotEmpty
+              ? 'Account created successfully with referral code!'
+              : 'Account created successfully!';
+          context.showSuccess(msg);
+          context.go(Routes.role);
+        }
+      } else if (authState.error != null) {
+        throw Exception(authState.error);
+      } else {
+        throw Exception('Registration failed. Please try again.');
       }
     } catch (e) {
       if (mounted) {
-        context.showError('Registration failed: ${e.toString()}');
+        final errorMessage = e.toString().toLowerCase();
+        
+        // Check if user already exists
+        if (errorMessage.contains('user exists') || 
+            errorMessage.contains('already exists') ||
+            errorMessage.contains('email already')) {
+          context.showError(
+            '⚠️ Account Already Exists!\n\nThis email is already registered. Please login instead or use a different email.',
+            type: ErrorType.validation,
+          );
+          
+          // Optional: Show a dialog with login option
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Account Exists'),
+                  content: Text(
+                    'An account with ${_emailController.text.trim()} already exists.\n\nWould you like to login instead?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        context.go(Routes.auth);
+                      },
+                      child: const Text('Go to Login'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          });
+        } else {
+          // Generic error message for other errors
+          context.showError('Registration failed: ${e.toString()}');
+        }
       }
     } finally {
       ref.stopLoading('auth');

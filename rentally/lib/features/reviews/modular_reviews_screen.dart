@@ -5,7 +5,7 @@ import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/providers/ui_visibility_provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Industrial-Grade Modular Reviews and Ratings Screen
 /// 

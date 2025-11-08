@@ -29,29 +29,38 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
     try {
-      // Demo credentials for frontend-only admin panel
-      if (data.email === 'admin@rentally.com' && data.password === 'admin123') {
-        const mockUser = {
-          id: 'admin-1',
-          name: 'Admin User',
-          email: 'admin@rentally.com',
-          role: 'ADMIN',
+      // Call backend API through Vite proxy
+      const response = await fetch('/api/user/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+        credentials: 'include', // Include cookies
+      })
+
+      const result = await response.json()
+      
+      if (result.success && result.user) {
+        const user = {
+          id: result.user.email,
+          name: result.user.name || 'User',
+          email: result.user.email,
+          role: 'USER',
           avatar: undefined
         }
         
-        const mockToken = 'demo-admin-token-' + Date.now()
-        
-        login(mockToken, mockUser)
+        login(result.token, user)
         toast.success('Welcome back!')
       } else {
-        toast.error('Invalid credentials. Use: admin@rentally.com / admin123')
+        toast.error(result.message || 'Invalid credentials')
       }
     } catch (error: any) {
-      toast.error('Login failed')
+      toast.error('Login failed: ' + error.message)
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +94,7 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 className="input mt-1"
-                placeholder="admin@rentally.com"
+                placeholder="user@test.com"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -140,7 +149,7 @@ export default function LoginPage() {
 
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              Demo credentials: admin@rentally.com / admin123
+              Test credentials: user@test.com / user123
             </p>
           </div>
         </form>

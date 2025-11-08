@@ -91,35 +91,73 @@ class PropertyModel {
       return DateTime.now();
     }
 
-    // Support alternate keys from mock/real APIs
-    final String id = (json['id'] ?? '').toString();
-    final String title = (json['title'] ?? '').toString();
-    final String description = (json['description'] ?? '').toString();
-    final String location = (json['location'] ?? '').toString();
-    final String address = (json['address'] ?? '').toString();
+    // Support alternate keys from mock/real APIs (MongoDB uses _id and capital first letters)
+    final String id = (json['id'] ?? json['_id'] ?? '').toString();
+    final String title = (json['title'] ?? json['Title'] ?? '').toString();
+    final String description = (json['description'] ?? json['Description'] ?? '').toString();
+    // Backend may send 'city', 'location', or 'Location' (MongoDB)
+    final String location = (json['location'] ?? json['Location'] ?? json['city'] ?? '').toString();
+    final String address = (json['address'] ?? json['Address'] ?? '').toString();
     final double latitude = toDouble(json['latitude'] ?? json['lat']);
     final double longitude = toDouble(json['longitude'] ?? json['lng'] ?? json['long']);
-    final double pricePerNight = toDouble(json['pricePerNight'] ?? json['price'] ?? json['nightPrice']);
-    final double pricePerDay = toDouble(json['pricePerDay'] ?? json['dayPrice'] ?? 0);
-    final double? pricePerMonth = (json.containsKey('pricePerMonth') || json.containsKey('monthlyRent') || json.containsKey('monthlyPrice'))
-        ? toDouble(json['pricePerMonth'] ?? json['monthlyRent'] ?? json['monthlyPrice'])
-        : null;
-    final double? leasePrice = (json.containsKey('leasePrice') || json.containsKey('lease') || json.containsKey('lease_amount'))
-        ? toDouble(json['leasePrice'] ?? json['lease'] ?? json['lease_amount'])
-        : null;
+    
+    // Backend sends price as either:
+    // - A number: "Price": 1200 (MongoDB direct field)
+    // - A nested object: "price": {"perMonth": 1200, "perDay": 40, "currency": "USD"}
+    final priceObj = json['price'] ?? json['Price'];
+    
+    // Safely extract from nested object or use direct value
+    final double pricePerNight = toDouble(
+      json['pricePerNight'] ?? 
+      json['nightPrice'] ?? 
+      (priceObj is Map ? priceObj['perDay'] : null)
+    );
+    
+    final double pricePerDay = toDouble(
+      json['pricePerDay'] ?? 
+      json['dayPrice'] ?? 
+      (priceObj is Map ? priceObj['perDay'] : null) ?? 
+      0
+    );
+    
+    final double? pricePerMonth = (
+      json.containsKey('pricePerMonth') || 
+      json.containsKey('monthlyRent') || 
+      json.containsKey('monthlyPrice') || 
+      json.containsKey('Price') ||
+      priceObj != null
+    ) ? toDouble(
+        json['pricePerMonth'] ?? 
+        json['monthlyRent'] ?? 
+        json['monthlyPrice'] ?? 
+        json['Price'] ??  // MongoDB uses 'Price' field
+        (priceObj is Map ? priceObj['perMonth'] : priceObj)
+      ) : null;
+    
+    final double? leasePrice = (
+      json.containsKey('leasePrice') || 
+      json.containsKey('lease') || 
+      json.containsKey('lease_amount')
+    ) ? toDouble(
+        json['leasePrice'] ?? 
+        json['lease'] ?? 
+        json['lease_amount']
+      ) : null;
     final double? discountPercent = (json.containsKey('discountPercent') || json.containsKey('discount'))
         ? toDouble(json['discountPercent'] ?? json['discount'])
         : null;
+    // Backend sends 'category', 'Category' (MongoDB), or frontend uses 'type' - support all
+    final String typeString = (json['type'] ?? json['category'] ?? json['Category'] ?? json['Type'] ?? '').toString().toLowerCase();
     final PropertyType type = PropertyType.values.firstWhere(
-      (e) => e.name == (json['type']?.toString().toLowerCase() ?? ''),
+      (e) => e.name == typeString,
       orElse: () => PropertyType.apartment,
     );
     final String ownerId = (json['ownerId'] ?? '').toString();
     final String ownerName = (json['ownerName'] ?? '').toString();
     final String ownerAvatar = (json['ownerAvatar'] ?? '').toString();
 
-    // Images may come as a single 'imageUrl' or a list 'images'
-    List<String> images = toStringList(json['images']);
+    // Images may come as a single 'imageUrl' or a list 'images' or 'Images' (MongoDB)
+    List<String> images = toStringList(json['images'] ?? json['Images']);
     if (images.isEmpty && json['imageUrl'] != null) {
       final url = json['imageUrl'].toString();
       if (url.isNotEmpty) images = [url];
@@ -129,10 +167,20 @@ class PropertyModel {
     final int bedrooms = toInt(json['bedrooms']);
     final int bathrooms = toInt(json['bathrooms']);
     final int maxGuests = toInt(json['maxGuests']);
-    final double rating = toDouble(json['rating']);
-    final int reviewCount = toInt(json['reviewCount'] ?? json['reviews']);
+    
+    // Backend sends nested rating object: {avg, count}
+    final ratingObj = json['rating'];
+    final double rating = (ratingObj is Map) 
+        ? toDouble(ratingObj['avg']) 
+        : toDouble(json['rating']);
+    final int reviewCount = (ratingObj is Map)
+        ? toInt(ratingObj['count'])
+        : toInt(json['reviewCount'] ?? json['reviews']);
     final bool isAvailable = (json['isAvailable'] is bool) ? (json['isAvailable'] as bool) : true;
-    final bool isFeatured = (json['isFeatured'] is bool) ? (json['isFeatured'] as bool) : false;
+    // Backend uses 'Featured' (capital F), frontend uses 'isFeatured'
+    final bool isFeatured = (json['isFeatured'] is bool) 
+        ? (json['isFeatured'] as bool) 
+        : ((json['Featured'] is bool) ? (json['Featured'] as bool) : false);
     final DateTime createdAt = toDateTime(json['createdAt']);
     final DateTime updatedAt = toDateTime(json['updatedAt']);
 

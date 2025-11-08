@@ -11,7 +11,7 @@ import '../../core/widgets/listing_card_list.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Modular Wishlist Screen with Industrial-Grade Features
 class ModularWishlistScreen extends ConsumerStatefulWidget {

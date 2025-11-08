@@ -13,7 +13,7 @@ import '../../core/widgets/listing_badges.dart' show ListingBadgeType;
 import '../../core/widgets/listing_vm_factory.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../widgets/advanced_map_widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/listing_service.dart' as ls;
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';

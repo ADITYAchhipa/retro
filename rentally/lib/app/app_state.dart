@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../core/constants/api_constants.dart';
 
 enum UserRole { seeker, owner }
 
@@ -82,45 +85,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      // Call backend API
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/login');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
       
-      // Test credentials for different user types
-      User? user;
-      
-      if (email == 'user@test.com' && password == 'user123') {
-        user = const User(
-          id: 'user_001',
-          email: 'user@test.com',
-          name: 'Test User (Seeker)',
-          phone: '+1234567890',
-          role: UserRole.seeker,
+      if (data['success'] == true && data['user'] != null) {
+        // Create user from backend response
+        final user = User(
+          id: data['user']['email'],
+          email: data['user']['email'],
+          name: data['user']['name'] ?? 'User',
+          phone: null,
+          role: UserRole.seeker, // Default role, can be determined from backend
         );
-      } else if (email == 'owner@test.com' && password == 'owner123') {
-        user = const User(
-          id: 'owner_001',
-          email: 'owner@test.com',
-          name: 'Test Owner',
-          phone: '+1234567891',
-          role: UserRole.owner,
-        );
-      } else if (email == 'demo@rentally.com' && password == 'demo123') {
-        user = const User(
-          id: 'demo_001',
-          email: 'demo@rentally.com',
-          name: 'Demo User',
-          phone: '+1234567893',
-          role: UserRole.seeker,
+        
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          error: null,
         );
       } else {
-        throw Exception('Invalid email or password');
+        throw Exception(data['message'] ?? 'Invalid email or password');
       }
-      
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        error: null,
-      );
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
@@ -129,30 +124,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> signUp(String name, String email, String password, UserRole role) async {
+  Future<void> signUp(String name, String email, String password, UserRole role, {String? phone}) async {
     state = state.copyWith(status: AuthStatus.loading);
     
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Mock successful registration
-      final user = User(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        email: email,
-        name: name,
-        role: role,
+      // Call backend API
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/register');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'phone': phone ?? '0000000000', // Use provided phone or default
+        }),
       );
+
+      final data = jsonDecode(response.body);
       
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        error: null,
-      );
+      if (data['success'] == true && data['user'] != null) {
+        // Create user from backend response
+        final user = User(
+          id: data['user']['email'],
+          email: data['user']['email'],
+          name: data['user']['name'] ?? name,
+          phone: phone,
+          role: role,
+        );
+        
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          error: null,
+        );
+      } else {
+        // Preserve the exact error message from backend
+        final errorMsg = data['message'] ?? 'Registration failed';
+        throw Exception(errorMsg);
+      }
     } catch (e) {
+      // Extract the actual error message without "Exception:" prefix
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        error: 'Registration failed: ${e.toString()}',
+        error: errorMessage,
       );
     }
   }
@@ -161,8 +181,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      // Call backend API
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/logout');
+      await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
       
       state = const AuthState(status: AuthStatus.unauthenticated);
     } catch (e) {

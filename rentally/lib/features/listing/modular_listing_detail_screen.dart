@@ -10,7 +10,7 @@ import '../../models/listing.dart';
 import '../../services/wishlist_service.dart';
 import '../../utils/snackbar_utils.dart';
 import '../../core/utils/currency_formatter.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../services/booking_pricing_service.dart';
 import '../widgets/property_map_widget.dart';
