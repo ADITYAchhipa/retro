@@ -19,6 +19,54 @@ class SubscriptionPlansScreen extends ConsumerStatefulWidget {
 
 class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScreen> {
   SubscriptionDuration _selectedDuration = SubscriptionDuration.monthly;
+  final ScrollController _scrollController = ScrollController();
+  bool _showHeader = true;
+  double _lastScrollOffset = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    
+    final currentOffset = _scrollController.offset;
+    
+    // Always show header when near the top
+    if (currentOffset < 50) {
+      if (!_showHeader) {
+        setState(() {
+          _showHeader = true;
+        });
+      }
+      _lastScrollOffset = currentOffset;
+      return;
+    }
+    
+    final delta = currentOffset - _lastScrollOffset;
+    
+    // Threshold for triggering hide/show
+    if (delta.abs() > 8) {
+      // Scrolling down (delta > 0) = hide header, scrolling up (delta < 0) = show header
+      final shouldShow = delta < 0;
+      
+      if (shouldShow != _showHeader) {
+        setState(() {
+          _showHeader = shouldShow;
+        });
+      }
+      
+      _lastScrollOffset = currentOffset;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,49 +89,58 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Header Section
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(isPhone ? 16 : 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary.withOpacity(0.85),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        widget.isHost ? Icons.business : Icons.star,
-                        size: isPhone ? 34 : 48,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                      SizedBox(height: isPhone ? 10 : 16),
-                      Text(
-                        widget.isHost 
-                            ? 'Grow Your Hosting Business'
-                            : 'Unlock Premium Features',
-                        style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
-                          color: theme.colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
+                // Header Section with auto-hide on scroll
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  height: _showHeader ? null : 0,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: _showHeader ? 1.0 : 0.0,
+                    child: _showHeader ? Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(isPhone ? 16 : 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.secondary.withOpacity(0.85),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: isPhone ? 6 : 8),
-                      Text(
-                        widget.isHost
-                            ? 'Choose the perfect plan to maximize your earnings and reach more guests'
-                            : 'Get early access, advanced filters, and exclusive deals',
-                        style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
-                          color: theme.colorScheme.onPrimary.withOpacity(0.92),
-                        ),
-                        textAlign: TextAlign.center,
+                      child: Column(
+                        children: [
+                          Icon(
+                            widget.isHost ? Icons.business : Icons.star,
+                            size: isPhone ? 34 : 48,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                          SizedBox(height: isPhone ? 10 : 16),
+                          Text(
+                            widget.isHost 
+                                ? 'Grow Your Hosting Business'
+                                : 'Unlock Premium Features',
+                            style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: isPhone ? 6 : 8),
+                          Text(
+                            widget.isHost
+                                ? 'Choose the perfect plan to maximize your earnings and reach more guests'
+                                : 'Get early access, advanced filters, and exclusive deals',
+                            style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
+                              color: theme.colorScheme.onPrimary.withOpacity(0.92),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                    ],
+                    ) : const SizedBox.shrink(),
                   ),
                 ),
                 
@@ -123,6 +180,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                       // Desktop: 3 columns, Tablet: 2, Mobile: list
                       if (width >= 1024) {
                         return GridView.builder(
+                          controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
@@ -135,6 +193,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                         );
                       } else if (width >= 720) {
                         return GridView.builder(
+                          controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
@@ -147,6 +206,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                         );
                       }
                       return ListView.builder(
+                        controller: _scrollController,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: plans.length,
                         itemBuilder: (context, index) => _buildPlanCard(plans[index]),
