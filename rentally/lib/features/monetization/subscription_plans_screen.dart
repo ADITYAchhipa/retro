@@ -41,7 +41,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     final currentOffset = _scrollController.offset;
     
     // Always show header when near the top
-    if (currentOffset < 50) {
+    if (currentOffset < 30) {
       if (!_showHeader) {
         setState(() {
           _showHeader = true;
@@ -53,8 +53,8 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     
     final delta = currentOffset - _lastScrollOffset;
     
-    // Threshold for triggering hide/show
-    if (delta.abs() > 8) {
+    // Lower threshold for more responsive hide/show
+    if (delta.abs() > 5) {
       // Scrolling down (delta > 0) = hide header, scrolling up (delta < 0) = show header
       final shouldShow = delta < 0;
       
@@ -90,57 +90,60 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           : Column(
               children: [
                 // Header Section with auto-hide on scroll
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  height: _showHeader ? null : 0,
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 250),
-                    opacity: _showHeader ? 1.0 : 0.0,
-                    child: _showHeader ? Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(isPhone ? 16 : 24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.secondary.withOpacity(0.85),
+                ClipRect(
+                  child: AnimatedSlide(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOutCubicEmphasized,
+                    offset: _showHeader ? Offset.zero : const Offset(0, -1),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                      opacity: _showHeader ? 1.0 : 0.0,
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(isPhone ? 16 : 24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              theme.colorScheme.primary,
+                              theme.colorScheme.secondary.withOpacity(0.85),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              widget.isHost ? Icons.business : Icons.star,
+                              size: isPhone ? 34 : 48,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                            SizedBox(height: isPhone ? 10 : 16),
+                            Text(
+                              widget.isHost 
+                                  ? 'Grow Your Hosting Business'
+                                  : 'Unlock Premium Features',
+                              style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: isPhone ? 6 : 8),
+                            Text(
+                              widget.isHost
+                                  ? 'Choose the perfect plan to maximize your earnings and reach more guests'
+                                  : 'Get early access, advanced filters, and exclusive deals',
+                              style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
+                                color: theme.colorScheme.onPrimary.withOpacity(0.92),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            widget.isHost ? Icons.business : Icons.star,
-                            size: isPhone ? 34 : 48,
-                            color: theme.colorScheme.onPrimary,
-                          ),
-                          SizedBox(height: isPhone ? 10 : 16),
-                          Text(
-                            widget.isHost 
-                                ? 'Grow Your Hosting Business'
-                                : 'Unlock Premium Features',
-                            style: (isPhone ? theme.textTheme.titleLarge : theme.textTheme.headlineSmall)?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: isPhone ? 6 : 8),
-                          Text(
-                            widget.isHost
-                                ? 'Choose the perfect plan to maximize your earnings and reach more guests'
-                                : 'Get early access, advanced filters, and exclusive deals',
-                            style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
-                              color: theme.colorScheme.onPrimary.withOpacity(0.92),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ) : const SizedBox.shrink(),
+                    ),
                   ),
                 ),
                 
