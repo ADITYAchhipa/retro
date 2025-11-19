@@ -326,6 +326,44 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
       ),
     );
   }
+  
+  Widget _buildVariableHeightGridSliver(List<SubscriptionPlan> plans, int columns) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, rowIndex) {
+            final start = rowIndex * columns;
+            final end = (start + columns) > plans.length ? plans.length : start + columns;
+            final rowItems = plans.sublist(start, end);
+
+            final children = <Widget>[];
+            for (int i = 0; i < columns; i++) {
+              final isLast = i == columns - 1;
+              if (i < rowItems.length) {
+                children.add(
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: isLast ? 0 : 16),
+                      child: _buildPlanCard(rowItems[i]),
+                    ),
+                  ),
+                );
+              } else {
+                children.add(const Expanded(child: SizedBox.shrink()));
+              }
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            );
+          },
+          childCount: (plans.length + columns - 1) ~/ columns,
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -458,37 +496,9 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                           ),
                           // Plans Grid/List
                           if (width >= 1024)
-                            SliverPadding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              sliver: SliverGrid(
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 1.1,
-                                ),
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) => _buildPlanCard(plans[index]),
-                                  childCount: plans.length,
-                                ),
-                              ),
-                            )
+                            _buildVariableHeightGridSliver(plans, 3)
                           else if (width >= 720)
-                            SliverPadding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                              sliver: SliverGrid(
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 1.1,
-                                ),
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) => _buildPlanCard(plans[index]),
-                                  childCount: plans.length,
-                                ),
-                              ),
-                            )
+                            _buildVariableHeightGridSliver(plans, 2)
                           else
                             SliverPadding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -965,12 +975,6 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                           ),
                       ],
                     );
-                    if (constraints.hasBoundedHeight) {
-                      return SingleChildScrollView(
-                        primary: false,
-                        child: content,
-                      );
-                    }
                     return content;
                   },
                 ),
