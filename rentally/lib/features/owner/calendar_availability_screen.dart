@@ -316,7 +316,7 @@ class _CalendarAvailabilityScreenState extends ConsumerState<CalendarAvailabilit
   Widget _buildLegend(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -357,30 +357,30 @@ class _CalendarAvailabilityScreenState extends ConsumerState<CalendarAvailabilit
     if (availability != null) {
       switch (availability.status) {
         case AvailabilityStatus.available:
-          backgroundColor = Colors.green.withOpacity(0.3);
+          backgroundColor = Colors.green.withValues(alpha: 0.3);
           break;
         case AvailabilityStatus.booked:
-          backgroundColor = Colors.blue.withOpacity(0.3);
+          backgroundColor = Colors.blue.withValues(alpha: 0.3);
           textColor = Colors.white;
           break;
         case AvailabilityStatus.blocked:
-          backgroundColor = Colors.red.withOpacity(0.3);
+          backgroundColor = Colors.red.withValues(alpha: 0.3);
           textColor = Colors.white;
           break;
         case AvailabilityStatus.pending:
-          backgroundColor = Colors.orange.withOpacity(0.3);
+          backgroundColor = Colors.orange.withValues(alpha: 0.3);
           break;
       }
     }
 
     if (_selectedDates.contains(day)) {
-      backgroundColor = theme.colorScheme.primary.withOpacity(0.7);
+      backgroundColor = theme.colorScheme.primary.withValues(alpha: 0.7);
       textColor = theme.colorScheme.onPrimary;
     } else if (isSelected) {
       backgroundColor = theme.colorScheme.primary;
       textColor = theme.colorScheme.onPrimary;
     } else if (isToday) {
-      backgroundColor = theme.colorScheme.secondary.withOpacity(0.3);
+      backgroundColor = theme.colorScheme.secondary.withValues(alpha: 0.3);
     }
 
     return Container(
@@ -420,7 +420,7 @@ class _CalendarAvailabilityScreenState extends ConsumerState<CalendarAvailabilit
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, -2),
           ),
@@ -828,7 +828,7 @@ class _BulkEditDialogState extends State<BulkEditDialog> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<AvailabilityStatus>(
-            value: _selectedStatus,
+            initialValue: _selectedStatus,
             decoration: const InputDecoration(
               labelText: 'Status',
               border: OutlineInputBorder(),

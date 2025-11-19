@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../app/app_state.dart';
 import '../../core/widgets/tab_back_handler.dart';
@@ -266,10 +267,20 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
   void _skipOnboarding() {
     // Set onboarding complete state before navigation
     ref.read(onboardingCompleteProvider.notifier).state = true;
+    _persistOnboardingComplete();
     
-    // Navigate to country selection
+    // Navigate to login/auth screen (country selection is handled separately)
     if (mounted) {
-      context.go('/country');
+      context.go('/auth');
+    }
+  }
+
+  Future<void> _persistOnboardingComplete() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboardingComplete', true);
+    } catch (_) {
+      // Ignore persistence errors
     }
   }
 
@@ -334,7 +345,7 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                             decoration: BoxDecoration(
                               color: _currentPage == index
                                   ? _slides[_currentPage].color
-                                  : _slides[_currentPage].color.withOpacity(0.3),
+                                  : _slides[_currentPage].color.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -359,14 +370,14 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                               decoration: BoxDecoration(
                                 gradient: isDark ? LinearGradient(
                                   colors: [
-                                    const Color(0xFF21262D).withOpacity(0.9),
+                                    const Color(0xFF21262D).withValues(alpha: 0.9),
                                     const Color(0xFF30363D),
                                   ],
                                 ) : null,
                                 color: isDark ? null : Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 border: Border.all(
-                                  color: _slides[_currentPage].color.withOpacity(0.4),
+                                  color: _slides[_currentPage].color.withValues(alpha: 0.4),
                                   width: 1.5,
                                 ),
                                 boxShadow: const [],
@@ -410,7 +421,7 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                               gradient: LinearGradient(
                                 colors: [
                                   _slides[_currentPage].color,
-                                  _slides[_currentPage].color.withOpacity(0.8),
+                                  _slides[_currentPage].color.withValues(alpha: 0.8),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(30),
@@ -475,8 +486,8 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                     shadowColor: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      splashColor: _slides[_currentPage].color.withOpacity(0.2),
-                      highlightColor: _slides[_currentPage].color.withOpacity(0.1),
+                      splashColor: _slides[_currentPage].color.withValues(alpha: 0.2),
+                      highlightColor: _slides[_currentPage].color.withValues(alpha: 0.1),
                       onTap: () {
                         _skipOnboarding();
                       },
@@ -487,7 +498,7 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                         ),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: _slides[_currentPage].color.withOpacity(0.3),
+                            color: _slides[_currentPage].color.withValues(alpha: 0.3),
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(16),
@@ -560,21 +571,21 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                             boxShadow: [
                               // Deep outer shadow
                               BoxShadow(
-                                color: slide.color.withOpacity(0.25),
+                                color: slide.color.withValues(alpha: 0.25),
                                 blurRadius: 25,
                                 offset: const Offset(0, 12),
                                 spreadRadius: -5,
                               ),
                               // Medium shadow
                               BoxShadow(
-                                color: slide.color.withOpacity(0.15),
+                                color: slide.color.withValues(alpha: 0.15),
                                 blurRadius: 15,
                                 offset: const Offset(0, 6),
                                 spreadRadius: -3,
                               ),
                               // Close shadow
                               BoxShadow(
-                                color: slide.color.withOpacity(0.08),
+                                color: slide.color.withValues(alpha: 0.08),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                                 spreadRadius: -1,
@@ -589,24 +600,24 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                                 center: const Alignment(-0.2, -0.2),
                                 radius: 0.8,
                                 colors: [
-                                  slide.color.withOpacity(0.95),
+                                  slide.color.withValues(alpha: 0.95),
                                   slide.color,
-                                  slide.color.withOpacity(0.7),
-                                  slide.color.withOpacity(0.9),
+                                  slide.color.withValues(alpha: 0.7),
+                                  slide.color.withValues(alpha: 0.9),
                                 ],
                                 stops: const [0.0, 0.3, 0.8, 1.0],
                               ),
                               boxShadow: [
                                 // Inner depth
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.4),
+                                  color: Colors.black.withValues(alpha: 0.4),
                                   blurRadius: 12,
                                   offset: const Offset(2, 3),
                                   spreadRadius: -4,
                                 ),
                                 // Inner highlight
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   blurRadius: 8,
                                   offset: const Offset(-2, -2),
                                   spreadRadius: -6,
@@ -615,20 +626,19 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                             ),
                             child: Center(
                               child: Transform(
-                                transform: Matrix4.identity()
-                                  ..translate(0.0, -1.0, 2.0),
+                                transform: Matrix4.translationValues(0.0, -1.0, 2.0),
                                 child: Icon(
                                   slide.icon,
                                   size: iconSizeValue,
                                   color: Colors.white,
                                   shadows: [
                                     Shadow(
-                                      color: Colors.black.withOpacity(0.6),
+                                      color: Colors.black.withValues(alpha: 0.6),
                                       offset: const Offset(2, 2),
                                       blurRadius: 4,
                                     ),
                                     Shadow(
-                                      color: slide.color.withOpacity(0.3),
+                                      color: slide.color.withValues(alpha: 0.3),
                                       offset: const Offset(1, 1),
                                       blurRadius: 2,
                                     ),
@@ -664,36 +674,36 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                         gradient: isDark 
                             ? LinearGradient(
                                 colors: [
-                                  const Color(0xFF1E1E3F).withOpacity(0.9),
-                                  const Color(0xFF2A2D47).withOpacity(0.7),
+                                  const Color(0xFF1E1E3F).withValues(alpha: 0.9),
+                                  const Color(0xFF2A2D47).withValues(alpha: 0.7),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               )
                             : null,
-                        color: isDark ? null : Colors.white.withOpacity(0.9),
+                        color: isDark ? null : Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(35),
                         border: isDark 
                             ? Border.all(
-                                color: const Color(0xFF4A6CF7).withOpacity(0.4),
+                                color: const Color(0xFF4A6CF7).withValues(alpha: 0.4),
                                 width: 1.5,
                               )
                             : null,
                         boxShadow: isDark ? [
                           BoxShadow(
-                            color: const Color(0xFF4A6CF7).withOpacity(0.2),
+                            color: const Color(0xFF4A6CF7).withValues(alpha: 0.2),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                             spreadRadius: 1,
                           ),
                           BoxShadow(
-                            color: const Color(0xFF000000).withOpacity(0.3),
+                            color: const Color(0xFF000000).withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ] : [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -745,40 +755,40 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
                         gradient: isDark 
                             ? LinearGradient(
                                 colors: [
-                                  const Color(0xFF1A1A2E).withOpacity(0.8),
-                                  const Color(0xFF2A2D47).withOpacity(0.6),
-                                  const Color(0xFF3E4A78).withOpacity(0.4),
+                                  const Color(0xFF1A1A2E).withValues(alpha: 0.8),
+                                  const Color(0xFF2A2D47).withValues(alpha: 0.6),
+                                  const Color(0xFF3E4A78).withValues(alpha: 0.4),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               )
                             : null,
-                        color: isDark ? null : Colors.white.withOpacity(0.9),
+                        color: isDark ? null : Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(20),
                         border: isDark 
                             ? Border.all(
-                                color: const Color(0xFF4A6CF7).withOpacity(0.3),
+                                color: const Color(0xFF4A6CF7).withValues(alpha: 0.3),
                                 width: 1.5,
                               )
                             : Border.all(
-                                color: slide.color.withOpacity(0.2),
+                                color: slide.color.withValues(alpha: 0.2),
                                 width: 1.0,
                               ),
                         boxShadow: isDark ? [
                           BoxShadow(
-                            color: const Color(0xFF4A6CF7).withOpacity(0.1),
+                            color: const Color(0xFF4A6CF7).withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                             spreadRadius: 2,
                           ),
                           BoxShadow(
-                            color: const Color(0xFF000000).withOpacity(0.4),
+                            color: const Color(0xFF000000).withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
                         ] : [
                           BoxShadow(
-                            color: slide.color.withOpacity(0.15),
+                            color: slide.color.withValues(alpha: 0.15),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -873,7 +883,7 @@ class _ResponsiveOnboardingScreenState extends ConsumerState<ResponsiveOnboardin
           width: buttonSize,
           height: buttonSize,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
           ),
           child: Icon(

@@ -99,7 +99,7 @@ class AuthHeader extends StatelessWidget {
             subtitle,
             textAlign: centered ? TextAlign.center : TextAlign.start,
             style: (compact ? theme.textTheme.bodyMedium : theme.textTheme.bodyLarge)?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.5,
             ),
           ),

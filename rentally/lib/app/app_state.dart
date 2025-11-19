@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/api_constants.dart';
+import '../core/config/dev_config.dart';
 
 enum UserRole { seeker, owner }
 
@@ -79,7 +81,77 @@ class AuthState {
 
 // Auth State Notifier
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState(status: AuthStatus.initial));
+  AuthNotifier() : super(const AuthState(status: AuthStatus.initial)) {
+    _restoreSession();
+  }
+
+  static const _authUserKey = 'auth_user';
+  static const _authStatusKey = 'auth_status';
+
+  Future<void> _restoreSession() async {
+    // Start in loading state while we check for a persisted session
+    state = state.copyWith(status: AuthStatus.loading);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString(_authUserKey);
+      final statusIndex = prefs.getInt(_authStatusKey);
+
+      if (userJson != null && statusIndex != null &&
+          AuthStatus.values[statusIndex] == AuthStatus.authenticated) {
+        final data = jsonDecode(userJson) as Map<String, dynamic>;
+        final roleString = data['role'] as String? ?? 'seeker';
+        final role = roleString == 'owner' ? UserRole.owner : UserRole.seeker;
+
+        final user = User(
+          id: data['id'] as String? ?? '',
+          email: data['email'] as String? ?? '',
+          name: data['name'] as String? ?? 'User',
+          phone: data['phone'] as String?,
+          role: role,
+          profileImageUrl: data['profileImageUrl'] as String?,
+          isKycVerified: data['isKycVerified'] as bool? ?? false,
+        );
+
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          error: null,
+        );
+      } else {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+      }
+    } catch (_) {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    }
+  }
+
+  Future<void> _persistSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (state.status == AuthStatus.authenticated && state.user != null) {
+        final user = state.user!;
+        final payload = <String, dynamic>{
+          'id': user.id,
+          'email': user.email,
+          'name': user.name,
+          'phone': user.phone,
+          'role': user.role.name,
+          'profileImageUrl': user.profileImageUrl,
+          'isKycVerified': user.isKycVerified,
+        };
+
+        await prefs.setString(_authUserKey, jsonEncode(payload));
+        await prefs.setInt(_authStatusKey, AuthStatus.authenticated.index);
+      } else {
+        await prefs.remove(_authUserKey);
+        await prefs.remove(_authStatusKey);
+      }
+    } catch (_) {
+      // Ignore persistence errors to avoid blocking auth flow
+    }
+  }
 
   Future<void> signIn(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading);
@@ -113,14 +185,59 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           error: null,
         );
+        await _persistSession();
       } else {
         throw Exception(data['message'] ?? 'Invalid email or password');
       }
     } catch (e) {
+      // Development fallback: allow test credentials when backend is unavailable
+      if (DevConfig.isDevelopmentMode) {
+        final emailL = email.trim().toLowerCase();
+        final testMap = {
+          'user@test.com': {
+            'name': 'Test User',
+            'role': UserRole.seeker,
+            'pass': 'user123',
+          },
+          'owner@test.com': {
+            'name': 'Owner',
+            'role': UserRole.owner,
+            'pass': 'owner123',
+          },
+          'demo@rentally.com': {
+            'name': 'Demo',
+            'role': UserRole.seeker,
+            'pass': 'demo123',
+          },
+          DevConfig.defaultTestEmail.toLowerCase(): {
+            'name': 'Test User',
+            'role': UserRole.seeker,
+            'pass': DevConfig.defaultTestPassword,
+          },
+        };
+        final entry = testMap[emailL];
+        if (entry != null && password == entry['pass']) {
+          final user = User(
+            id: emailL,
+            email: emailL,
+            name: entry['name'] as String,
+            phone: null,
+            role: entry['role'] as UserRole,
+          );
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+            error: null,
+          );
+          await _persistSession();
+          return;
+        }
+      }
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         error: 'Login failed: ${e.toString()}',
       );
+      await _persistSession();
     }
   }
 
@@ -158,6 +275,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           error: null,
         );
+        await _persistSession();
       } else {
         // Preserve the exact error message from backend
         final errorMsg = data['message'] ?? 'Registration failed';
@@ -174,6 +292,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.unauthenticated,
         error: errorMessage,
       );
+      await _persistSession();
     }
   }
 
@@ -189,10 +308,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       
       state = const AuthState(status: AuthStatus.unauthenticated);
+      await _persistSession();
     } catch (e) {
       state = state.copyWith(
         error: 'Logout failed: ${e.toString()}',
       );
+      await _persistSession();
     }
   }
 
@@ -215,6 +336,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.authenticated,
         error: 'Profile update failed: ${e.toString()}',
       );
+    } finally {
+      await _persistSession();
     }
   }
 

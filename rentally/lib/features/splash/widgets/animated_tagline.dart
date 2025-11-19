@@ -100,7 +100,7 @@ class _AnimatedTaglineState extends State<AnimatedTagline>
       fontSize: fontSize,
       fontWeight: FontWeight.w600,
       color: isDark 
-          ? theme.colorScheme.onSurface.withOpacity(0.8)
+          ? theme.colorScheme.onSurface.withValues(alpha: 0.8)
           : const Color(0xFF1E293B),
       letterSpacing: letterSpacing,
       height: 1.4,

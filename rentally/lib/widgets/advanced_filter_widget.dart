@@ -72,7 +72,7 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
           color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -324,7 +324,7 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
                 });
                 _updateFilters();
               },
-              selectedColor: theme.primaryColor.withOpacity(0.2),
+              selectedColor: theme.primaryColor.withValues(alpha: 0.2),
               checkmarkColor: theme.primaryColor,
             );
           }).toList(),
@@ -455,7 +455,7 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
                 });
                 _updateFilters();
               },
-              selectedColor: theme.primaryColor.withOpacity(0.2),
+              selectedColor: theme.primaryColor.withValues(alpha: 0.2),
               checkmarkColor: theme.primaryColor,
             );
           }).toList(),

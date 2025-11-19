@@ -22,7 +22,6 @@ class AuthWrapper extends ConsumerWidget {
           case UserRole.owner:
             return const CleanOwnerDashboardScreen();
           case UserRole.seeker:
-          default:
             return const OriginalHomeScreen();
         }
       case AuthStatus.loading:
@@ -33,7 +32,6 @@ class AuthWrapper extends ConsumerWidget {
         );
       case AuthStatus.unauthenticated:
       case AuthStatus.initial:
-      default:
         return const SplashScreen();
     }
   }

@@ -27,11 +27,11 @@ class NeoDecoration {
     // In light theme: bright highlight and soft slate shadow
     // In dark theme: subtle highlight and deep black shadow
     final highlight = isDark
-        ? Colors.white.withOpacity(0.05)
-        : Colors.white.withOpacity(0.90);
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.white.withValues(alpha: 0.90);
     final shadow = isDark
-        ? Colors.black.withOpacity(0.48)
-        : const Color(0xFFA3B1C6).withOpacity(0.70);
+        ? Colors.black.withValues(alpha: 0.48)
+        : const Color(0xFFA3B1C6).withValues(alpha: 0.70);
     return [
       BoxShadow(
         color: shadow,
@@ -66,11 +66,11 @@ class NeoDecoration {
     final base = baseColor(context, color: color);
 
     final highlight = isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.white.withOpacity(0.85);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.white.withValues(alpha: 0.85);
     final shadow = isDark
-        ? Colors.black.withOpacity(0.45)
-        : const Color(0xFFA3B1C6).withOpacity(0.75);
+        ? Colors.black.withValues(alpha: 0.45)
+        : const Color(0xFFA3B1C6).withValues(alpha: 0.75);
 
     // Scale down spread globally and clamp to prevent heavy halos, esp. on white.
     // Make it more subtle across the board.
@@ -148,12 +148,12 @@ class NeoIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = borderColor ?? (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.08));
+    final border = borderColor ?? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08));
     final accent = accentColor ?? Theme.of(context).colorScheme.primary;
     final List<BoxShadow>? halo = active
         ? [
             BoxShadow(
-              color: accent.withOpacity(isDark ? 0.16 : 0.10),
+              color: accent.withValues(alpha: isDark ? 0.16 : 0.10),
               blurRadius: isDark ? 9 : 7,
               spreadRadius: isDark ? 0.4 : 0.6,
               offset: const Offset(0, 2),
@@ -225,9 +225,9 @@ class NeoGlass extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bg = backgroundColor ??
-        (isDark ? Colors.white.withOpacity(0.06) : Colors.white.withOpacity(0.65));
+        (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.65));
     final border = borderColor ??
-        (isDark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.8));
+        (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8));
     
     // Fast path without blur to avoid anti-aliased seams on curved edges.
     if (blur <= 0) {

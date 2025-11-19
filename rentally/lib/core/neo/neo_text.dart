@@ -35,11 +35,11 @@ class Neo3DText extends StatelessWidget {
 
     // Subtle highlight/shadow tuned for calmer dark mode
     final Color shadowColor = isDark
-        ? Colors.black.withOpacity(0.50)
-        : Colors.black.withOpacity(0.14);
+        ? Colors.black.withValues(alpha: 0.50)
+        : Colors.black.withValues(alpha: 0.14);
     final Color highlightColor = isDark
-        ? Colors.white.withOpacity(0.14)
-        : Colors.white.withOpacity(0.95);
+        ? Colors.white.withValues(alpha: 0.14)
+        : Colors.white.withValues(alpha: 0.95);
 
     // Bottom-right soft extrude layer for added depth (very subtle)
     final Widget extrude = Transform.translate(

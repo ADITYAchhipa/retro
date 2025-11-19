@@ -61,7 +61,7 @@ class GuestProfileScreen extends ConsumerWidget {
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.primaryContainer,
-            theme.colorScheme.primaryContainer.withOpacity(0.7),
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -118,7 +118,7 @@ class GuestProfileScreen extends ConsumerWidget {
                     Text(
                       '(${stats.totalReviews} ${stats.totalReviews == 1 ? 'review' : 'reviews'})',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -127,7 +127,7 @@ class GuestProfileScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getReputationColor(stats.averageRating).withOpacity(0.2),
+                    color: _getReputationColor(stats.averageRating).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -152,7 +152,7 @@ class GuestProfileScreen extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
@@ -183,7 +183,7 @@ class GuestProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -215,7 +215,7 @@ class GuestProfileScreen extends ConsumerWidget {
                   Expanded(
                     child: LinearProgressIndicator(
                       value: percentage,
-                      backgroundColor: theme.colorScheme.outline.withOpacity(0.2),
+                      backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
                       valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
                     ),
                   ),
@@ -245,7 +245,7 @@ class GuestProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -324,7 +324,7 @@ class GuestProfileScreen extends ConsumerWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -375,7 +375,7 @@ class GuestProfileScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.2),
+                  color: Colors.amber.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -420,7 +420,7 @@ class GuestProfileScreen extends ConsumerWidget {
                     '${_getCategoryDisplayName(entry.key)}: ${entry.value.toStringAsFixed(1)}',
                     style: theme.textTheme.bodySmall,
                   ),
-                  backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 );
               }).toList(),
             ),

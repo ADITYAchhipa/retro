@@ -55,7 +55,7 @@ class LoginForm extends StatelessWidget {
             suffixIcon: IconButton(
               icon: Icon(
                 obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 size: 20,
               ),
               onPressed: onTogglePasswordVisibility,

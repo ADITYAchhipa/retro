@@ -66,6 +66,17 @@ class CountryService {
     return country?['currency'] ?? 'USD';
   }
 
+  static String getFlagEmojiForCountry(String countryName) {
+    final country = findCountryByName(countryName);
+    final code = (country?['code'] as String? ?? '').toUpperCase();
+    if (code.length != 2) {
+      return '🌍';
+    }
+    final first = 0x1F1E6 + code.codeUnitAt(0) - 0x41;
+    final second = 0x1F1E6 + code.codeUnitAt(1) - 0x41;
+    return String.fromCharCode(first) + String.fromCharCode(second);
+  }
+
   /// Maps location country names to app country names
   static String? mapLocationCountryToAppCountry(String locationCountry) {
     final countryMappings = {

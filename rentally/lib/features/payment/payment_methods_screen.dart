@@ -20,7 +20,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.background : Colors.grey.shade50,
+      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('Payment Methods'),
         elevation: 0,
@@ -36,15 +36,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  theme.colorScheme.primary.withOpacity(0.1),
-                  theme.colorScheme.secondary.withOpacity(0.05),
+                  theme.colorScheme.primary.withValues(alpha: 0.1),
+                  theme.colorScheme.secondary.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.2),
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -62,7 +62,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -90,7 +90,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       Text(
                         'Add or manage cards and payment options',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -178,9 +178,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           height: isPhone ? 22 : 24,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.12),
+            color: theme.colorScheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+            border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
           ),
           child: Icon(icon, color: theme.colorScheme.primary, size: isPhone ? 14 : 16),
         ),
@@ -223,7 +223,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      splashColor: theme.colorScheme.primary.withOpacity(isDark ? 0.12 : 0.08),
+      splashColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.08),
       highlightColor: Colors.transparent,
       onTap: () {
         setState(() {
@@ -238,15 +238,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: c.isDefault ? color.withOpacity(0.2) : Colors.black.withOpacity(0.08),
-              blurRadius: c.isDefault ? 15 : 12,
-              offset: const Offset(0, 4),
-              spreadRadius: c.isDefault ? 1 : 0,
+              color: c.isDefault ? color.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.06),
+              blurRadius: c.isDefault ? 10 : 8,
+              offset: const Offset(0, 3),
+              spreadRadius: 0,
             ),
             BoxShadow(
-              color: c.isDefault ? _brandColorSecondary(brand).withOpacity(0.15) : Colors.black.withOpacity(0.04),
-              blurRadius: c.isDefault ? 20 : 16,
-              offset: const Offset(0, 6),
+              color: c.isDefault ? _brandColorSecondary(brand).withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.03),
+              blurRadius: c.isDefault ? 14 : 10,
+              offset: const Offset(0, 4),
+              spreadRadius: 0,
             ),
           ],
         ),
@@ -257,7 +258,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: c.isDefault
-                  ? color.withOpacity(0.3)
+                  ? color.withValues(alpha: 0.3)
                   : Colors.grey.shade200,
               width: c.isDefault ? 2 : 1,
             ),
@@ -276,9 +277,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: color.withValues(alpha: 0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -309,13 +310,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                               borderRadius: BorderRadius.circular(999),
                               boxShadow: [
                                 BoxShadow(
-                                  color: color.withOpacity(0.3),
-                                  blurRadius: 6,
+                                  color: color.withValues(alpha: 0.2),
+                                  blurRadius: 5,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: Row(
+                            child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
@@ -323,7 +324,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                                   color: Colors.white,
                                   size: 12,
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Text(
                                   'Default',
                                   style: TextStyle(
@@ -379,7 +380,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   Widget _walletTile(BuildContext context, String title, IconData icon, Color color, ThemeData theme) {
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      splashColor: theme.colorScheme.primary.withOpacity(0.08),
+      splashColor: theme.colorScheme.primary.withValues(alpha: 0.08),
       highlightColor: Colors.transparent,
       onTap: () => SnackBarUtils.showInfo(context, '$title setup coming soon'),
       child: Container(
@@ -388,9 +389,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+              spreadRadius: 0,
             ),
           ],
         ),
@@ -422,9 +424,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: color.withValues(alpha: 0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                      spreadRadius: 0,
                     ),
                   ],
                 ),
@@ -445,7 +448,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -481,7 +484,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),

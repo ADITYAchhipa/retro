@@ -133,7 +133,6 @@ class PerformanceOptimizer {
   /// Lazy loading wrapper (simplified without external dependency)
   static Widget lazyLoader({
     required Widget Function() builder,
-    Widget? placeholder,
   }) {
     return builder(); // Simplified implementation
   }
@@ -210,11 +209,9 @@ class _DebouncedSearchFieldState extends State<_DebouncedSearchField> {
 /// Simplified lazy loader implementation
 class _LazyLoader extends StatelessWidget {
   final Widget Function() builder;
-  final Widget? placeholder;
 
   const _LazyLoader({
     required this.builder,
-    this.placeholder,
   });
 
   @override
@@ -260,7 +257,7 @@ class _PerformanceMonitorState extends State<_PerformanceMonitor> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(

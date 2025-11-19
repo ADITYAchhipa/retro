@@ -36,9 +36,9 @@ class CountryListItem extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(AppConstants.radiusL),
             onTap: onTap,
-            hoverColor: theme.colorScheme.primary.withOpacity(0.02),
-            splashColor: theme.colorScheme.primary.withOpacity(0.1),
-            highlightColor: theme.colorScheme.primary.withOpacity(0.05),
+            hoverColor: theme.colorScheme.primary.withValues(alpha: 0.02),
+            splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+            highlightColor: theme.colorScheme.primary.withValues(alpha: 0.05),
             child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isDesktop ? AppConstants.spacingM : AppConstants.spacingS,
@@ -64,17 +64,17 @@ class CountryListItem extends StatelessWidget {
       gradient: isSelected 
           ? LinearGradient(
               colors: isDark ? [
-                EnterpriseDarkTheme.primaryAccent.withOpacity(0.1),
-                EnterpriseDarkTheme.primaryAccent.withOpacity(0.05),
+                EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.1),
+                EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.05),
               ] : [
-                EnterpriseLightTheme.primaryAccent.withOpacity(0.1),
-                EnterpriseLightTheme.primaryAccent.withOpacity(0.05),
+                EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.1),
+                EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.05),
               ],
             )
           : LinearGradient(
               colors: isDark ? [
                 EnterpriseDarkTheme.cardBackground,
-                EnterpriseDarkTheme.cardBackground.withOpacity(0.8),
+                EnterpriseDarkTheme.cardBackground.withValues(alpha: 0.8),
               ] : [
                 Colors.grey.shade50,
                 Colors.white,
@@ -91,7 +91,7 @@ class CountryListItem extends StatelessWidget {
       ),
       boxShadow: isSelected ? [
         BoxShadow(
-          color: (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withOpacity(isDark ? 0.22 : 0.16),
+          color: (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withValues(alpha: isDark ? 0.22 : 0.16),
           blurRadius: 6,
           offset: const Offset(0, 2),
         ),
@@ -113,19 +113,19 @@ class CountryListItem extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             countryColor,
-            countryColor.withOpacity(0.8),
+            countryColor.withValues(alpha: 0.8),
           ],
         ),
         borderRadius: BorderRadius.circular(AppConstants.spacingM),
         border: Border.all(
           color: isSelected 
               ? countryColor
-              : countryColor.withOpacity(0.3),
+              : countryColor.withValues(alpha: 0.3),
           width: isSelected ? 2.0 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: countryColor.withOpacity(0.18),
+            color: countryColor.withValues(alpha: 0.18),
             blurRadius: isSelected ? 6 : 3,
             offset: const Offset(0, 2),
           ),
@@ -164,16 +164,16 @@ class CountryListItem extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: isSelected
-                  ? (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withOpacity(0.1)
+                  ? (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withValues(alpha: 0.1)
                   : isDark 
-                      ? EnterpriseDarkTheme.inputBackground.withOpacity(0.4)
+                      ? EnterpriseDarkTheme.inputBackground.withValues(alpha: 0.4)
                       : EnterpriseLightTheme.cardBackground,
               borderRadius: BorderRadius.circular(AppConstants.radiusS),
             ),
             child: Text(
               '${country['code']} • ${country['currency']}',
               style: AppTextStyles.countryCode(isDesktop, isSelected).copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -196,7 +196,7 @@ class CountryListItem extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: isSelected ? [
           BoxShadow(
-            color: (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withOpacity(isDark ? 0.4 : 0.3),
+            color: (isDark ? EnterpriseDarkTheme.primaryAccent : EnterpriseLightTheme.primaryAccent).withValues(alpha: isDark ? 0.4 : 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -207,7 +207,7 @@ class CountryListItem extends StatelessWidget {
         color: isSelected 
             ? Colors.white 
             : isDark 
-                ? Colors.white.withOpacity(0.5)
+                ? Colors.white.withValues(alpha: 0.5)
                 : Colors.grey.shade500,
         size: isDesktop ? AppConstants.spacingL : AppConstants.spacingM,
       ),

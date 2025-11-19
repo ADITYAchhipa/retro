@@ -159,27 +159,27 @@ class _GetStartedButtonState extends State<GetStartedButton>
       ),
       borderRadius: BorderRadius.circular(12.0),
       border: Border.all(
-        color: const Color(0xFF3B82F6).withOpacity(0.3),
+        color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
         width: 1,
       ),
       boxShadow: [
         // Primary shadow
         BoxShadow(
-          color: const Color(0xFF1E40AF).withOpacity(0.30), // Navy blue shadow
+          color: const Color(0xFF1E40AF).withValues(alpha: 0.30), // Navy blue shadow
           blurRadius: 16,
           offset: const Offset(0, 8),
           spreadRadius: 1,
         ),
         // Inner glow
         BoxShadow(
-          color: const Color(0xFF60A5FA).withOpacity(0.18),
+          color: const Color(0xFF60A5FA).withValues(alpha: 0.18),
           blurRadius: 8,
           offset: const Offset(0, -2),
           spreadRadius: -5,
         ),
         // Depth shadow
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
+          color: Colors.black.withValues(alpha: 0.08),
           blurRadius: 12,
           offset: const Offset(0, 4),
         ),
@@ -197,7 +197,7 @@ class _GetStartedButtonState extends State<GetStartedButton>
             end: Alignment(_shimmerAnimation.value, 0),
             colors: [
               Colors.transparent,
-              Colors.white.withOpacity(0.2),
+              Colors.white.withValues(alpha: 0.2),
               Colors.transparent,
             ],
             stops: const [0.0, 0.5, 1.0],
@@ -225,7 +225,7 @@ class _GetStartedButtonState extends State<GetStartedButton>
             color: Colors.white,
             shadows: [
               Shadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 offset: const Offset(0, 1),
                 blurRadius: 2,
               ),

@@ -188,7 +188,7 @@ class _ModularPaymentIntegrationScreenState
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.08),
+                color: Colors.green.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -212,7 +212,7 @@ class _ModularPaymentIntegrationScreenState
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.green.withOpacity(0.8),
+                color: Colors.green.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -435,38 +435,40 @@ class _ModularPaymentIntegrationScreenState
       {'type': 'Mastercard', 'last4': '8888', 'expiry': '08/26'},
     ];
 
-    return Column(
-      children: savedCards.map((card) {
-        final isSelected = _selectedPaymentMethod == 'card_${card['last4']}';
-        
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: RadioListTile<String>(
-            value: 'card_${card['last4']}',
-            groupValue: _selectedPaymentMethod,
-            onChanged: (value) {
-              setState(() {
-                _selectedPaymentMethod = value;
-              });
-            },
-            title: Row(
-              children: [
-                Icon(
-                  card['type'] == 'Visa' ? Icons.credit_card : Icons.credit_card,
-                  color: isSelected ? Theme.of(context).colorScheme.primary : null,
-                ),
-                const SizedBox(width: 12),
-                Text('**** **** **** ${card['last4']}'),
-              ],
+    return RadioGroup<String>(
+      groupValue: _selectedPaymentMethod,
+      onChanged: (value) {
+        setState(() {
+          _selectedPaymentMethod = value;
+        });
+      },
+      child: Column(
+        children: savedCards.map((card) {
+          final isSelected = _selectedPaymentMethod == 'card_${card['last4']}';
+          
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: RadioListTile<String>(
+              value: 'card_${card['last4']}',
+              title: Row(
+                children: [
+                  Icon(
+                    card['type'] == 'Visa' ? Icons.credit_card : Icons.credit_card,
+                    color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Text('**** **** **** ${card['last4']}'),
+                ],
+              ),
+              subtitle: Text('Expires ${card['expiry']}'),
+              secondary: IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () => _showDeleteCardDialog(card['last4']!),
+              ),
             ),
-            subtitle: Text('Expires ${card['expiry']}'),
-            secondary: IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _showDeleteCardDialog(card['last4']!),
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -477,33 +479,35 @@ class _ModularPaymentIntegrationScreenState
       {'name': 'PayPal', 'icon': Icons.payment},
     ];
 
-    return Column(
-      children: wallets.map((wallet) {
-        final isSelected = _selectedPaymentMethod == (wallet['name'] as String?)?.toLowerCase();
-        
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: RadioListTile<String>(
-            value: (wallet['name'] as String?)?.toLowerCase() ?? '',
-            groupValue: _selectedPaymentMethod,
-            onChanged: (value) {
-              setState(() {
-                _selectedPaymentMethod = value;
-              });
-            },
-            title: Row(
-              children: [
-                Icon(
-                  wallet['icon'] as IconData,
-                  color: isSelected ? Theme.of(context).colorScheme.primary : null,
-                ),
-                const SizedBox(width: 12),
-                Text(wallet['name'] as String),
-              ],
+    return RadioGroup<String>(
+      groupValue: _selectedPaymentMethod,
+      onChanged: (value) {
+        setState(() {
+          _selectedPaymentMethod = value;
+        });
+      },
+      child: Column(
+        children: wallets.map((wallet) {
+          final isSelected = _selectedPaymentMethod == (wallet['name'] as String?)?.toLowerCase();
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: RadioListTile<String>(
+              value: (wallet['name'] as String?)?.toLowerCase() ?? '',
+              title: Row(
+                children: [
+                  Icon(
+                    wallet['icon'] as IconData,
+                    color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(wallet['name'] as String),
+                ],
+              ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -632,7 +636,7 @@ class _ModularPaymentIntegrationScreenState
 
   Widget _buildSecurityInfo() {
     return Card(
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -688,7 +692,7 @@ class _ModularPaymentIntegrationScreenState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.credit_card_off_rounded, color: Colors.red, size: 28),
@@ -708,9 +712,9 @@ class _ModularPaymentIntegrationScreenState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.08),
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -744,7 +748,7 @@ class _ModularPaymentIntegrationScreenState
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.red.withOpacity(0.8),
+                color: Colors.red.withValues(alpha: 0.8),
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -808,7 +812,7 @@ class _ModularPaymentIntegrationScreenState
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+                  colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -841,9 +845,9 @@ class _ModularPaymentIntegrationScreenState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.08),
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               ),
               child: Column(
                 children: [
@@ -884,7 +888,7 @@ class _ModularPaymentIntegrationScreenState
                   'Available 24/7',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.green.withOpacity(0.8),
+                    color: Colors.green.withValues(alpha: 0.8),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

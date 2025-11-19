@@ -11,7 +11,7 @@ class HotReloadHelper {
   static void trackHotReload() {
     _lastHotReload = DateTime.now();
     if (DevConfig.enableDebugLogs) {
-      debugPrint('🔥 Hot reload detected at ${_lastHotReload}');
+      debugPrint('🔥 Hot reload detected at $_lastHotReload');
     }
   }
   

@@ -303,7 +303,7 @@ Account Termination:
     final isDark = theme.brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.grey[50],
       appBar: _buildAppBar(theme, isDark),
       body: _isLoading ? _buildLoadingState() : _buildContent(theme, isDark),
     );
@@ -425,8 +425,8 @@ Account Termination:
     return NeoGlass(
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.all(16),
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       blur: isDark ? 10 : 0,
       child: Column(
@@ -439,8 +439,8 @@ Account Termination:
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.2),
-                      theme.colorScheme.primary.withOpacity(0.1),
+                      theme.colorScheme.primary.withValues(alpha: 0.2),
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -491,8 +491,8 @@ Account Termination:
     return NeoGlass(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,8 +548,8 @@ Account Termination:
 
     return NeoGlass(
       padding: EdgeInsets.zero,
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       blur: isDark ? 8 : 0,
       child: Column(
@@ -568,8 +568,8 @@ Account Termination:
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            theme.colorScheme.primary.withOpacity(0.2),
-                            theme.colorScheme.primary.withOpacity(0.1),
+                            theme.colorScheme.primary.withValues(alpha: 0.2),
+                            theme.colorScheme.primary.withValues(alpha: 0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
@@ -606,7 +606,7 @@ Account Termination:
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Divider(
-                    color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -631,16 +631,6 @@ Account Termination:
         _expandedSections.remove(index);
       } else {
         _expandedSections.add(index);
-      }
-    });
-  }
-
-  void _toggleAllSections() {
-    setState(() {
-      if (_expandedSections.length == _sections.length) {
-        _expandedSections.clear();
-      } else {
-        _expandedSections.addAll(List.generate(_sections.length, (i) => i));
       }
     });
   }

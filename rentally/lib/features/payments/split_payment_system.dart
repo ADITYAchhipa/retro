@@ -201,20 +201,20 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
           Icon(
             Icons.group_off,
             size: 80,
-            color: theme.colorScheme.onSurface.withOpacity(0.3),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'No payment groups found',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Create a new split payment to get started',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -251,7 +251,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                       Text(
                         group.propertyTitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -260,9 +260,9 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(group.status).withOpacity(0.1),
+                    color: _getStatusColor(group.status).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _getStatusColor(group.status).withOpacity(0.3)),
+                    border: Border.all(color: _getStatusColor(group.status).withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     _getStatusText(group.status),
@@ -285,7 +285,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                       Text(
                         'Total Amount',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
@@ -304,7 +304,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                       Text(
                         'Your Share',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
@@ -324,7 +324,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                       Text(
                         'Due Date',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
@@ -364,7 +364,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                 ),
               ],
@@ -385,7 +385,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Row(
@@ -487,7 +487,7 @@ class _SplitPaymentScreenState extends ConsumerState<SplitPaymentScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

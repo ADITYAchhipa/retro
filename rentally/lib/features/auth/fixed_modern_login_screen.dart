@@ -159,15 +159,15 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                         ) : LinearGradient(
                           colors: [
                             theme.colorScheme.primary,
-                            theme.colorScheme.primary.withOpacity(0.8),
+                            theme.colorScheme.primary.withValues(alpha: 0.8),
                           ],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: isDark 
-                                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.22)
-                                : theme.colorScheme.primary.withOpacity(0.18),
+                                ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.22)
+                                : theme.colorScheme.primary.withValues(alpha: 0.18),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -210,7 +210,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                       Text(
                         'Sign in to continue your journey',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                         ),
@@ -225,7 +225,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                     decoration: BoxDecoration(
                       gradient: isDark ? LinearGradient(
                         colors: [
-                          const Color(0xFF21262D).withOpacity(0.9),
+                          const Color(0xFF21262D).withValues(alpha: 0.9),
                           const Color(0xFF30363D),
                         ],
                       ) : null,
@@ -233,14 +233,14 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: isDark 
-                            ? const Color(0xFF58A6FF).withOpacity(0.4)
-                            : theme.colorScheme.outline.withOpacity(0.2),
+                            ? const Color(0xFF58A6FF).withValues(alpha: 0.4)
+                            : theme.colorScheme.outline.withValues(alpha: 0.2),
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: isDark 
-                              ? const Color(0xFF58A6FF).withOpacity(0.12)
-                              : Colors.black.withOpacity(0.06),
+                              ? const Color(0xFF58A6FF).withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.06),
                           blurRadius: 10,
                           offset: const Offset(0, 6),
                         ),
@@ -265,11 +265,11 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                 labelText: 'Email Address',
                                 hintText: 'Enter your email',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
@@ -277,8 +277,8 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: isDark 
-                                        ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.1)
-                                        : theme.colorScheme.primary.withOpacity(0.1),
+                                        ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.1)
+                                        : theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -294,14 +294,14 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: isDark ? Colors.white.withOpacity(0.22) : theme.colorScheme.outline,
+                                    color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline,
                                     width: 1.5,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: isDark ? Colors.white.withOpacity(0.22) : theme.colorScheme.outline,
+                                    color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline,
                                     width: 1.5,
                                   ),
                                 ),
@@ -348,11 +348,11 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                 labelText: 'Password',
                                 hintText: 'Enter your password',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
@@ -360,8 +360,8 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: isDark 
-                                        ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.1)
-                                        : theme.colorScheme.primary.withOpacity(0.1),
+                                        ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.1)
+                                        : theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -391,14 +391,14 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: isDark ? Colors.white.withOpacity(0.22) : theme.colorScheme.outline,
+                                    color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline,
                                     width: 1.5,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: isDark ? Colors.white.withOpacity(0.22) : theme.colorScheme.outline,
+                                    color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline,
                                     width: 1.5,
                                   ),
                                 ),
@@ -468,7 +468,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                                     const Color(0xFF0969DA),
                                   ] : [
                                     theme.colorScheme.primary,
-                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primary.withValues(alpha: 0.8),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
@@ -506,13 +506,13 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: isDark 
-                          ? const Color(0xFF58A6FF).withOpacity(0.1)
-                          : theme.colorScheme.primaryContainer.withOpacity(0.3),
+                          ? const Color(0xFF58A6FF).withValues(alpha: 0.1)
+                          : theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isDark 
-                            ? const Color(0xFF58A6FF).withOpacity(0.3)
-                            : theme.colorScheme.primary.withOpacity(0.2),
+                            ? const Color(0xFF58A6FF).withValues(alpha: 0.3)
+                            : theme.colorScheme.primary.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
@@ -557,7 +557,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                       Expanded(
                         child: Container(
                           height: 1,
-                          color: theme.colorScheme.outline.withOpacity(0.3),
+                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
                         ),
                       ),
                       Padding(
@@ -565,7 +565,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                         child: Text(
                           'Or continue with',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -573,7 +573,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                       Expanded(
                         child: Container(
                           height: 1,
-                          color: theme.colorScheme.outline.withOpacity(0.3),
+                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
                         ),
                       ),
                     ],
@@ -624,7 +624,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                       Text(
                         "Don't have an account? ",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       TextButton(
@@ -673,7 +673,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
         border: Border.all(
           color: isDark 
               ? EnterpriseDarkTheme.primaryBorder
-              : theme.colorScheme.outline.withOpacity(0.3),
+              : theme.colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Material(
@@ -716,7 +716,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -738,14 +738,14 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                   email,
                   style: TextStyle(
                     fontSize: 9,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 Text(
                   password,
                   style: TextStyle(
                     fontSize: 9,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],

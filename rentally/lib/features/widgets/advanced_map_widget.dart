@@ -292,7 +292,7 @@ class _AdvancedMapWidgetState extends ConsumerState<AdvancedMapWidget> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.4)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -450,7 +450,7 @@ class PropertyMapCard extends StatelessWidget {
                   placeholder: (context, url) => Container(
                     width: 80,
                     height: 80,
-                    color: theme.colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     child: const Center(
                       child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                     ),
@@ -458,7 +458,7 @@ class PropertyMapCard extends StatelessWidget {
                   errorWidget: (context, url, error) => Container(
                     width: 80,
                     height: 80,
-                    color: theme.colorScheme.surfaceVariant,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     child: const Icon(Icons.image),
                   ),
                 ),
@@ -557,7 +557,7 @@ class ClusterBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -602,7 +602,7 @@ class ClusterBottomSheet extends StatelessWidget {
                         placeholder: (context, url) => Container(
                           width: 60,
                           height: 60,
-                          color: theme.colorScheme.surfaceVariant,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           child: const Center(
                             child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
                           ),
@@ -610,7 +610,7 @@ class ClusterBottomSheet extends StatelessWidget {
                         errorWidget: (context, url, error) => Container(
                           width: 60,
                           height: 60,
-                          color: theme.colorScheme.surfaceVariant,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           child: const Icon(Icons.image),
                         ),
                       ),

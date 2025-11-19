@@ -37,7 +37,7 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
       accountName: 'user@rentally',
       secretBase32: secret,
     );
-    if (!mounted) return;
+    if (!context.mounted) return;
     setState(() {
       _enabled = enabled;
       _secret = secret;
@@ -66,7 +66,7 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a code from your authenticator and tap Verify & Enable')));
                       } else {
                         await TwoFactorService.instance.setEnabled(false);
-                        if (!mounted) return;
+                        if (!context.mounted) return;
                         setState(() => _enabled = false);
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Two-factor authentication disabled')));
                       }
@@ -124,10 +124,10 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                                   return;
                                 }
                                 final ok = await TwoFactorService.instance.verifyCode(code);
-                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 if (ok) {
                                   await TwoFactorService.instance.setEnabled(true);
-                                  if (!mounted) return;
+                                  if (!context.mounted) return;
                                   setState(() => _enabled = true);
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Two-factor authentication enabled')));
                                 } else {
@@ -148,7 +148,7 @@ class _TwoFactorSetupScreenState extends State<TwoFactorSetupScreen> {
                       onPressed: () async {
                         await TwoFactorService.instance.regenerateSecret();
                         await _load();
-                        if (!mounted) return;
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Secret regenerated. Scan the new QR')));
                       },
                       icon: const Icon(Icons.refresh),

@@ -32,7 +32,6 @@ class PropertyProvider with ChangeNotifier {
   bool _isSearching = false;
   String? _error;
   PropertyType? _filterType;
-  String _currentCategory = 'all'; // Track current category
 
   // Getters
   List<PropertyModel> get properties => _properties;
@@ -82,7 +81,6 @@ class PropertyProvider with ChangeNotifier {
 
   /// Load featured properties for home screen from real backend with caching
   Future<void> loadFeaturedProperties({String category = 'all'}) async {
-    _currentCategory = category;
     
     // Check cache first
     if (_cacheProvider != null) {

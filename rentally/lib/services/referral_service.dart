@@ -261,7 +261,6 @@ class ReferralService extends StateNotifier<UserReferralStats> {
       case ReferralLevel.silver:
         return 1.1;
       case ReferralLevel.bronze:
-      default:
         return 1.0;
     }
   }

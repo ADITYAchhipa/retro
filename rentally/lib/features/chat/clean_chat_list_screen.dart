@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/app_state.dart';
 
 import '../../widgets/responsive_layout.dart';
 import '../../widgets/error_boundary.dart';
@@ -18,14 +20,14 @@ import '../../core/neo/neo.dart';
 /// - Chat search and filtering
 /// - Real-time message updates
 /// - Chat management actions
-class CleanChatListScreen extends StatefulWidget {
+class CleanChatListScreen extends ConsumerStatefulWidget {
   const CleanChatListScreen({super.key});
 
   @override
-  State<CleanChatListScreen> createState() => _CleanChatListScreenState();
+  ConsumerState<CleanChatListScreen> createState() => _CleanChatListScreenState();
 }
 
-class _CleanChatListScreenState extends State<CleanChatListScreen> {
+class _CleanChatListScreenState extends ConsumerState<CleanChatListScreen> {
   late ScrollController _scrollController;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -197,18 +199,18 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
         boxShadow: isDark
             ? [
                 BoxShadow(
-                  color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.12),
+                  color: EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.12),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -259,21 +261,21 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surface.withOpacity(0.5) : Colors.white,
+        color: isDark ? theme.colorScheme.surface.withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey[300]!,
+          color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey[300]!,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
             blurRadius: 12,
             offset: const Offset(-6, -6),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.2 : 0.15),
+                .withValues(alpha: isDark ? 0.2 : 0.15),
             blurRadius: 12,
             offset: const Offset(6, 6),
           ),
@@ -299,7 +301,7 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
                 hintText: 'Search messages...',
                 hintStyle: TextStyle(
                   fontSize: 13,
-                  color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                  color: isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[500],
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -317,7 +319,7 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -387,20 +389,20 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
           Icon(
             Icons.chat_bubble_outline,
             size: 64,
-            color: theme.primaryColor.withOpacity(0.5),
+            color: theme.primaryColor.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No messages yet',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.textTheme.titleLarge?.color?.withOpacity(0.7),
+              color: theme.textTheme.titleLarge?.color?.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start a conversation with property owners or guests',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
             ),
             textAlign: TextAlign.center,
           ),
@@ -448,19 +450,19 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         borderRadius: BorderRadius.circular(18),
-        backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!,
         borderWidth: 1,
         blur: isDark ? 12 : 0,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
             blurRadius: 10,
             offset: const Offset(-5, -5),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.12 : 0.06),
+                .withValues(alpha: isDark ? 0.12 : 0.06),
             blurRadius: 10,
             offset: const Offset(5, 5),
           ),
@@ -519,7 +521,7 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
                         Text(
                           chat['timestamp'],
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[600],
+                            color: isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[600],
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -531,9 +533,9 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       margin: const EdgeInsets.only(bottom: 6),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 1),
+                        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2), width: 1),
                       ),
                       child: Text(
                         chat['propertyTitle'],
@@ -553,7 +555,7 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
                             chat['lastMessage'],
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-                              color: isDark ? Colors.white.withOpacity(0.8) : Colors.grey[700],
+                              color: isDark ? Colors.white.withValues(alpha: 0.8) : Colors.grey[700],
                               fontSize: 14,
                             ),
                             maxLines: 1,
@@ -612,10 +614,13 @@ class _CleanChatListScreenState extends State<CleanChatListScreen> {
   }
 
   void _handleBack() {
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      context.pop();
     } else {
-      context.go('/home');
+      final authState = ref.read(authProvider);
+      final isOwner = authState.user?.role == UserRole.owner;
+      context.go(isOwner ? '/owner-dashboard' : '/home');
     }
   }
 }

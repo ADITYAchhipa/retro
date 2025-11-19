@@ -5,6 +5,7 @@ import '../../features/monetization/sponsored_listings_service.dart';
 import '../../services/monetization_service.dart';
 import '../../models/monetization_models.dart';
 import '../../core/providers/ui_visibility_provider.dart';
+import '../../core/utils/currency_formatter.dart';
 
 class PromoteListingScreen extends ConsumerStatefulWidget {
   const PromoteListingScreen({super.key});
@@ -30,58 +31,161 @@ class _PromoteListingScreenState extends ConsumerState<PromoteListingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final symbol = CurrencyFormatter.currencySymbolFor(CurrencyFormatter.defaultCurrency);
+    final daily = double.tryParse(_bidCtrl.text.trim()) ?? 0.0;
+    final days = _range == null ? 0 : (_range!.end.difference(_range!.start).inDays + 1);
+    final total = daily * days;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Promote Listing')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _listingIdCtrl,
-                decoration: const InputDecoration(labelText: 'Listing ID'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter listing id' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Campaign Name'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter name' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _bidCtrl,
-                decoration: const InputDecoration(labelText: 'Daily Budget (INR)'),
-                keyboardType: TextInputType.number,
-                validator: (v) => (double.tryParse(v ?? '') ?? 0) > 0 ? null : 'Enter valid amount',
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        final now = DateTime.now();
-                        final picked = await showDateRangePicker(context: context, firstDate: now, lastDate: now.add(const Duration(days: 365)));
-                        if (picked != null) setState(() => _range = picked);
-                      },
-                      icon: const Icon(Icons.date_range),
-                      label: Text(_range == null ? 'Pick Dates' : '${_range!.start.toString().split(' ').first} → ${_range!.end.toString().split(' ').first}'),
+      appBar: AppBar(
+        titleSpacing: 16,
+        toolbarHeight: 60,
+        backgroundColor: theme.colorScheme.surface,
+        title: const Text('Promote Listing'),
+        elevation: 0,
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _listingIdCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Listing ID',
+                            prefixIcon: Icon(Icons.home_outlined),
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter listing id' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _nameCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Campaign Name',
+                            prefixIcon: Icon(Icons.flag_outlined),
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _bidCtrl,
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            labelText: 'Daily Budget',
+                            prefixIcon: const Icon(Icons.attach_money),
+                            suffixText: symbol,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (v) => (double.tryParse(v ?? '') ?? 0) > 0 ? null : 'Enter valid amount',
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final now = DateTime.now();
+                              final picked = await showDateRangePicker(
+                                context: context,
+                                firstDate: now,
+                                lastDate: now.add(const Duration(days: 365)),
+                              );
+                              if (picked != null) setState(() => _range = picked);
+                            },
+                            icon: const Icon(Icons.date_range),
+                            label: Text(
+                              _range == null
+                                  ? 'Pick Date Range'
+                                  : '${_range!.start.toString().split(' ').first} → ${_range!.end.toString().split(' ').first}',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Proceed to Checkout'),
                 ),
-              )
-            ],
+                const SizedBox(height: 12),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Daily', style: theme.textTheme.bodySmall),
+                              const SizedBox(height: 2),
+                              Text(
+                                daily > 0 ? CurrencyFormatter.formatPrice(daily) : '—',
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Days', style: theme.textTheme.bodySmall),
+                              const SizedBox(height: 2),
+                              Text(days > 0 ? '$days' : '—', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Total', style: theme.textTheme.bodySmall),
+                              const SizedBox(height: 2),
+                              Text(
+                                (total > 0) ? CurrencyFormatter.formatPrice(total) : '—',
+                                style: theme.textTheme.titleMedium?.copyWith(color: Colors.green[700], fontWeight: FontWeight.w800),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton(
+              onPressed: _submit,
+              child: const Text('Proceed to Checkout'),
+            ),
           ),
         ),
       ),

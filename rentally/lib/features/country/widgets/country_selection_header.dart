@@ -36,38 +36,38 @@ class CountrySelectionHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark ? [
-            theme.colorScheme.surface.withOpacity(0.98),
-            theme.colorScheme.surface.withOpacity(0.92),
-            theme.colorScheme.surface.withOpacity(0.95),
+            theme.colorScheme.surface.withValues(alpha: 0.98),
+            theme.colorScheme.surface.withValues(alpha: 0.92),
+            theme.colorScheme.surface.withValues(alpha: 0.95),
           ] : [
-            Colors.white.withOpacity(0.98),
-            Colors.white.withOpacity(0.92),
-            const Color(0xFFFBFCFE).withOpacity(0.95),
+            Colors.white.withValues(alpha: 0.98),
+            Colors.white.withValues(alpha: 0.92),
+            const Color(0xFFFBFCFE).withValues(alpha: 0.95),
           ],
           stops: const [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(
           color: isDark 
-              ? Colors.white.withOpacity(0.12) 
+              ? Colors.white.withValues(alpha: 0.12) 
               : const Color(0xFFCBD5E1), // stronger border in light mode for visibility
           width: isDark ? 0.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(isDark ? 0.08 : 0.05),
+            color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.05),
             blurRadius: 18,
             offset: const Offset(0, 8),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.22 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
           if (!isDark)
             BoxShadow(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               blurRadius: 1,
               offset: const Offset(0, 1),
               spreadRadius: 0,
@@ -94,7 +94,7 @@ class CountrySelectionHeader extends StatelessWidget {
           Text(
             'Select your country to unlock personalized rental experiences tailored just for you.',
             style: AppTextStyles.body(isDesktop).copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -122,21 +122,21 @@ class CountrySelectionHeader extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 theme.colorScheme.primary,
-                theme.colorScheme.primary.withOpacity(0.8),
-                theme.colorScheme.primary.withOpacity(0.6),
+                theme.colorScheme.primary.withValues(alpha: 0.8),
+                theme.colorScheme.primary.withValues(alpha: 0.6),
               ],
               stops: const [0.0, 0.5, 1.0],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(isDark ? 0.24 : 0.16),
+                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.24 : 0.16),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
                 spreadRadius: 0,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),

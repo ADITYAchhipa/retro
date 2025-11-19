@@ -74,7 +74,7 @@ class _SkeletonCardState extends State<_SkeletonCard> with SingleTickerProviderS
         borderRadius: borderRadius,
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: widget.theme.colorScheme.outline.withOpacity(0.15)),
+            border: Border.all(color: widget.theme.colorScheme.outline.withValues(alpha: 0.15)),
             borderRadius: borderRadius,
           ),
           child: _shimmer(
@@ -145,7 +145,6 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
       case SubscriptionTier.pro:
         return const Color(0xFF3B82F6); // Vibrant Blue
       case SubscriptionTier.basic:
-      default:
         return const Color(0xFF10B981); // Emerald Green
     }
   }
@@ -158,7 +157,6 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
       case SubscriptionTier.pro:
         return const Color(0xFF06B6D4); // Cyan
       case SubscriptionTier.basic:
-      default:
         return const Color(0xFF059669); // Darker Green
     }
   }
@@ -181,7 +179,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.15)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
       ),
       padding: EdgeInsets.all(isPhone ? 10 : 14),
       child: SingleChildScrollView(
@@ -197,12 +195,12 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],
-                border: Border.all(color: theme.colorScheme.outline.withOpacity(0.15)),
+                border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,8 +307,8 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
             fontSize: isPhone ? 11 : 12,
           ),
         ),
-        backgroundColor: color.withOpacity(0.10),
-        shape: StadiumBorder(side: BorderSide(color: color.withOpacity(0.25))),
+        backgroundColor: color.withValues(alpha: 0.10),
+        shape: StadiumBorder(side: BorderSide(color: color.withValues(alpha: 0.25))),
         padding: EdgeInsets.symmetric(horizontal: isPhone ? 6 : 8),
       );
     }
@@ -379,7 +377,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                      border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: [
@@ -411,7 +409,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                                 gradient: LinearGradient(
                                   colors: [
                                     theme.colorScheme.primary,
-                                    theme.colorScheme.secondary.withOpacity(0.85),
+                                    theme.colorScheme.secondary.withValues(alpha: 0.85),
                                   ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
@@ -443,7 +441,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                                         ? 'Choose the perfect plan to maximize your earnings and reach more guests'
                                         : 'Get early access, advanced filters, and exclusive deals',
                                     style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
-                                      color: theme.colorScheme.onPrimary.withOpacity(0.92),
+                                      color: theme.colorScheme.onPrimary.withValues(alpha: 0.92),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -539,8 +537,8 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
               letterSpacing: -0.2,
             ),
           ),
-          backgroundColor: color.withOpacity(0.10),
-          shape: StadiumBorder(side: BorderSide(color: color.withOpacity(0.25))),
+          backgroundColor: color.withValues(alpha: 0.10),
+          shape: StadiumBorder(side: BorderSide(color: color.withValues(alpha: 0.25))),
           padding: EdgeInsets.symmetric(horizontal: isPhone ? 4 : 6),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
@@ -640,7 +638,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           borderRadius: BorderRadius.circular(25),
           boxShadow: isSelected
               ? [BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 3,
                   offset: const Offset(0, 2),
                 )]
@@ -684,7 +682,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
             ),
             boxShadow: [
               BoxShadow(
-                color: accent.withOpacity(0.3),
+                color: accent.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -701,12 +699,12 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: isPhone ? 8 : 10, vertical: isPhone ? 3 : 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -729,7 +727,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                     const SizedBox(height: 4),
                     Text(
                       plan.description,
-                      style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(color: Colors.white.withOpacity(0.9)),
+                      style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
                     ),
                   ],
                 ),
@@ -744,7 +742,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -775,9 +773,9 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: isPhone ? 6 : 8, vertical: isPhone ? 3 : 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white.withOpacity(0.25)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -805,13 +803,13 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: accent.withOpacity(plan.isPopular ? 0.2 : 0.15),
+              color: accent.withValues(alpha: plan.isPopular ? 0.2 : 0.15),
               blurRadius: plan.isPopular ? 20 : 15,
               offset: const Offset(0, 4),
               spreadRadius: plan.isPopular ? 2 : 1,
             ),
             BoxShadow(
-              color: accentSecondary.withOpacity(plan.isPopular ? 0.15 : 0.1),
+              color: accentSecondary.withValues(alpha: plan.isPopular ? 0.15 : 0.1),
               blurRadius: plan.isPopular ? 30 : 20,
               offset: const Offset(0, 8),
               spreadRadius: plan.isPopular ? 1 : 0,
@@ -824,7 +822,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: plan.isPopular
-                ? BorderSide(color: accent.withOpacity(0.3), width: 2)
+                ? BorderSide(color: accent.withValues(alpha: 0.3), width: 2)
                 : BorderSide(color: Colors.grey.shade200, width: 1),
           ),
           color: Colors.white,
@@ -849,13 +847,13 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: accent.withOpacity(0.4),
+                          color: accent.withValues(alpha: 0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                           spreadRadius: 1,
                         ),
                         BoxShadow(
-                          color: accentSecondary.withOpacity(0.3),
+                          color: accentSecondary.withValues(alpha: 0.3),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -883,7 +881,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                             fontSize: isPhone ? 10 : 11,
                             shadows: [
                               Shadow(
-                                color: Colors.black.withOpacity(0.25),
+                                color: Colors.black.withValues(alpha: 0.25),
                                 offset: const Offset(0, 1),
                                 blurRadius: 2,
                               ),
@@ -896,74 +894,85 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                 ),
               Padding(
                 padding: EdgeInsets.all(plan.isPopular ? (isPhone ? 16 : 20) : (isPhone ? 12 : 16)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (plan.isPopular) SizedBox(height: isPhone ? 8 : 12),
-                    header(),
-                    SizedBox(height: isPhone ? 14 : 18),
-                    Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
-                    SizedBox(height: isPhone ? 12 : 16),
-                    _buildPlanHighlights(plan),
-                    SizedBox(height: isPhone ? 10 : 14),
-                    ...plan.features.map((feature) => Padding(
-                          padding: EdgeInsets.symmetric(vertical: isPhone ? 3 : 4),
-                          child: Row(
-                            children: [
-                              Icon(Icons.check_circle, color: Colors.green, size: isPhone ? 16 : 20),
-                              SizedBox(width: isPhone ? 8 : 12),
-                              Expanded(child: Text(feature, style: isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final content = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (plan.isPopular) SizedBox(height: isPhone ? 8 : 12),
+                        header(),
+                        SizedBox(height: isPhone ? 14 : 18),
+                        Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+                        SizedBox(height: isPhone ? 12 : 16),
+                        _buildPlanHighlights(plan),
+                        SizedBox(height: isPhone ? 10 : 14),
+                        ...plan.features.map((feature) => Padding(
+                              padding: EdgeInsets.symmetric(vertical: isPhone ? 3 : 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.green, size: isPhone ? 16 : 20),
+                                  SizedBox(width: isPhone ? 8 : 12),
+                                  Expanded(child: Text(feature, style: isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)),
+                                ],
+                              ),
+                            )),
+                        SizedBox(height: isPhone ? 10 : 14),
+                        _buildGuaranteeChips(),
+                        SizedBox(height: isPhone ? 16 : 24),
+                        Container(
+                          width: double.infinity,
+                          height: isPhone ? 48 : 54,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [accent, accentSecondary],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: accent.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
                             ],
                           ),
-                        )),
-                    SizedBox(height: isPhone ? 10 : 14),
-                    _buildGuaranteeChips(),
-                    SizedBox(height: isPhone ? 16 : 24),
-                    Container(
-                      width: double.infinity,
-                      height: isPhone ? 48 : 54,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [accent, accentSecondary],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
+                          child: ElevatedButton(
+                            onPressed: () => _selectPlan(plan),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text(
+                              'Start 7-Day Free Trial',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.3),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () => _selectPlan(plan),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text(
-                          'Start 7-Day Free Trial',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.3),
-                        ),
-                      ),
-                    ),
-                    if (_isCurrentPlan(plan))
-                      Padding(
-                        padding: EdgeInsets.only(top: isPhone ? 8 : 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.verified, color: Colors.green, size: 16),
-                            SizedBox(width: 4),
-                            Text('Current Plan', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                  ],
+                        if (_isCurrentPlan(plan))
+                          Padding(
+                            padding: EdgeInsets.only(top: isPhone ? 8 : 12),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.verified, color: Colors.green, size: 16),
+                                SizedBox(width: 4),
+                                Text('Current Plan', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    );
+                    if (constraints.hasBoundedHeight) {
+                      return SingleChildScrollView(
+                        primary: false,
+                        child: content,
+                      );
+                    }
+                    return content;
+                  },
                 ),
               ),
             ],
@@ -1103,7 +1112,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
         return StatefulBuilder(
           builder: (context, setState) {
             final isProTier = plan.tier == SubscriptionTier.pro;
-            final introDiscountPct = 0.20;
+            const introDiscountPct = 0.20;
             final introPrice = (price * (1 - introDiscountPct));
             void applyPromo() {
               final code = promoController.text.trim().toUpperCase();
@@ -1124,6 +1133,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
             }
 
             return AlertDialog(
+              scrollable: true,
               title: const Text('Confirm Subscription'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1134,9 +1144,9 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.teal.withOpacity(0.1),
+                      color: Colors.teal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.teal.withOpacity(0.25)),
+                      border: Border.all(color: Colors.teal.withValues(alpha: 0.25)),
                     ),
                     child: Text(
                       '7-Day Free Trial: ₹0 today. Next charge ${CurrencyFormatter.formatPrice(isProTier ? introPrice : price, currency: plan.currency)} after trial${isProTier ? ' (with 20% intro discount)' : ''}.',
@@ -1212,7 +1222,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1237,7 +1247,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

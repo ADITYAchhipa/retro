@@ -110,11 +110,11 @@ class ErrorHandlingService {
   // Show snackbar for minor errors
   void _showSnackBar(BuildContext context, String message, Color color) {
     // Use appropriate snackbar type based on color
-    if (color == Colors.red || color.value == 0xFFEF4444) {
+    if (color == Colors.red || color.toARGB32() == 0xFFEF4444) {
       SnackBarUtils.showError(context, message);
-    } else if (color == Colors.orange || color.value == 0xFFF59E0B) {
+    } else if (color == Colors.orange || color.toARGB32() == 0xFFF59E0B) {
       SnackBarUtils.showWarning(context, message);
-    } else if (color == Colors.green || color.value == 0xFF10B981) {
+    } else if (color == Colors.green || color.toARGB32() == 0xFF10B981) {
       SnackBarUtils.showSuccess(context, message);
     } else {
       SnackBarUtils.showInfo(context, message);
@@ -122,7 +122,7 @@ class ErrorHandlingService {
   }
 
   // Show error dialog for standard errors
-  void _showErrorDialog(BuildContext context, AppError error, AppLocalizations? l10n) {
+  void _showErrorDialog(BuildContext context, AppError error, dynamic l10n) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -161,7 +161,7 @@ class ErrorHandlingService {
   }
 
   // Show critical error dialog
-  void _showCriticalErrorDialog(BuildContext context, AppError error, AppLocalizations? l10n) {
+  void _showCriticalErrorDialog(BuildContext context, AppError error, dynamic l10n) {
     showDialog(
       context: context,
       barrierDismissible: false,

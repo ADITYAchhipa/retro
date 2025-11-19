@@ -6,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -20,14 +18,13 @@ import '../../services/listing_service.dart';
 import '../../services/image_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../utils/snackbar_utils.dart';
-import 'forms/plot_details_form.dart';
-import 'forms/commercial_details_form.dart';
 import 'forms/residential_details_form.dart';
-import 'forms/venue_details_form.dart';
 import '../../app/app_state.dart';
 
 class FixedAddListingScreen extends ConsumerStatefulWidget {
-  const FixedAddListingScreen({super.key});
+  final String? initialCategory;
+
+  const FixedAddListingScreen({super.key, this.initialCategory});
 
   @override
   ConsumerState<FixedAddListingScreen> createState() => _FixedAddListingScreenState();
@@ -45,6 +42,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   final _zipCodeController = TextEditingController();
   final _nearLandmarkController = TextEditingController();
   final _otherAmenitiesController = TextEditingController();
+  final _houseRulesController = TextEditingController();
   final _pincodeController = TextEditingController();
   final _monthlyRentController = TextEditingController();
   final _discountPercentController = TextEditingController();
@@ -63,9 +61,55 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   final _studioSizeController = TextEditingController();
   // PG/Hostel specific
   final _pgOccupancyController = TextEditingController();
+  final _pgBedRentController = TextEditingController();
   bool _pgAttachedBathroom = true;
   String _pgGender = 'Any';
   String _pgMeals = 'No Meals';
+
+  // Kitchen details
+  final _kitchenPlatformController = TextEditingController();
+  String _kitchenType = 'Modular';
+  String _kitchenAccess = 'Full';
+  bool _kitchenGasConnection = false;
+  bool _kitchenChimney = false;
+  bool _kitchenCabinets = false;
+  bool _kitchenCommonKitchen = false;
+
+  // Bathroom details
+  bool _bathroomHasGeyser = true;
+  String _bathroomStyle = 'Western';
+  bool _bathroomHasExhaust = false;
+  bool _pgHotWater = true;
+
+  // Dynamic room module
+  String _roomType = 'Single Room';
+  final _roomSizeController = TextEditingController();
+  final _roomSharingCountController = TextEditingController();
+  bool _roomHasBed = true;
+  bool _roomHasMattress = true;
+  bool _roomHasWardrobe = true;
+  bool _roomHasFan = true;
+  bool _roomHasAC = false;
+  bool _roomHasTable = false;
+  bool _roomHasChair = false;
+  bool _roomHasMirror = false;
+  bool _roomHasMiniFridge = false;
+
+  // Rules & restrictions
+  bool _ruleVisitorsAllowed = true;
+  bool _ruleOvernightGuestsAllowed = false;
+  bool _ruleSmokingAllowed = false;
+  bool _ruleDrinkingAllowed = false;
+  bool _ruleCookingAllowed = true;
+  bool _ruleOwnerStaysOnProperty = false;
+  final _gateClosingTimeController = TextEditingController();
+
+  // Availability
+  final _availableFromController = TextEditingController();
+  String _availabilityStatus = 'Vacant';
+  bool _earlyMoveInAllowed = false;
+  final _maxOccupancyController = TextEditingController();
+  final _moveInRequirementsController = TextEditingController();
 
   // Commercial specific controllers/flags
   // Office
@@ -85,21 +129,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   final _warehousePowerController = TextEditingController(); // in kVA
   bool _warehouseTruckAccess = true;
 
-  // Venue specific controllers/flags
-  final _venueSeatedCapacityController = TextEditingController();
-  final _venueParkingCapacityController = TextEditingController();
-  final _venueRoomCountController = TextEditingController(); // resort
-  final _venueHallAreaController = TextEditingController(); // event hall
-  final _venueGardenAreaController = TextEditingController(); // event garden
-  bool _venuePowerBackup = true;
-  bool _venueInHouseCatering = true;
-  bool _venueOutsideCateringAllowed = false;
-  bool _venueAlcoholAllowed = false;
-  bool _venueHallAC = false;
-  bool _venueStageIncluded = false;
-  bool _venueBridalRoom = false;
-  bool _venueOpenAirAllowed = false;
-
   // Generic area fields
   final _carpetAreaController = TextEditingController(); // apartment/condo/townhouse
   // Generic commercial area for new types
@@ -110,7 +139,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   // New: Rental & Plot support
   String _rentalModeListing = 'both'; // both | rental | monthly
   String _plotUsageListing = 'any'; // any | agriculture | commercial | events | construction
-  List<XFile> _documentImages = [];
   // Geo location (persisted in draft)
   double? _latitude;
   double? _longitude;
@@ -167,8 +195,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   final List<String> _pgGenderOptions = ['Any', 'Male', 'Female'];
   final List<String> _pgMealsOptions = ['No Meals', 'Breakfast', 'Breakfast + Dinner', 'All Meals'];
   
-  // Categories
-  final List<String> _categories = ['Residential', 'Commercial', 'Plot', 'Venue'];
+  // Categories (now restricted to Residential-only for this screen)
+  final List<String> _categories = ['Residential'];
 
   // Room options (Residential -> Room)
   final List<String> _roomBathroomOptions = ['Shared', 'Separate', 'Attached'];
@@ -180,9 +208,34 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   bool _suspendDraft = false;
 
   @override
+  void didUpdateWidget(covariant FixedAddListingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newCategory = widget.initialCategory;
+    if (newCategory != null &&
+        newCategory != oldWidget.initialCategory &&
+        _categories.contains(newCategory)) {
+      setState(() {
+        _selectedCategory = newCategory;
+        final allowed = _getTypesForCategory();
+        if (allowed.isNotEmpty) {
+          _selectedPropertyType = allowed.first;
+        }
+      });
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
+    final initial = widget.initialCategory;
+    if (initial != null && _categories.contains(initial)) {
+      _selectedCategory = initial;
+      final allowed = _getTypesForCategory();
+      if (allowed.isNotEmpty) {
+        _selectedPropertyType = allowed.first;
+      }
+    }
     _attachDraftListeners();
     // Load any saved draft
     unawaited(_loadDraft());
@@ -216,7 +269,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             'Provide essential details about your property',
             style: TextStyle(
               fontSize: isPhone ? 12 : 13,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               height: 1.3,
             ),
           ),
@@ -275,7 +328,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _tabController.animateTo(0),
+                  onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.arrow_back_rounded, size: 18),
                   label: Text(
                     'Back',
@@ -287,7 +340,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                       borderRadius: BorderRadius.circular(12),
                     ),
                     side: BorderSide(
-                      color: theme.colorScheme.outline.withOpacity(0.8),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.8),
                     ),
                   ),
                 ),
@@ -295,7 +348,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               const SizedBox(width: 19),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _tabController.animateTo(2),
+                  onPressed: () => _tabController.animateTo(1),
                   label: Text(
                     'Continue',
                     style: TextStyle(fontSize: isPhone ? 12 : 13),
@@ -329,9 +382,11 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool showRequiredMarker = true,
   }) {
     final theme = Theme.of(context);
     final isPhone = MediaQuery.of(context).size.width < 600;
+    final isRequired = validator != null && showRequiredMarker;
     
     return TextFormField(
       controller: controller,
@@ -340,24 +395,24 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       validator: validator,
       style: TextStyle(fontSize: isPhone ? 11 : 12),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: isRequired ? '$label *' : label,
         hintText: hint,
         helperText: helperText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
         hintStyle: TextStyle(
           fontSize: isPhone ? 11 : 12,
-          color: theme.hintColor.withOpacity(0.9),
+          color: theme.hintColor.withValues(alpha: 0.9),
         ),
         labelStyle: TextStyle(fontSize: isPhone ? 13 : 15),
         filled: true,
         fillColor: theme.colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -385,9 +440,11 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     int maxLines = 1,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool showRequiredMarker = true,
   }) {
     final theme = Theme.of(context);
     final isPhone = MediaQuery.of(context).size.width < 600;
+    final isRequired = validator != null && showRequiredMarker;
     
     return TextFormField(
       controller: controller,
@@ -396,21 +453,21 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       validator: validator,
       style: TextStyle(fontSize: isPhone ? 10 : 11),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: isRequired ? '$label *' : label,
         hintText: hint,
         helperText: helperText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
         labelStyle: TextStyle(fontSize: isPhone ? 12 : 13),
-        hintStyle: TextStyle(fontSize: isPhone ? 11 : 12, color: theme.hintColor.withOpacity(0.9)),
+        hintStyle: TextStyle(fontSize: isPhone ? 11 : 12, color: theme.hintColor.withValues(alpha: 0.9)),
         filled: true,
         fillColor: theme.colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -439,7 +496,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final theme = Theme.of(context);
     final isPhone = MediaQuery.of(context).size.width < 600;
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       items: items,
       onChanged: onChanged,
       isExpanded: true,
@@ -452,11 +509,11 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         fillColor: theme.colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -481,7 +538,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final theme = Theme.of(context);
     final isPhone = MediaQuery.of(context).size.width < 600;
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       items: items,
       onChanged: onChanged,
       isExpanded: true,
@@ -494,11 +551,11 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         fillColor: theme.colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withOpacity(0.8)),
+          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -537,18 +594,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       'room': ['Wardrobe', 'Geyser', 'Attached Bathroom'],
       'pg': ['CCTV', 'Warden', 'Laundry', 'RO Water', 'Common Kitchen'],
       'hostel': ['CCTV', 'Warden', 'Laundry', 'Mess', 'Study Room'],
-      'office': ['Reception', 'Meeting Rooms', 'Cafeteria'],
-      'shop': ['Shutter', 'Display Window', 'Near Main Road'],
-      'warehouse': ['Dock', 'Security Cabin', 'CCTV'],
-      'coworking': ['Hot Desk', 'Meeting Rooms', 'High-Speed Internet'],
-      'showroom': ['Display Area', 'Storage', 'Prime Location'],
-      'clinic': ['Waiting Area', 'Reception', 'Washroom'],
-      'restaurant': ['Exhaust', 'Kitchen Setup', 'Fire Safety'],
-      'industrial': ['Power Backup', 'Crane', 'Truck Access'],
-      // Venue types
-      'resort': ['Power Backup', 'In-house Catering', 'Accommodation'],
-      'event_hall': ['AC', 'Stage', 'Bridal Room', 'Power Backup'],
-      'event_garden': ['Open Air', 'Outdoor Lighting', 'Power Backup'],
     };
     final extras = extrasByType[_selectedPropertyType] ?? const <String>[];
     final set = <String>{..._availableAmenities, ...extras};
@@ -557,54 +602,21 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
 
   // Filter property types by selected category
   List<String> _getTypesForCategory() {
-    switch (_selectedCategory) {
-      case 'PG/Hostel':
-        return ['pg', 'hostel'];
-      case 'Commercial':
-        return ['office', 'shop', 'warehouse', 'coworking', 'showroom', 'clinic', 'restaurant', 'industrial'];
-      case 'Plot':
-        return ['plot'];
-      case 'Venue':
-        return ['resort', 'event_hall', 'event_garden'];
-      case 'Residential':
-      default:
-        return ['apartment', 'house', 'villa', 'studio', 'townhouse', 'condo', 'room', 'duplex', 'penthouse', 'bungalow'];
-    }
-  }
-
-  Future<void> _pickDocuments() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'],
-      );
-      if (result == null) return;
-
-      final files = result.files;
-      if (files.length > 10) {
-        if (mounted) {
-          SnackBarUtils.showWarning(context, 'You can select maximum 10 documents');
-        }
-        return;
-      }
-
-      final List<XFile> picked = [];
-      for (final f in files) {
-        if (f.path != null && f.path!.isNotEmpty) {
-          picked.add(XFile(f.path!));
-        }
-      }
-
-      setState(() {
-        _documentImages = picked;
-      });
-      _scheduleDraftSave();
-    } catch (e) {
-      if (mounted) {
-        SnackBarUtils.showError(context, 'Failed to pick documents: $e');
-      }
-    }
+    // This screen is residential-only: always return residential/room/PG types.
+    return [
+      'apartment',        // Apartment / Flat
+      'house',            // Independent House
+      'villa',            // Villa
+      'studio',           // Studio Apartment
+      'townhouse',
+      'condo',
+      'room',             // Single / Shared Room, Room in Shared Apartment
+      'pg',               // PG / Co-living
+      'hostel',           // Hostel
+      'duplex',
+      'penthouse',
+      'bungalow',
+    ];
   }
 
   // Attach text field listeners for draft autosave
@@ -621,6 +633,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       _zipCodeController,
       _nearLandmarkController,
       _otherAmenitiesController,
+      _houseRulesController,
       _pincodeController,
       _contactPersonController,
       _phoneController,
@@ -633,6 +646,14 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       _parkingSpacesController,
       _hoaFeeController,
       _pgOccupancyController,
+       _pgBedRentController,
+      _kitchenPlatformController,
+      _roomSizeController,
+      _roomSharingCountController,
+      _gateClosingTimeController,
+      _availableFromController,
+      _maxOccupancyController,
+      _moveInRequirementsController,
       // Commercial controllers
       _officeCarpetAreaController,
       _officeCabinsController,
@@ -643,12 +664,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       _warehouseCeilingHeightController,
       _warehouseLoadingBaysController,
       _warehousePowerController,
-      // Venue controllers
-      _venueSeatedCapacityController,
-      _venueParkingCapacityController,
-      _venueRoomCountController,
-      _venueHallAreaController,
-      _venueGardenAreaController,
       _carpetAreaController,
       _terraceAreaController,
       _commercialBuiltUpAreaController,
@@ -682,6 +697,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         'state': _stateController.text,
         'zipCode': _zipCodeController.text,
         'nearLandmark': _nearLandmarkController.text,
+        'houseRules': _houseRulesController.text,
         'furnishing': _furnishing,
         'bedrooms': _bedrooms,
         'bathrooms': _bathrooms,
@@ -689,12 +705,12 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         'amenities': _selectedAmenities,
         'nearby': _selectedNearbyFacilities,
         'charges': _selectedChargesIncluded,
-        'documents': _documentImages.map((x) => x.path).toList(),
         'pg': {
           'occupancy': _pgOccupancyController.text,
           'gender': _pgGender,
           'meals': _pgMeals,
           'attached': _pgAttachedBathroom,
+          'bedRent': _pgBedRentController.text,
         },
         'studioSize': _studioSizeController.text,
         'floor': _floorController.text,
@@ -731,6 +747,51 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         'room': {
           'bathroomType': _roomBathroomType,
         },
+        'kitchen': {
+          'type': _kitchenType,
+          'access': _kitchenAccess,
+          'platform': _kitchenPlatformController.text,
+          'gas': _kitchenGasConnection,
+          'chimney': _kitchenChimney,
+          'cabinets': _kitchenCabinets,
+          'commonKitchen': _kitchenCommonKitchen,
+        },
+        'bathroomExtra': {
+          'style': _bathroomStyle,
+          'hasGeyser': _bathroomHasGeyser,
+          'hasExhaust': _bathroomHasExhaust,
+          'pgHotWater': _pgHotWater,
+        },
+        'roomModule': {
+          'roomType': _roomType,
+          'roomSize': _roomSizeController.text,
+          'sharingCount': _roomSharingCountController.text,
+          'hasBed': _roomHasBed,
+          'hasMattress': _roomHasMattress,
+          'hasWardrobe': _roomHasWardrobe,
+          'hasFan': _roomHasFan,
+          'hasAC': _roomHasAC,
+          'hasTable': _roomHasTable,
+          'hasChair': _roomHasChair,
+          'hasMirror': _roomHasMirror,
+          'hasMiniFridge': _roomHasMiniFridge,
+        },
+        'rulesExt': {
+          'visitorsAllowed': _ruleVisitorsAllowed,
+          'overnightGuestsAllowed': _ruleOvernightGuestsAllowed,
+          'smokingAllowed': _ruleSmokingAllowed,
+          'drinkingAllowed': _ruleDrinkingAllowed,
+          'cookingAllowed': _ruleCookingAllowed,
+          'ownerStaysOnProperty': _ruleOwnerStaysOnProperty,
+          'gateClosingTime': _gateClosingTimeController.text,
+        },
+        'availability': {
+          'availableFrom': _availableFromController.text,
+          'status': _availabilityStatus,
+          'earlyMoveIn': _earlyMoveInAllowed,
+          'maxOccupancy': _maxOccupancyController.text,
+          'requirements': _moveInRequirementsController.text,
+        },
         'commercial': {
           'office': {
             'carpetArea': _officeCarpetAreaController.text,
@@ -755,31 +816,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             'builtUpArea': _commercialBuiltUpAreaController.text,
           },
         },
-        'venue': {
-          'seatedCapacity': _venueSeatedCapacityController.text,
-          'parkingCapacity': _venueParkingCapacityController.text,
-          'powerBackup': _venuePowerBackup,
-          'inHouseCatering': _venueInHouseCatering,
-          'outsideCateringAllowed': _venueOutsideCateringAllowed,
-          'alcoholAllowed': _venueAlcoholAllowed,
-          'resort': {
-            'roomCount': _venueRoomCountController.text,
-          },
-          'event_hall': {
-            'hallArea': _venueHallAreaController.text,
-            'hallAC': _venueHallAC,
-            'stageIncluded': _venueStageIncluded,
-            'bridalRoom': _venueBridalRoom,
-          },
-          'event_garden': {
-            'gardenArea': _venueGardenAreaController.text,
-            'openAirAllowed': _venueOpenAirAllowed,
-          },
-        },
-        'geo': {
-          'lat': _latitude,
-          'lng': _longitude,
-        },
+      
       };
       await prefs.setString('listing_draft_v1', jsonEncode(data));
     } catch (_) {}
@@ -900,10 +937,21 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
 
       if (!mounted) return;
       setState(() {
-        _selectedCategory = _asString(map['category']) ?? _selectedCategory;
-        final allowed = _getTypesForCategory();
-        final savedType = _asString(map['type']) ?? _selectedPropertyType;
-        _selectedPropertyType = allowed.contains(savedType) ? savedType : allowed.first;
+        final hasInitialCategory = widget.initialCategory != null;
+        if (!hasInitialCategory) {
+          final savedCategory = _asString(map['category']);
+          // This screen is now residential-only: ignore any non-residential
+          // categories from older drafts and always keep Residential.
+          if (savedCategory == 'Residential') {
+            _selectedCategory = 'Residential';
+          }
+          final allowed = _getTypesForCategory();
+          final savedType = _asString(map['type']) ?? _selectedPropertyType;
+          _selectedPropertyType =
+              allowed.contains(savedType) && allowed.isNotEmpty
+                  ? savedType
+                  : (allowed.isNotEmpty ? allowed.first : _selectedPropertyType);
+        }
 
         _titleController.text = _asString(map['title']) ?? '';
         _descriptionController.text = _asString(map['description']) ?? '';
@@ -915,6 +963,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _stateController.text = _asString(map['state']) ?? '';
         _zipCodeController.text = _asString(map['zipCode']) ?? '';
         _nearLandmarkController.text = _asString(map['nearLandmark']) ?? '';
+        _houseRulesController.text = _asString(map['houseRules']) ?? '';
         _furnishing = _asString(map['furnishing']) ?? _furnishing;
         _bedrooms = _asInt(map['bedrooms']) ?? _bedrooms;
         _bathrooms = _asInt(map['bathrooms']) ?? _bathrooms;
@@ -934,6 +983,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _pgGender = _asString(pg['gender']) ?? _pgGender;
         _pgMeals = _asString(pg['meals']) ?? _pgMeals;
         _pgAttachedBathroom = _asBool(pg['attached']);
+        _pgBedRentController.text = _asString(pg['bedRent']) ?? '';
 
         _studioSizeController.text = _asString(map['studioSize']) ?? '';
         _floorController.text = _asString(map['floor']) ?? '';
@@ -966,17 +1016,57 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         final plot = _asMap(map['plot']);
         _plotUsageListing = _asString(plot['usage']) ?? _plotUsageListing;
 
-        final docs = map['documents'];
-        if (docs is List) {
-          _documentImages = docs.whereType<String>().map((p) => XFile(p)).toList();
-        }
-
         final area = _asMap(map['area']);
         _carpetAreaController.text = _asString(area['carpet']) ?? '';
         _terraceAreaController.text = _asString(area['terrace']) ?? '';
 
         final room = _asMap(map['room']);
         _roomBathroomType = _asString(room['bathroomType']) ?? _roomBathroomType;
+
+        final kitchen = _asMap(map['kitchen']);
+        _kitchenType = _asString(kitchen['type']) ?? _kitchenType;
+        _kitchenAccess = _asString(kitchen['access']) ?? _kitchenAccess;
+        _kitchenPlatformController.text = _asString(kitchen['platform']) ?? '';
+        _kitchenGasConnection = _asBool(kitchen['gas']);
+        _kitchenChimney = _asBool(kitchen['chimney']);
+        _kitchenCabinets = _asBool(kitchen['cabinets']);
+        _kitchenCommonKitchen = _asBool(kitchen['commonKitchen']);
+
+        final bathExtra = _asMap(map['bathroomExtra']);
+        _bathroomStyle = _asString(bathExtra['style']) ?? _bathroomStyle;
+        _bathroomHasGeyser = _asBool(bathExtra['hasGeyser']);
+        _bathroomHasExhaust = _asBool(bathExtra['hasExhaust']);
+        _pgHotWater = _asBool(bathExtra['pgHotWater']);
+
+        final roomModule = _asMap(map['roomModule']);
+        _roomType = _asString(roomModule['roomType']) ?? _roomType;
+        _roomSizeController.text = _asString(roomModule['roomSize']) ?? '';
+        _roomSharingCountController.text = _asString(roomModule['sharingCount']) ?? '';
+        _roomHasBed = _asBool(roomModule['hasBed']);
+        _roomHasMattress = _asBool(roomModule['hasMattress']);
+        _roomHasWardrobe = _asBool(roomModule['hasWardrobe']);
+        _roomHasFan = _asBool(roomModule['hasFan']);
+        _roomHasAC = _asBool(roomModule['hasAC']);
+        _roomHasTable = _asBool(roomModule['hasTable']);
+        _roomHasChair = _asBool(roomModule['hasChair']);
+        _roomHasMirror = _asBool(roomModule['hasMirror']);
+        _roomHasMiniFridge = _asBool(roomModule['hasMiniFridge']);
+
+        final rulesExt = _asMap(map['rulesExt']);
+        _ruleVisitorsAllowed = _asBool(rulesExt['visitorsAllowed']);
+        _ruleOvernightGuestsAllowed = _asBool(rulesExt['overnightGuestsAllowed']);
+        _ruleSmokingAllowed = _asBool(rulesExt['smokingAllowed']);
+        _ruleDrinkingAllowed = _asBool(rulesExt['drinkingAllowed']);
+        _ruleCookingAllowed = _asBool(rulesExt['cookingAllowed']);
+        _ruleOwnerStaysOnProperty = _asBool(rulesExt['ownerStaysOnProperty']);
+        _gateClosingTimeController.text = _asString(rulesExt['gateClosingTime']) ?? '';
+
+        final availability = _asMap(map['availability']);
+        _availableFromController.text = _asString(availability['availableFrom']) ?? '';
+        _availabilityStatus = _asString(availability['status']) ?? _availabilityStatus;
+        _earlyMoveInAllowed = _asBool(availability['earlyMoveIn']);
+        _maxOccupancyController.text = _asString(availability['maxOccupancy']) ?? '';
+        _moveInRequirementsController.text = _asString(availability['requirements']) ?? '';
 
         final commercial = _asMap(map['commercial']);
         final office = _asMap(commercial['office']);
@@ -997,24 +1087,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _warehouseTruckAccess = _asBool(warehouse['truckAccess']);
         final generic = _asMap(commercial['generic']);
         _commercialBuiltUpAreaController.text = _asString(generic['builtUpArea']) ?? '';
-        // Venue
-        final venue = _asMap(map['venue']);
-        _venueSeatedCapacityController.text = _asString(venue['seatedCapacity']) ?? '';
-        _venueParkingCapacityController.text = _asString(venue['parkingCapacity']) ?? '';
-        _venuePowerBackup = _asBool(venue['powerBackup']);
-        _venueInHouseCatering = _asBool(venue['inHouseCatering']);
-        _venueOutsideCateringAllowed = _asBool(venue['outsideCateringAllowed']);
-        _venueAlcoholAllowed = _asBool(venue['alcoholAllowed']);
-        final resort = _asMap(venue['resort']);
-        _venueRoomCountController.text = _asString(resort['roomCount']) ?? '';
-        final hall = _asMap(venue['event_hall']);
-        _venueHallAreaController.text = _asString(hall['hallArea']) ?? '';
-        _venueHallAC = _asBool(hall['hallAC']);
-        _venueStageIncluded = _asBool(hall['stageIncluded']);
-        _venueBridalRoom = _asBool(hall['bridalRoom']);
-        final garden = _asMap(venue['event_garden']);
-        _venueGardenAreaController.text = _asString(garden['gardenArea']) ?? '';
-        _venueOpenAirAllowed = _asBool(garden['openAirAllowed']);
         // Geo (lat/lng)
         final geo = _asMap(map['geo']);
         final latRaw = geo['lat'];
@@ -1059,18 +1131,12 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _stateController.clear();
         _zipCodeController.clear();
         _nearLandmarkController.clear();
+        _houseRulesController.clear();
         _pincodeController.clear();
         _contactPersonController.clear();
         _phoneController.clear();
         _alternatePhoneController.clear();
         _emailController.clear();
-        _studioSizeController.clear();
-        _floorController.clear();
-        _totalFloorsController.clear();
-        _plotAreaController.clear();
-        _parkingSpacesController.clear();
-        _hoaFeeController.clear();
-        _pgOccupancyController.clear();
         _carpetAreaController.clear();
         _terraceAreaController.clear();
         _roomBathroomType = 'Attached';
@@ -1090,24 +1156,41 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         _selectedNearbyFacilities.clear();
         _selectedChargesIncluded.clear();
         _selectedImages.clear();
-        _documentImages.clear();
-        _commercialBuiltUpAreaController.clear();
-        // Venue clears
-        _venueSeatedCapacityController.clear();
-        _venueParkingCapacityController.clear();
-        _venueRoomCountController.clear();
-        _venueHallAreaController.clear();
-        _venueGardenAreaController.clear();
-        _venuePowerBackup = true;
-        _venueInHouseCatering = true;
-        _venueOutsideCateringAllowed = false;
-        _venueAlcoholAllowed = false;
-        _venueHallAC = false;
-        _venueStageIncluded = false;
-        _venueBridalRoom = false;
-        _venueOpenAirAllowed = false;
-        _latitude = null;
-        _longitude = null;
+        _kitchenPlatformController.clear();
+        _kitchenType = 'Modular';
+        _kitchenAccess = 'Full';
+        _kitchenGasConnection = false;
+        _kitchenChimney = false;
+        _kitchenCabinets = false;
+        _kitchenCommonKitchen = false;
+        _bathroomHasGeyser = true;
+        _bathroomStyle = 'Western';
+        _bathroomHasExhaust = false;
+        _pgHotWater = true;
+        _roomType = 'Single Room';
+        _roomSizeController.clear();
+        _roomSharingCountController.clear();
+        _roomHasBed = true;
+        _roomHasMattress = true;
+        _roomHasWardrobe = true;
+        _roomHasFan = true;
+        _roomHasAC = false;
+        _roomHasTable = false;
+        _roomHasChair = false;
+        _roomHasMirror = false;
+        _roomHasMiniFridge = false;
+        _ruleVisitorsAllowed = true;
+        _ruleOvernightGuestsAllowed = false;
+        _ruleSmokingAllowed = false;
+        _ruleDrinkingAllowed = false;
+        _ruleCookingAllowed = true;
+        _ruleOwnerStaysOnProperty = false;
+        _gateClosingTimeController.clear();
+        _availableFromController.clear();
+        _availabilityStatus = 'Vacant';
+        _earlyMoveInAllowed = false;
+        _maxOccupancyController.clear();
+        _moveInRequirementsController.clear();
       });
       await _clearDraft();
       if (!mounted) return;
@@ -1195,12 +1278,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       'nearby': m['nearby'],
       'charges': m['charges'],
       'pg': m['pg'] ?? '{}',
-      'studioSize': m['studioSize'],
-      'floor': m['floor'],
-      'totalFloors': m['totalFloors'],
-      'plotArea': m['plotArea'],
-      'parkingSpaces': m['parkingSpaces'],
-      'hoaFee': m['hoaFee'],
       'contact': m['contact'] ?? '{}',
       'prefs': m['prefs'] ?? '{}',
     };
@@ -1220,39 +1297,22 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     _zipCodeController.dispose();
     _nearLandmarkController.dispose();
     _otherAmenitiesController.dispose();
+    _houseRulesController.dispose();
     _pincodeController.dispose();
     _monthlyRentController.dispose();
+    _kitchenPlatformController.dispose();
+    _roomSizeController.dispose();
+    _roomSharingCountController.dispose();
+    _gateClosingTimeController.dispose();
+    _availableFromController.dispose();
+    _maxOccupancyController.dispose();
+    _moveInRequirementsController.dispose();
     _noticePeriodDaysController.dispose();
     _contactPersonController.dispose();
     _phoneController.dispose();
     _alternatePhoneController.dispose();
     _emailController.dispose();
     _discountPercentController.dispose();
-    // Dispose type-specific controllers
-    _floorController.dispose();
-    _totalFloorsController.dispose();
-    _plotAreaController.dispose();
-    _parkingSpacesController.dispose();
-    _hoaFeeController.dispose();
-    _studioSizeController.dispose();
-    _pgOccupancyController.dispose();
-    // Dispose commercial controllers
-    _officeCarpetAreaController.dispose();
-    _officeCabinsController.dispose();
-    _officeConferenceRoomsController.dispose();
-    _shopCarpetAreaController.dispose();
-    _shopFrontageController.dispose();
-    _warehouseBuiltUpAreaController.dispose();
-    _warehouseCeilingHeightController.dispose();
-    _warehouseLoadingBaysController.dispose();
-    _warehousePowerController.dispose();
-    // Dispose venue controllers
-    _venueSeatedCapacityController.dispose();
-    _venueParkingCapacityController.dispose();
-    _venueRoomCountController.dispose();
-    _venueHallAreaController.dispose();
-    _venueGardenAreaController.dispose();
-    // Dispose generic area
     _carpetAreaController.dispose();
     _terraceAreaController.dispose();
     _commercialBuiltUpAreaController.dispose();
@@ -1281,36 +1341,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     }
   }
 
-  Future<void> _pickVideo() async {
-    // Video upload feature removed
-    if (mounted) {
-      SnackBarUtils.showWarning(context, 'Video upload is no longer supported.');
-    }
-  }
-
-  // ignore: unused_element
-  Future<void> _pickDocumentImages() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final List<XFile> docs = await picker.pickMultiImage();
-      
-      if (docs.length > 10) {
-        if (mounted) {
-          SnackBarUtils.showWarning(context, 'You can select maximum 10 document images');
-        }
-        return;
-      }
-
-      setState(() {
-        _documentImages = docs;
-      });
-      _scheduleDraftSave();
-    } catch (e) {
-      if (mounted) {
-        SnackBarUtils.showError(context, 'Failed to pick documents: $e');
-      }
-    }
-  }
+  // Video and document upload are not supported in this screen; only photos are used.
 
 
   Future<void> _saveListing() async {
@@ -1351,15 +1382,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         }
       }
 
-      // Upload document images (optional)
-      List<String> documentUrls = [];
-      for (XFile doc in _documentImages) {
-        String? url = await imageService.uploadImage(doc);
-        if (url != null) {
-          documentUrls.add(url);
-        }
-      }
-
       // Create amenities map
       Map<String, dynamic> amenitiesMap = {};
       for (String amenity in _selectedAmenities) {
@@ -1396,13 +1418,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         if (plot != null) amenitiesMap['plot_area_sqft'] = plot;
         if (parking != null) amenitiesMap['parking_spaces'] = parking;
       }
-      if (_selectedPropertyType == 'plot') {
-        final plot = int.tryParse(_plotAreaController.text.trim());
-        if (plot != null) amenitiesMap['plot_area_sqft'] = plot;
-        if (_plotUsageListing.isNotEmpty && _plotUsageListing != 'any') {
-          amenitiesMap['plot_usage'] = _plotUsageListing;
-        }
-      }
       if (_selectedPropertyType == 'apartment' || _selectedPropertyType == 'condo' || _selectedPropertyType == 'townhouse' || _selectedPropertyType == 'duplex' || _selectedPropertyType == 'penthouse') {
         final carpet = int.tryParse(_carpetAreaController.text.trim());
         if (carpet != null) amenitiesMap['carpet_area_sqft'] = carpet;
@@ -1427,38 +1442,82 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       if (_selectedPropertyType == 'room') {
         amenitiesMap['room_bathroom_type'] = _roomBathroomType.toLowerCase();
       }
-      if (_selectedPropertyType == 'office') {
-        final area = int.tryParse(_officeCarpetAreaController.text.trim());
-        final cabins = int.tryParse(_officeCabinsController.text.trim());
-        final conf = int.tryParse(_officeConferenceRoomsController.text.trim());
-        if (area != null) amenitiesMap['office_carpet_area_sqft'] = area;
-        if (cabins != null) amenitiesMap['office_cabins'] = cabins;
-        if (conf != null) amenitiesMap['office_conference_rooms'] = conf;
-        amenitiesMap['office_pantry'] = _officePantry;
+      // Kitchen mapping
+      if (_selectedPropertyType == 'apartment' ||
+          _selectedPropertyType == 'house' ||
+          _selectedPropertyType == 'villa' ||
+          _selectedPropertyType == 'condo' ||
+          _selectedPropertyType == 'townhouse' ||
+          _selectedPropertyType == 'duplex' ||
+          _selectedPropertyType == 'penthouse' ||
+          _selectedPropertyType == 'studio') {
+        amenitiesMap['kitchen_type'] = _kitchenType.toLowerCase();
+        final platform = _kitchenPlatformController.text.trim();
+        if (platform.isNotEmpty) amenitiesMap['kitchen_platform'] = platform;
+        amenitiesMap['kitchen_gas_connection'] = _kitchenGasConnection;
+        amenitiesMap['kitchen_chimney'] = _kitchenChimney;
+        amenitiesMap['kitchen_cabinets'] = _kitchenCabinets;
+      } else {
+        amenitiesMap['kitchen_access'] = _kitchenAccess.toLowerCase().replaceAll(' ', '_');
+        amenitiesMap['common_kitchen_available'] = _kitchenCommonKitchen;
       }
-      if (_selectedPropertyType == 'shop') {
-        final area = int.tryParse(_shopCarpetAreaController.text.trim());
-        final frontage = int.tryParse(_shopFrontageController.text.trim());
-        if (area != null) amenitiesMap['shop_carpet_area_sqft'] = area;
-        if (frontage != null) amenitiesMap['shop_frontage_ft'] = frontage;
-        amenitiesMap['shop_footfall'] = _shopFootfall.toLowerCase();
-        amenitiesMap['shop_washroom'] = _shopWashroom;
+
+      // Bathroom extras
+      if (!(_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel')) {
+        amenitiesMap['bathroom_style'] = _bathroomStyle.toLowerCase();
+        amenitiesMap['bathroom_geyser'] = _bathroomHasGeyser;
+        amenitiesMap['bathroom_exhaust'] = _bathroomHasExhaust;
+      } else {
+        final sharing = int.tryParse(_roomSharingCountController.text.trim());
+        if (sharing != null) amenitiesMap['bathroom_sharing_count'] = sharing;
+        amenitiesMap['pg_hot_water'] = _pgHotWater;
       }
-      if (_selectedPropertyType == 'warehouse') {
-        final area = int.tryParse(_warehouseBuiltUpAreaController.text.trim());
-        final height = int.tryParse(_warehouseCeilingHeightController.text.trim());
-        final bays = int.tryParse(_warehouseLoadingBaysController.text.trim());
-        final power = int.tryParse(_warehousePowerController.text.trim());
-        if (area != null) amenitiesMap['wh_builtup_area_sqft'] = area;
-        if (height != null) amenitiesMap['wh_ceiling_height_ft'] = height;
-        if (bays != null) amenitiesMap['wh_loading_bays'] = bays;
-        if (power != null) amenitiesMap['wh_power_kva'] = power;
-        amenitiesMap['wh_truck_access'] = _warehouseTruckAccess;
+
+      // Room module mapping
+      if (_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel' || _selectedPropertyType == 'studio') {
+        amenitiesMap['room_type'] = _roomType.toLowerCase().replaceAll(' ', '_');
+        final size = int.tryParse(_roomSizeController.text.trim());
+        if (size != null) amenitiesMap['room_size_sqft'] = size;
+        amenitiesMap['room_has_bed'] = _roomHasBed;
+        amenitiesMap['room_has_mattress'] = _roomHasMattress;
+        amenitiesMap['room_has_wardrobe'] = _roomHasWardrobe;
+        amenitiesMap['room_has_fan'] = _roomHasFan;
+        amenitiesMap['room_has_ac'] = _roomHasAC;
+        amenitiesMap['room_has_table'] = _roomHasTable;
+        amenitiesMap['room_has_chair'] = _roomHasChair;
+        amenitiesMap['room_has_mirror'] = _roomHasMirror;
+        amenitiesMap['room_has_mini_fridge'] = _roomHasMiniFridge;
       }
-      if (_selectedCategory == 'Commercial' && _selectedPropertyType != 'office' && _selectedPropertyType != 'shop' && _selectedPropertyType != 'warehouse') {
-        final built = int.tryParse(_commercialBuiltUpAreaController.text.trim());
-        if (built != null) amenitiesMap['commercial_builtup_area_sqft'] = built;
+      if (_selectedCategory == 'Residential') {
+        final rules = _houseRulesController.text.trim();
+        if (rules.isNotEmpty) {
+          amenitiesMap['house_rules'] = rules;
+        }
+        if (_selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel') {
+          final bedRent = int.tryParse(_pgBedRentController.text.trim());
+          if (bedRent != null) {
+            amenitiesMap['pg_bed_rent'] = bedRent;
+          }
+        }
       }
+      // Extended rules & availability
+      amenitiesMap['visitors_allowed'] = _ruleVisitorsAllowed;
+      amenitiesMap['overnight_guests_allowed'] = _ruleOvernightGuestsAllowed;
+      amenitiesMap['smoking_allowed'] = _ruleSmokingAllowed;
+      amenitiesMap['drinking_allowed'] = _ruleDrinkingAllowed;
+      amenitiesMap['cooking_allowed'] = _ruleCookingAllowed;
+      amenitiesMap['owner_stays_on_property'] = _ruleOwnerStaysOnProperty;
+      final gateTime = _gateClosingTimeController.text.trim();
+      if (gateTime.isNotEmpty) amenitiesMap['gate_closing_time'] = gateTime;
+
+      final availableFrom = _availableFromController.text.trim();
+      if (availableFrom.isNotEmpty) amenitiesMap['available_from'] = availableFrom;
+      amenitiesMap['availability_status'] = _availabilityStatus.toLowerCase();
+      amenitiesMap['early_move_in'] = _earlyMoveInAllowed;
+      final maxOcc = int.tryParse(_maxOccupancyController.text.trim());
+      if (maxOcc != null) amenitiesMap['max_occupancy'] = maxOcc;
+      final req = _moveInRequirementsController.text.trim();
+      if (req.isNotEmpty) amenitiesMap['move_in_requirements'] = req;
       // Monthly/Rental mode meta
       if (_rentalModeListing == 'monthly') {
         amenitiesMap['rental_unit'] = 'monthly';
@@ -1493,10 +1552,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         isActive: true,
-        amenities: {
-          ...amenitiesMap,
-          if (documentUrls.isNotEmpty) 'document_urls': documentUrls,
-        },
+        amenities: amenitiesMap,
         requireSeekerId: _requireSeekerId,
         rentalUnit: rentalUnit,
         securityDeposit: secDep?.toDouble(),
@@ -1560,7 +1616,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.refresh, size: 18, color: Colors.white),
@@ -1602,8 +1658,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary,
-                  theme.colorScheme.primary.withOpacity(0.85),
-                  theme.colorScheme.secondary.withOpacity(0.9),
+                  theme.colorScheme.primary.withValues(alpha: 0.85),
+                  theme.colorScheme.secondary.withValues(alpha: 0.9),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1618,13 +1674,13 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
           Container(
             height: 1,
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.1),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
             ),
             child: LinearProgressIndicator(
               value: (_tabController.index + 1) / 6,
               backgroundColor: Colors.transparent,
               valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary.withOpacity(0.8),
+                theme.colorScheme.primary.withValues(alpha: 0.8),
               ),
               minHeight: 1,
             ),
@@ -1636,38 +1692,15 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               children: [
                 // Ultra-compact Step indicator  
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: isPhone ? 2 : 3,
-                    horizontal: 8,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.06),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${_tabController.index + 1}/6',
-                          style: TextStyle(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w500,
-                            color: theme.colorScheme.primary,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  padding: EdgeInsets.zero,
+                  child: const SizedBox.shrink(),
                 ),
                 // Tab bar with modern design
                 Container(
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: theme.colorScheme.outline.withOpacity(0.1),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
                         width: 1,
                       ),
                     ),
@@ -1679,7 +1712,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                     indicatorWeight: 2.5,
                     indicatorSize: TabBarIndicatorSize.label,
                     labelColor: theme.colorScheme.primary,
-                    unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.5),
+                    unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     labelStyle: TextStyle(
                       fontSize: isPhone ? 8 : 9,
                       fontWeight: FontWeight.w600,
@@ -1695,67 +1728,61 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                     ),
                     tabs: [
                       Tab(
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.category_outlined, size: isPhone ? 14 : 12),
-                            SizedBox(width: isPhone ? 2 : 3),
-                            const Text('Category'),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.home_outlined, size: isPhone ? 10 : 12),
-                            SizedBox(width: isPhone ? 2 : 3),
+                            Icon(Icons.home_outlined, size: isPhone ? 14 : 16),
+                            SizedBox(height: isPhone ? 2 : 3),
                             const Text('Basics'),
                           ],
                         ),
                       ),
                       Tab(
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.info_outline, size: isPhone ? 10 : 12),
-                            SizedBox(width: isPhone ? 2 : 3),
-                            Text(
-                              _selectedCategory == 'Commercial'
-                                  ? 'Commercial Details'
-                                  : (_selectedCategory == 'Plot'
-                                      ? 'Plot Details'
-                                      : 'Residential Details'),
-                            ),
+                            Icon(Icons.info_outline, size: isPhone ? 14 : 16),
+                            SizedBox(height: isPhone ? 2 : 3),
+                            const Text('Property Details'),
                           ],
                         ),
                       ),
                       Tab(
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.star_outline, size: isPhone ? 10 : 12),
-                            SizedBox(width: isPhone ? 2 : 3),
+                            Icon(Icons.star_outline, size: isPhone ? 14 : 16),
+                            SizedBox(height: isPhone ? 2 : 3),
                             const Text('Amenities'),
                           ],
                         ),
                       ),
                       Tab(
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.photo_camera_outlined, size: isPhone ? 10 : 12),
-                            SizedBox(width: isPhone ? 2 : 3),
+                            Icon(Icons.payments_outlined, size: isPhone ? 14 : 16),
+                            SizedBox(height: isPhone ? 2 : 3),
+                            const Text('Pricing'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.photo_camera_outlined, size: isPhone ? 14 : 16),
+                            SizedBox(height: isPhone ? 2 : 3),
                             const Text('Media'),
                           ],
                         ),
                       ),
                       Tab(
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.contact_phone_outlined, size: isPhone ? 10 : 12),
-                            SizedBox(width: isPhone ? 2 : 3),
+                            Icon(Icons.contact_phone_outlined, size: isPhone ? 14 : 16),
+                            SizedBox(height: isPhone ? 2 : 3),
                             const Text('Contact'),
                           ],
                         ),
@@ -1769,7 +1796,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
           // Form Content
           Expanded(
             child: Container(
-              color: theme.colorScheme.background,
+              color: theme.colorScheme.surface,
               child: ResponsiveLayout(
                 maxWidth: 800,
                 child: Theme(
@@ -1789,10 +1816,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                       dragStartBehavior: DragStartBehavior.down,
                       physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
                       children: [
-                        _buildCategoryStep(),
                         _buildBasicsStep(),
                         _buildDetailsStep(),
                         _buildAmenitiesStep(),
+                        _buildPricingStep(),
                         _buildPhotosStep(),
                         _buildContactStep(),
                       ],
@@ -1807,206 +1834,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     );
   }
 
-  Widget _buildCategoryStep() {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.sizeOf(context).width < 600;
-    
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.all(isPhone ? 12 : 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Info Card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.2),
-                width: 0.5,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 18,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Select the category that best describes your property',
-                    style: TextStyle(
-                      fontSize: isPhone ? 11 : 12,
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          Text(
-            'Property Category',
-            style: TextStyle(
-              fontSize: isPhone ? 15 : 16,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 12),
-          
-          // Modern Category Cards
-          ..._categories.map((category) {
-            final isSelected = _selectedCategory == category;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedCategory = category;
-                    final allowed = _getTypesForCategory();
-                    if (!allowed.contains(_selectedPropertyType)) {
-                      _selectedPropertyType = allowed.first;
-                    }
-                    _scheduleDraftSave();
-                  });
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                      ? theme.colorScheme.primaryContainer.withOpacity(0.3)
-                      : theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outline.withOpacity(0.2),
-                      width: isSelected ? 1.5 : 1,
-                    ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      )
-                    ] : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: (isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.surfaceVariant).withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          category == 'Residential' 
-                            ? Icons.home_rounded
-                            : (category == 'Commercial' ? Icons.business_rounded : Icons.terrain_rounded),
-                          size: 22,
-                          color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              category,
-                              style: TextStyle(
-                                fontSize: isPhone ? 15 : 16,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              category == 'Residential'
-                                ? 'Homes, Apartments, PG, Hostels'
-                                : (category == 'Commercial'
-                                  ? 'Offices, Shops, Warehouses, etc.'
-                                  : 'Land/Plots for agriculture, commercial, events, construction'),
-                              style: TextStyle(
-                                fontSize: isPhone ? 10 : 11,
-                                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isSelected)
-                        Icon(
-                          Icons.check_circle,
-                          size: 20,
-                          color: theme.colorScheme.primary,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-          
-          const SizedBox(height: 24),
-          
-          // Modern Navigation Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _tabController.animateTo(1),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: EdgeInsets.symmetric(vertical: isPhone ? 14 : 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: isPhone ? 15 : 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded, size: 18),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDetailsStep() {
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-    final isCommercial = _selectedCategory == 'Commercial';
-    final isPlotCat = _selectedCategory == 'Plot';
-    final isVenue = _selectedCategory == 'Venue';
-    final showFurnishing = (!isCommercial || _selectedPropertyType == 'office') && !isPlotCat;
+    final showFurnishing = _selectedPropertyType != 'studio';
     
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -2024,41 +1855,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
           ),
           const SizedBox(height: 12),
-          if (isPlotCat) ...[
-            PlotDetailsForm(
-              plotAreaController: _plotAreaController,
-              plotUsage: _plotUsageListing,
-              onPlotUsageChanged: (u) { setState(() { _plotUsageListing = u; }); _scheduleDraftSave(); },
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (isVenue) ...[
-            VenueDetailsForm(
-              propertyType: _selectedPropertyType,
-              seatedCapacityController: _venueSeatedCapacityController,
-              parkingCapacityController: _venueParkingCapacityController,
-              powerBackup: _venuePowerBackup,
-              onPowerBackupChanged: (v) { setState(() { _venuePowerBackup = v; }); _scheduleDraftSave(); },
-              inHouseCatering: _venueInHouseCatering,
-              onInHouseCateringChanged: (v) { setState(() { _venueInHouseCatering = v; }); _scheduleDraftSave(); },
-              outsideCateringAllowed: _venueOutsideCateringAllowed,
-              onOutsideCateringAllowedChanged: (v) { setState(() { _venueOutsideCateringAllowed = v; }); _scheduleDraftSave(); },
-              alcoholAllowed: _venueAlcoholAllowed,
-              onAlcoholAllowedChanged: (v) { setState(() { _venueAlcoholAllowed = v; }); _scheduleDraftSave(); },
-              roomCountController: _venueRoomCountController,
-              hallAreaController: _venueHallAreaController,
-              hallAC: _venueHallAC,
-              onHallACChanged: (v) { setState(() { _venueHallAC = v; }); _scheduleDraftSave(); },
-              stageIncluded: _venueStageIncluded,
-              onStageIncludedChanged: (v) { setState(() { _venueStageIncluded = v; }); _scheduleDraftSave(); },
-              bridalRoom: _venueBridalRoom,
-              onBridalRoomChanged: (v) { setState(() { _venueBridalRoom = v; }); _scheduleDraftSave(); },
-              gardenAreaController: _venueGardenAreaController,
-              openAirAllowed: _venueOpenAirAllowed,
-              onOpenAirAllowedChanged: (v) { setState(() { _venueOpenAirAllowed = v; }); _scheduleDraftSave(); },
-            ),
-            const SizedBox(height: 12),
-          ],
+          const SizedBox(height: 12),
           if (_selectedCategory == 'Residential') ...[
             ResidentialDetailsForm(
               propertyType: _selectedPropertyType,
@@ -2094,11 +1891,45 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               onPgAttachedBathroomChanged: (v) { setState(() { _pgAttachedBathroom = v; }); _scheduleDraftSave(); },
             ),
             const SizedBox(height: 12),
+            if (_selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel') ...[
+              Text(
+                'PG Occupancy Quick Select',
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: const [1, 2, 3, 4, 5, 6].map((occ) {
+                  return Builder(builder: (context) {
+                    final theme = Theme.of(context);
+                    final isSelected = _pgOccupancyController.text.trim() == occ.toString();
+                    return ChoiceChip(
+                      label: Text('$occ per room'),
+                      selected: isSelected,
+                      showCheckmark: false,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
+                      backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                      shape: const StadiumBorder(),
+                      onSelected: (_) {
+                        setState(() {
+                          _pgOccupancyController.text = occ.toString();
+                        });
+                        _scheduleDraftSave();
+                      },
+                    );
+                  });
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
           LayoutBuilder(builder: (context, cons) {
-            if (!isCommercial) {
-              return const SizedBox.shrink();
-            }
             final isXS = cons.maxWidth < 360;
             if (isXS) {
               return Column(
@@ -2137,7 +1968,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                         _scheduleDraftSave();
                       }),
                     ),
-                  ] else if (!isCommercial && _selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room' && _selectedPropertyType != 'plot') ...[
+                  ] else if (_selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room') ...[
                     const SizedBox(height: 12),
                     _buildCompactDropdown<int>(
                       value: _bedrooms,
@@ -2210,7 +2041,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                       }),
                     ),
                   )
-                else if (!isCommercial && _selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room')
+                else if (_selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room')
                   Expanded(
                     child: _buildCompactDropdown<int>(
                       value: _bedrooms,
@@ -2232,8 +2063,493 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               ],
             );
           }),
-          const SizedBox(height: 12),
-          const SizedBox.shrink(),
+          const SizedBox(height: 16),
+
+          // Kitchen Details
+          Text(
+            'Kitchen Details',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          if (_selectedPropertyType == 'apartment' ||
+              _selectedPropertyType == 'house' ||
+              _selectedPropertyType == 'villa' ||
+              _selectedPropertyType == 'condo' ||
+              _selectedPropertyType == 'townhouse' ||
+              _selectedPropertyType == 'duplex' ||
+              _selectedPropertyType == 'penthouse' ||
+              _selectedPropertyType == 'studio') ...[
+            DropdownButtonFormField<String>(
+              initialValue: _kitchenType,
+              decoration: InputDecoration(
+                labelText: 'Kitchen Type',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                isDense: true,
+              ),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'Modular', child: Text('Modular')),
+                DropdownMenuItem(value: 'Open', child: Text('Open')),
+                DropdownMenuItem(value: 'Closed', child: Text('Closed')),
+                DropdownMenuItem(value: 'Kitchenette', child: Text('Kitchenette')),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _kitchenType = v);
+                _scheduleDraftSave();
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildCompactTextField(
+              controller: _kitchenPlatformController,
+              label: 'Kitchen Platform / Counter Type',
+              hint: 'e.g., Granite platform',
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                FilterChip(
+                  label: const Text('Gas Connection'),
+                  selected: _kitchenGasConnection,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _kitchenGasConnection
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _kitchenGasConnection = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Chimney'),
+                  selected: _kitchenChimney,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _kitchenChimney
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _kitchenChimney = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Cabinets'),
+                  selected: _kitchenCabinets,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _kitchenCabinets
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _kitchenCabinets = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ] else ...[
+            DropdownButtonFormField<String>(
+              initialValue: _kitchenAccess,
+              decoration: InputDecoration(
+                labelText: 'Kitchen Access',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                isDense: true,
+              ),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'Full', child: Text('Full')),
+                DropdownMenuItem(value: 'Limited', child: Text('Limited')),
+                DropdownMenuItem(value: 'No Access', child: Text('No Access')),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _kitchenAccess = v);
+                _scheduleDraftSave();
+              },
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              value: _kitchenCommonKitchen,
+              onChanged: (v) {
+                setState(() => _kitchenCommonKitchen = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Common Kitchen Available'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Bathroom Details
+          Text(
+            'Bathroom Details',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          if (!(_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel')) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _bathroomStyle,
+                    decoration: InputDecoration(
+                      labelText: 'Bathroom Style',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      isDense: true,
+                    ),
+                    isExpanded: true,
+                    items: const [
+                      DropdownMenuItem(value: 'Western', child: Text('Western')),
+                      DropdownMenuItem(value: 'Indian', child: Text('Indian')),
+                      DropdownMenuItem(value: 'Both', child: Text('Both')),
+                    ],
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() => _bathroomStyle = v);
+                      _scheduleDraftSave();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SwitchListTile(
+                    value: _bathroomHasGeyser,
+                    onChanged: (v) {
+                      setState(() => _bathroomHasGeyser = v);
+                      _scheduleDraftSave();
+                    },
+                    title: const Text('Geyser'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              value: _bathroomHasExhaust,
+              onChanged: (v) {
+                setState(() => _bathroomHasExhaust = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Exhaust Fan'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ] else ...[
+            _buildCompactTextField(
+              controller: _roomSharingCountController,
+              label: 'Number of people sharing bathroom (if shared)',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              value: _pgHotWater,
+              onChanged: (v) {
+                setState(() => _pgHotWater = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Hot Water Available'),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ],
+
+          const SizedBox(height: 16),
+          if (_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel' || _selectedPropertyType == 'studio') ...[
+            Text(
+              'Room Module',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: _roomType,
+              decoration: InputDecoration(
+                labelText: 'Room Type',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                isDense: true,
+              ),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'Single Room', child: Text('Single Room')),
+                DropdownMenuItem(value: 'Single Room (Attached Bathroom)', child: Text('Single Room (Attached Bathroom)')),
+                DropdownMenuItem(value: 'Single Room (Shared Bathroom)', child: Text('Single Room (Shared Bathroom)')),
+                DropdownMenuItem(value: 'Double Sharing', child: Text('Double Sharing')),
+                DropdownMenuItem(value: 'Triple Sharing', child: Text('Triple Sharing')),
+                DropdownMenuItem(value: '4+ Sharing', child: Text('4+ Sharing')),
+                DropdownMenuItem(value: 'Dormitory Bed', child: Text('Dormitory Bed')),
+                DropdownMenuItem(value: 'Studio Room', child: Text('Studio Room')),
+                DropdownMenuItem(value: 'Private Room in Shared Apartment', child: Text('Private Room in Shared Apartment')),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _roomType = v);
+                _scheduleDraftSave();
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildCompactTextField(
+              controller: _roomSizeController,
+              label: 'Room Size (sq ft)',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                FilterChip(
+                  label: const Text('Bed'),
+                  selected: _roomHasBed,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasBed
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasBed = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Mattress'),
+                  selected: _roomHasMattress,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasMattress
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasMattress = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Wardrobe'),
+                  selected: _roomHasWardrobe,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasWardrobe
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasWardrobe = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Fan'),
+                  selected: _roomHasFan,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasFan
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasFan = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('AC'),
+                  selected: _roomHasAC,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasAC
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasAC = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Table'),
+                  selected: _roomHasTable,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasTable
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasTable = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Chair'),
+                  selected: _roomHasChair,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasChair
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasChair = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Mirror'),
+                  selected: _roomHasMirror,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasMirror
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasMirror = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Mini Fridge'),
+                  selected: _roomHasMiniFridge,
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: _roomHasMiniFridge
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                          : theme.colorScheme.outline.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  onSelected: (v) {
+                    setState(() => _roomHasMiniFridge = v);
+                    _scheduleDraftSave();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // Rules & Restrictions (for PG/Hostel/Shared)
+            Text(
+              'Rules & Restrictions',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              value: _ruleVisitorsAllowed,
+              onChanged: (v) {
+                setState(() => _ruleVisitorsAllowed = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Visitors allowed'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            SwitchListTile(
+              value: _ruleOvernightGuestsAllowed,
+              onChanged: (v) {
+                setState(() => _ruleOvernightGuestsAllowed = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Overnight guests allowed'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            SwitchListTile(
+              value: _ruleSmokingAllowed,
+              onChanged: (v) {
+                setState(() => _ruleSmokingAllowed = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Smoking allowed'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            SwitchListTile(
+              value: _ruleDrinkingAllowed,
+              onChanged: (v) {
+                setState(() => _ruleDrinkingAllowed = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Drinking allowed'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            SwitchListTile(
+              value: _ruleCookingAllowed,
+              onChanged: (v) {
+                setState(() => _ruleCookingAllowed = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Cooking allowed'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            SwitchListTile(
+              value: _ruleOwnerStaysOnProperty,
+              onChanged: (v) {
+                setState(() => _ruleOwnerStaysOnProperty = v);
+                _scheduleDraftSave();
+              },
+              title: const Text('Owner stays on property'),
+              contentPadding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 8),
+            _buildCompactTextField(
+              controller: _gateClosingTimeController,
+              label: 'Gate closing time (optional)',
+              hint: 'e.g., 11:00 PM',
+            ),
+          ],
+
           const SizedBox(height: 12),
           // Type-specific details (moved into ResidentialDetailsForm)
 /*
@@ -2428,36 +2744,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             const SizedBox(height: 12),
           ],
 */
-          // Commercial: details
-          if (_selectedCategory == 'Commercial') ...[
-            CommercialDetailsForm(
-              propertyType: _selectedPropertyType,
-              // Office
-              officeCarpetAreaController: _officeCarpetAreaController,
-              officeCabinsController: _officeCabinsController,
-              officeConferenceRoomsController: _officeConferenceRoomsController,
-              officePantry: _officePantry,
-              onOfficePantryChanged: (v) { setState(() { _officePantry = v; }); _scheduleDraftSave(); },
-              // Shop
-              shopCarpetAreaController: _shopCarpetAreaController,
-              shopFrontageController: _shopFrontageController,
-              shopFootfall: _shopFootfall,
-              onShopFootfallChanged: (v) { setState(() { _shopFootfall = v; }); _scheduleDraftSave(); },
-              shopWashroom: _shopWashroom,
-              onShopWashroomChanged: (v) { setState(() { _shopWashroom = v; }); _scheduleDraftSave(); },
-              // Warehouse
-              warehouseBuiltUpAreaController: _warehouseBuiltUpAreaController,
-              warehouseCeilingHeightController: _warehouseCeilingHeightController,
-              warehouseLoadingBaysController: _warehouseLoadingBaysController,
-              warehousePowerController: _warehousePowerController,
-              warehouseTruckAccess: _warehouseTruckAccess,
-              onWarehouseTruckAccessChanged: (v) { setState(() { _warehouseTruckAccess = v; }); _scheduleDraftSave(); },
-              // Generic
-              commercialBuiltUpAreaController: _commercialBuiltUpAreaController,
-            ),
-            const SizedBox(height: 12),
-          ],
-          // Commercial: generic extra fields handled above; lease options removed
+          // Commercial: generic extra fields removed; this screen is residential-only now
           Text('Location Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           _buildCompactTextField(
@@ -2567,10 +2854,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2))),
+              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 3,
                   offset: const Offset(0, -2),
                 ),
@@ -2631,16 +2918,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final amenities = _getAvailableAmenities();
-    final isPG = _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel';
-    final isCommercial = _selectedCategory == 'Commercial';
-    final isRoom = _selectedPropertyType == 'room';
-    final rentLabel = isPG
-        ? 'Monthly Rent (per bed)*'
-        : isRoom
-            ? 'Monthly Rent (per room)*'
-            : isCommercial
-                ? 'Monthly Rent (Commercial)*'
-                : 'Monthly Rent*';
     final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + 12.0;
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 2, 16, bottomPad),
@@ -2667,6 +2944,16 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               return FilterChip(
                 label: Text(amenity),
                 selected: isSelected,
+                showCheckmark: false,
+                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: isSelected
+                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                        : theme.colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -2691,6 +2978,16 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               return FilterChip(
                 label: Text(facility),
                 selected: isSelected,
+                showCheckmark: false,
+                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: isSelected
+                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                        : theme.colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -2704,246 +3001,117 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             }).toList(),
           ),
           const SizedBox(height: 15),
-          Row(children: [
-            Expanded(
-              child: _buildCompactTextField(
-                controller: _monthlyRentController,
-                label: rentLabel,
-                prefixIcon: Icons.currency_rupee,
-                hint: 'e.g., 25000',
-                helperText: 'Amount billed monthly',
-                keyboardType: TextInputType.number,
-                validator: (value) => value?.isEmpty ?? true ? 'Price is required' : null,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildCompactTextField(
-                controller: _securityDepositController,
-                label: 'Security Deposit (₹, optional)',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return null;
-                  }
-                  final n = int.tryParse(value.trim());
-                  if (n == null || n < 0) return 'Enter a valid amount';
-                  return null;
-                },
-              ),
-            ),
-          ]),
-          const SizedBox(height: 12),
-          _buildCompactTextField(
-            controller: _discountPercentController,
-            label: 'Discount (%) (optional)',
-            hint: '0-90',
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value == null || value.isEmpty) return null;
-              final d = double.tryParse(value.trim());
-              if (d == null) return 'Enter a valid number';
-              if (d < 0 || d > 90) return 'Enter 0-90';
-              return null;
-            },
-          ),
-          const SizedBox(height: 12),
-          Text('Rental Mode', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              {'key': 'both', 'label': 'Both'},
-              {'key': 'rental', 'label': 'Rental'},
-              {'key': 'monthly', 'label': 'Monthly Stay'},
-            ].map((m) {
-              final String k = m['key']!;
-              final bool sel = _rentalModeListing == k;
-              return ChoiceChip(
-                showCheckmark: false,
-                selected: sel,
-                label: Text(m['label']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                selectedColor: theme.colorScheme.primary,
-                shape: const StadiumBorder(),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                onSelected: (_) { setState(() { _rentalModeListing = k; }); _scheduleDraftSave(); },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          if (_rentalModeListing == 'monthly') ...[
-            const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              value: _minStayMonthsMonthly,
-              decoration: InputDecoration(
-                labelText: 'Minimum Stay (months)',
-                helperText: 'Set to Any if you do not enforce a minimum',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              isExpanded: true,
-              items: <int>[0, 1, 2, 3, 6, 9, 12]
-                  .map((m) => DropdownMenuItem(value: m, child: Text(m == 0 ? 'Any' : '$m months')))
-                  .toList(),
-              onChanged: (v) => setState(() { _minStayMonthsMonthly = v ?? 0; _scheduleDraftSave(); }),
-            ),
-            const SizedBox(height: 10),
-            _buildCompactTextField(
-              controller: _noticePeriodDaysController,
-              label: 'Notice Period (days) for Cancellation',
-              hint: 'e.g., 30',
-              helperText: 'Max 90 days',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (_rentalModeListing == 'monthly') {
-                  if (value != null && value.isNotEmpty) {
-                    final n = int.tryParse(value.trim());
-                    if (n == null || n < 0) return 'Enter a valid number of days';
-                    if (n > 90) return 'Maximum allowed is 90 days';
-                  }
-                }
-                return null;
-              },
-            ),
-          ],
-          if (!isCommercial) ...[
-            const SizedBox(height: 15),
-            Text('Charges Included in Rent', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _chargesIncluded.map((charge) {
-                final isSelected = _selectedChargesIncluded.contains(charge);
-                return FilterChip(
-                  label: Text(charge),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedChargesIncluded.add(charge);
-                      } else {
-                        _selectedChargesIncluded.remove(charge);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-          const SizedBox(height: 15),
+          Text('Other Amenities', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
           _buildCompactTextField(
             controller: _otherAmenitiesController,
             label: 'Additional Features (optional)',
             hint: 'Any other amenities or special features...',
             maxLines: 3,
           ),
-          if (!isCommercial) ...[
-            const SizedBox(height: 15),
-            Text('Tenant Preferences', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            LayoutBuilder(builder: (context, cons) {
-              final isXS = cons.maxWidth < 360;
-              if (isXS) {
-                return Column(children: [
-                  DropdownButtonFormField<String>(
-                    value: _preferredTenant,
-                    decoration: InputDecoration(
-                      labelText: 'Preferred Tenants*',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    isExpanded: true,
-                    selectedItemBuilder: (context) => _tenantPreferences
-                        .map((p) => Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(p, overflow: TextOverflow.ellipsis),
-                            ))
-                        .toList(),
-                    items: _tenantPreferences.map((pref) {
-                      return DropdownMenuItem(value: pref, child: Text(pref));
-                    }).toList(),
-                    onChanged: (value) => setState(() => _preferredTenant = value!),
+          const SizedBox(height: 12),
+          Text('Tenant Preferences', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          LayoutBuilder(builder: (context, cons) {
+            final isXS = cons.maxWidth < 360;
+            if (isXS) {
+              return Column(children: [
+                DropdownButtonFormField<String>(
+                  initialValue: _preferredTenant,
+                  decoration: InputDecoration(
+                    labelText: 'Preferred Tenants*',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: _foodPreference,
-                    decoration: InputDecoration(
-                      labelText: 'Food Preference',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    isExpanded: true,
-                    selectedItemBuilder: (context) => _foodPreferences
-                        .map((p) => Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(p, overflow: TextOverflow.ellipsis),
-                            ))
-                        .toList(),
-                    items: _foodPreferences.map((pref) {
-                      return DropdownMenuItem(value: pref, child: Text(pref));
-                    }).toList(),
-                    onChanged: (value) => setState(() => _foodPreference = value!),
-                  ),
-                ]);
-              }
-              return Row(children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _preferredTenant,
-                    decoration: InputDecoration(
-                      labelText: 'Preferred Tenants*',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    isExpanded: true,
-                    items: _tenantPreferences.map((pref) {
-                      return DropdownMenuItem(value: pref, child: Text(pref));
-                    }).toList(),
-                    onChanged: (value) => setState(() => _preferredTenant = value!),
-                  ),
+                  isExpanded: true,
+                  selectedItemBuilder: (context) => _tenantPreferences
+                      .map((p) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(p, overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
+                  items: _tenantPreferences.map((pref) {
+                    return DropdownMenuItem(value: pref, child: Text(pref));
+                  }).toList(),
+                  onChanged: (value) => setState(() => _preferredTenant = value!),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _foodPreference,
-                    decoration: InputDecoration(
-                      labelText: 'Food Preference',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    isExpanded: true,
-                    items: _foodPreferences.map((pref) {
-                      return DropdownMenuItem(value: pref, child: Text(pref));
-                    }).toList(),
-                    onChanged: (value) => setState(() => _foodPreference = value!),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _foodPreference,
+                  decoration: InputDecoration(
+                    labelText: 'Food Preference',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  isExpanded: true,
+                  selectedItemBuilder: (context) => _foodPreferences
+                      .map((p) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(p, overflow: TextOverflow.ellipsis),
+                          ))
+                      .toList(),
+                  items: _foodPreferences.map((pref) {
+                    return DropdownMenuItem(value: pref, child: Text(pref));
+                  }).toList(),
+                  onChanged: (value) => setState(() => _foodPreference = value!),
                 ),
               ]);
-            }),
-            const SizedBox(height: 15),
-            SwitchListTile(
-              title: const Text('Pets Allowed'),
-              subtitle: const Text('Allow tenants to keep pets in the property'),
-              value: _petsAllowed,
-              onChanged: (value) => setState(() => _petsAllowed = value),
-            ),
-            SwitchListTile(
-              title: const Text('Require Seeker ID at booking'),
-              subtitle: const Text('Seeker must upload a government ID photo during booking'),
-              value: _requireSeekerId,
-              onChanged: (value) {
-                setState(() => _requireSeekerId = value);
-                _scheduleDraftSave();
-              },
-            ),
-          ],
+            }
+            return Row(children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _preferredTenant,
+                  decoration: InputDecoration(
+                    labelText: 'Preferred Tenants*',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  isExpanded: true,
+                  items: _tenantPreferences.map((pref) {
+                    return DropdownMenuItem(value: pref, child: Text(pref));
+                  }).toList(),
+                  onChanged: (value) => setState(() => _preferredTenant = value!),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _foodPreference,
+                  decoration: InputDecoration(
+                    labelText: 'Food Preference',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  isExpanded: true,
+                  items: _foodPreferences.map((pref) {
+                    return DropdownMenuItem(value: pref, child: Text(pref));
+                  }).toList(),
+                  onChanged: (value) => setState(() => _foodPreference = value!),
+                ),
+              ),
+            ]);
+          }),
+          const SizedBox(height: 15),
+          SwitchListTile(
+            title: const Text('Pets Allowed'),
+            subtitle: const Text('Allow tenants to keep pets in the property'),
+            value: _petsAllowed,
+            onChanged: (value) => setState(() => _petsAllowed = value),
+          ),
+          SwitchListTile(
+            title: const Text('Require Seeker ID at booking'),
+            subtitle: const Text('Seeker must upload a government ID photo during booking'),
+            value: _requireSeekerId,
+            onChanged: (value) {
+              setState(() => _requireSeekerId = value);
+              _scheduleDraftSave();
+            },
+          ),
           const SizedBox(height: 15),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2))),
+              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 3,
                   offset: const Offset(0, -2),
                 ),
@@ -2974,6 +3142,352 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                 ),
                 ElevatedButton(
                   onPressed: () => _tabController.animateTo(3),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Next: Pricing', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, size: 20),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingStep() {
+    final theme = Theme.of(context);
+    final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isPG = _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel';
+    final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + 12.0;
+    final rentLabel = isPG
+        ? 'Base Rent (per room)*'
+        : 'Monthly Rent*';
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16, 2, 16, bottomPad),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pricing & Availability',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+              child: _buildCompactTextField(
+                controller: _monthlyRentController,
+                label: rentLabel,
+                prefixIcon: Icons.currency_rupee,
+                hint: 'e.g., 25000',
+                helperText: 'Amount billed monthly',
+                keyboardType: TextInputType.number,
+                validator: (value) => value?.isEmpty ?? true ? 'Price is required' : null,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildCompactTextField(
+                controller: _securityDepositController,
+                label: 'Security Deposit (₹, optional)',
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null;
+                  }
+                  final n = int.tryParse(value.trim());
+                  if (n == null || n < 0) return 'Enter a valid amount';
+                  return null;
+                },
+                showRequiredMarker: false,
+              ),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          _buildCompactTextField(
+            controller: _discountPercentController,
+            label: 'Discount (%) (optional)',
+            hint: '0-90',
+            keyboardType: TextInputType.number,
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
+              final d = double.tryParse(value.trim());
+              if (d == null) return 'Enter a valid number';
+              if (d < 0 || d > 90) return 'Enter 0-90';
+              return null;
+            },
+            showRequiredMarker: false,
+          ),
+          if (isPG) ...[
+            const SizedBox(height: 12),
+            _buildCompactTextField(
+              controller: _pgBedRentController,
+              label: 'Rent per Bed (₹, optional)',
+              hint: 'e.g., 8000',
+              keyboardType: TextInputType.number,
+            ),
+          ],
+          const SizedBox(height: 15),
+          Text('Charges Included in Rent', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _chargesIncluded.map((charge) {
+              final isSelected = _selectedChargesIncluded.contains(charge);
+              return FilterChip(
+                label: Text(charge),
+                selected: isSelected,
+                showCheckmark: false,
+                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
+                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: isSelected
+                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                        : theme.colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedChargesIncluded.add(charge);
+                    } else {
+                      _selectedChargesIncluded.remove(charge);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 15),
+          _buildCompactTextField(
+            controller: _houseRulesController,
+            label: 'House Rules (optional)',
+            hint: 'e.g., No loud music after 10 PM; no smoking inside the flat',
+            maxLines: 3,
+          ),
+          const SizedBox(height: 15),
+          Text('Rent Type', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              {'key': 'both', 'label': 'Both (per day & per month)'},
+              {'key': 'rental', 'label': 'Per Day'},
+              {'key': 'monthly', 'label': 'Per Month'},
+            ].map((m) {
+              final String k = m['key']!;
+              final bool sel = _rentalModeListing == k;
+              return ChoiceChip(
+                showCheckmark: false,
+                selected: sel,
+                label: Text(m['label']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
+                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                shape: const StadiumBorder(),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                onSelected: (_) { setState(() { _rentalModeListing = k; }); _scheduleDraftSave(); },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+          if (_rentalModeListing == 'monthly') ...[
+            const SizedBox(height: 10),
+            DropdownButtonFormField<int>(
+              initialValue: _minStayMonthsMonthly,
+              decoration: InputDecoration(
+                labelText: 'Minimum Stay (months)',
+                helperText: 'Set to Any if you do not enforce a minimum',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              isExpanded: true,
+              items: <int>[0, 1, 2, 3, 6, 9, 12]
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m == 0 ? 'Any' : '$m months')))
+                  .toList(),
+              onChanged: (v) => setState(() { _minStayMonthsMonthly = v ?? 0; _scheduleDraftSave(); }),
+            ),
+            const SizedBox(height: 10),
+            _buildCompactTextField(
+              controller: _noticePeriodDaysController,
+              label: 'Notice Period (days) for Cancellation',
+              hint: 'e.g., 30',
+              helperText: 'Max 90 days',
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (_rentalModeListing == 'monthly') {
+                  if (value != null && value.isNotEmpty) {
+                    final n = int.tryParse(value.trim());
+                    if (n == null || n < 0) return 'Enter a valid number of days';
+                    if (n > 90) return 'Maximum allowed is 90 days';
+                  }
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: const [7, 15, 30, 45, 60, 90].map((d) {
+                return Builder(builder: (context) {
+                  final theme = Theme.of(context);
+                  final isSelected = _noticePeriodDaysController.text.trim() == d.toString();
+                  return ChoiceChip(
+                    label: Text('$d days'),
+                    selected: isSelected,
+                    showCheckmark: false,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
+                    backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                    onSelected: (_) {
+                      setState(() {
+                        _noticePeriodDaysController.text = d.toString();
+                      });
+                      _scheduleDraftSave();
+                    },
+                  );
+                });
+              }).toList(),
+            ),
+          ],
+          const SizedBox(height: 15),
+          Text('Availability', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          _buildCompactTextField(
+            controller: _availableFromController,
+            label: 'Available From (date)',
+            hint: 'e.g., 01-12-2025',
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _availabilityStatus,
+            decoration: InputDecoration(
+              labelText: 'Current Status',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              isDense: true,
+            ),
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: 'Vacant', child: Text('Vacant')),
+              DropdownMenuItem(value: 'Occupied', child: Text('Occupied')),
+            ],
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() => _availabilityStatus = v);
+              _scheduleDraftSave();
+            },
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            value: _earlyMoveInAllowed,
+            onChanged: (v) {
+              setState(() => _earlyMoveInAllowed = v);
+              _scheduleDraftSave();
+            },
+            title: const Text('Early move-in allowed'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          const SizedBox(height: 8),
+          _buildCompactTextField(
+            controller: _maxOccupancyController,
+            label: 'Maximum Occupancy (people)',
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: const [1, 2, 3, 4, 5, 6].map((n) {
+              return Builder(builder: (context) {
+                final theme = Theme.of(context);
+                final isSelected = _maxOccupancyController.text.trim() == n.toString();
+                return ChoiceChip(
+                  label: Text('$n pax'),
+                  selected: isSelected,
+                  showCheckmark: false,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
+                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+                  onSelected: (_) {
+                    setState(() {
+                      _maxOccupancyController.text = n.toString();
+                    });
+                    _scheduleDraftSave();
+                  },
+                );
+              });
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          _buildCompactTextField(
+            controller: _moveInRequirementsController,
+            label: 'Move-in Requirements (optional)',
+            hint: 'e.g., ID proof, salary slips, agreement signing',
+            maxLines: 3,
+          ),
+          const SizedBox(height: 15),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 3,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                OutlinedButton(
+                  onPressed: () => _tabController.animateTo(2),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    side: BorderSide(color: theme.colorScheme.outline),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_back, size: 20),
+                      SizedBox(width: 8),
+                      Text('Back', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => _tabController.animateTo(4),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
@@ -3026,7 +3540,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             'Add photos to showcase your property',
             style: TextStyle(
               fontSize: isPhone ? 12 : 13,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               height: 1.3,
             ),
           ),
@@ -3039,7 +3553,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.2),
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
                 width: 1.5,
                 style: BorderStyle.solid,
               ),
@@ -3049,7 +3563,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -3072,7 +3586,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                   'JPEG, PNG • Max 5MB per image',
                   style: TextStyle(
                     fontSize: isPhone ? 11 : 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -3150,6 +3664,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               ),
               itemCount: _selectedImages.length,
               itemBuilder: (context, index) {
+                final isCover = index == 0;
                 return Stack(
                   children: [
                     ClipRRect(
@@ -3161,9 +3676,57 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                         height: double.infinity,
                       ),
                     ),
+                    if (isCover)
+                      Positioned(
+                        left: 4,
+                        top: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'COVER',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (!isCover)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              final imgToMakeCover = _selectedImages.removeAt(index);
+                              _selectedImages.insert(0, imgToMakeCover);
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Make cover',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       top: 4,
-                      right: 4,
+                      right: isCover ? 4 : 46,
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -3189,183 +3752,15 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               },
             ),
           ],
-          
-          const SizedBox(height: 16),
-          Text(
-            'Documents (Optional)${_documentImages.isNotEmpty ? ' (${_documentImages.length})' : ''}',
-            style: TextStyle(
-              fontSize: isPhone ? 16 : 16,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: _pickDocuments,
-            icon: const Icon(Icons.upload_file, size: 18),
-            label: Text('Upload Documents (PDF/DOC/DOCX/Images)', style: TextStyle(fontSize: isPhone ? 14 : 15)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: isPhone ? 10 : 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-          ),
-          if (_documentImages.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Selected Documents (${_documentImages.length})',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: _documentImages.length,
-              itemBuilder: (context, index) {
-                final path = _documentImages[index].path.toLowerCase();
-                final isPdf = path.endsWith('.pdf');
-                final isDoc = path.endsWith('.doc') || path.endsWith('.docx');
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () => OpenFilex.open(_documentImages[index].path),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: isPdf || isDoc
-                            ? Container(
-                                color: theme.colorScheme.surfaceVariant,
-                                alignment: Alignment.center,
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(isPdf ? Icons.picture_as_pdf : Icons.description, size: 36, color: theme.colorScheme.primary),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      _documentImages[index].name,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withOpacity(0.8)),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : Image.file(
-                                File(_documentImages[index].path),
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _documentImages.removeAt(index);
-                          });
-                          _scheduleDraftSave();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            color: theme.colorScheme.onPrimary,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
           const SizedBox(height: 24),
-
-          const Text(
-            'Upload Video Tour (Optional)',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          
-          // Video Upload Section
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 2),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade50,
-            ),
-            child: Column(
-              children: [
-                const Icon(Icons.videocam, size: 36, color: Colors.grey),
-                const SizedBox(height: 12),
-                const Text(
-                  'Drag & drop video here',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'or click to browse (MP4, max 50MB)',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _pickVideo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('+ Select Video'),
-                ),
-                const SizedBox(height: 12),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.lightbulb_outline, size: 14, color: Colors.grey),
-                    SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Tip: Add a short video tour (max 2 minutes) to increase tenant interest by 80%.',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                        textAlign: TextAlign.center,
-                        softWrap: true,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2))),
+              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -3560,7 +3955,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
             subtitle: Text(
               'Inquiries will be forwarded to your email if you hide your phone number',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
             ),
             value: _hidePhoneNumber,
             onChanged: (value) => setState(() => _hidePhoneNumber = value),
@@ -3600,10 +3995,10 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2))),
+              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),

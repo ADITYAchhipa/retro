@@ -135,8 +135,6 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
       case UserRole.guest:
         // Default seekers for guest mode in app state
         return app.UserRole.seeker;
-      default:
-        return app.UserRole.seeker;
     }
   }
 
@@ -148,8 +146,6 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
         return 'Owner';
       case UserRole.guest:
         return 'Guest';
-      default:
-        return 'Seeker';
     }
   }
 
@@ -162,8 +158,6 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
         return Icons.business;
       case UserRole.guest:
         return Icons.person;
-      default:
-        return Icons.search;
     }
   }
 
@@ -213,7 +207,7 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.primaryColor.withOpacity(0.16),
+                            color: theme.primaryColor.withValues(alpha: 0.16),
                             blurRadius: 3,
                             offset: const Offset(0, 2),
                           ),
@@ -292,7 +286,7 @@ class _RoleSwitcherState extends State<RoleSwitcher> with SingleTickerProviderSt
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
@@ -392,8 +386,6 @@ class CompactRoleSwitcher extends StatelessWidget {
         return 'Owner';
       case UserRole.guest:
         return 'Guest';
-      default:
-        return 'Seeker';
     }
   }
 
@@ -405,8 +397,6 @@ class CompactRoleSwitcher extends StatelessWidget {
         return Icons.business;
       case UserRole.guest:
         return Icons.person;
-      default:
-        return Icons.search;
     }
   }
 }

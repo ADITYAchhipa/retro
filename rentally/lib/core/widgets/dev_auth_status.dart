@@ -48,7 +48,7 @@ class DevAuthStatus extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
+        color: statusColor.withValues(alpha: 0.1),
         border: Border.all(color: statusColor),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -74,7 +74,7 @@ class DevAuthStatus extends ConsumerWidget {
                   authState.user!.email,
                   style: TextStyle(
                     fontSize: 9,
-                    color: statusColor.withOpacity(0.8),
+                    color: statusColor.withValues(alpha: 0.8),
                   ),
                 ),
               if (authState.error != null)

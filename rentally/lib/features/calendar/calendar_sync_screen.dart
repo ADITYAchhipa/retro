@@ -65,7 +65,7 @@ class _CalendarSyncScreenState extends ConsumerState<CalendarSyncScreen> {
               final now = DateTime.now();
               final ics = await CalendarSyncService.instance.generateIcs(title: 'Sample Booking', start: now.add(const Duration(days: 1)), end: now.add(const Duration(days: 1, hours: 2)));
               setState(() => _lastIcs = ics);
-              if (!mounted) return;
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ICS generated (mock)')));
             },
             icon: const Icon(Icons.event_available),

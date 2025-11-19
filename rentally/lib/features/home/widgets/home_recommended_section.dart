@@ -186,11 +186,11 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ).copyWith(
-                    overlayColor: MaterialStateProperty.resolveWith((states) {
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
                       final c = widget.isDark
                           ? EnterpriseDarkTheme.primaryAccent
                           : widget.theme.primaryColor;
-                      return c.withOpacity(0.12);
+                      return c.withValues(alpha: 0.12);
                     }),
                   ),
                   child: Text(
@@ -377,8 +377,8 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: widget.isDark 
-                  ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.6)
-                  : Colors.grey.withOpacity(0.3),
+                  ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.6)
+                  : Colors.grey.withValues(alpha: 0.3),
               width: 1,
             ),
           ),

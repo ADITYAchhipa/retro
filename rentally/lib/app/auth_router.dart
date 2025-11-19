@@ -20,10 +20,11 @@ import '../features/chat/clean_chat_list_screen.dart';
 import '../features/chat/modular_chat_screen.dart';
 import '../features/notifications/modular_notifications_screen.dart';
 import '../features/owner/fixed_add_listing_screen.dart';
+import '../features/owner/fixed_add_commercial_listing_screen.dart';
+import '../features/owner/venue_listing_form_screen.dart';
 import '../features/booking/modular_booking_history_screen.dart';
 import '../features/booking/modular_booking_detail_screen.dart';
 import '../features/wishlist/modular_wishlist_screen.dart';
-// import '../features/settings/responsive_settings_screen.dart'; // no longer used
 import '../features/settings/modular_settings_screen.dart';
 import '../features/auth/modern_forgot_password_screen.dart';
 import '../features/auth/modular_otp_verification_screen.dart';
@@ -58,10 +59,8 @@ import '../services/user_preferences_service.dart';
 import '../features/subscription/rent_reminders_manage_screen.dart';
 import '../features/lease/recurring_payment_setup_screen.dart';
 import '../features/owner/owner_availability_screen.dart';
+import '../features/wallet/wallet_methods_screen.dart';
 
-// Root navigator key to allow certain routes to appear above the ShellRoute
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 // Reusable page transition: subtle fade + slight slide for smooth feel
 CustomTransitionPage<T> _fadeSlidePage<T>({required Widget child}) {
@@ -116,6 +115,10 @@ class Routes {
   static const String reviews = '/reviews';
   static const String recommendations = '/recommendations';
   static const String addListing = '/add-listing';
+  static const String addResidentialListing = '/add-listing/residential';
+  static const String addCommercialListing = '/add-listing/commercial';
+  static const String addPlotListing = '/add-listing/plot';
+  static const String addVenueListing = '/add-listing/venue';
   static const String addVehicleListing = '/add-vehicle-listing';
   static const String manageListings = '/manage-listings';
   static const String subscriptionPlans = '/subscription-plans';
@@ -132,6 +135,7 @@ class Routes {
   static const String twoFactor = '/security/2fa';
   static const String contactSupport = '/support/contact';
   static const String rentReminders = '/rent-reminders';
+  static const String walletMethods = '/wallet/methods';
 }
 
 
@@ -139,10 +143,14 @@ class Routes {
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
   final onboardingComplete = ref.watch(onboardingCompleteProvider);
-  final selectedCountry = ref.watch(countryProvider);
+
+  // Create navigator keys per GoRouter instance to avoid reusing the same
+  // GlobalKey across hot rebuilds or provider-driven router rebuilds
+  final rootNavigatorKey = GlobalKey<NavigatorState>();
+  final shellNavigatorKey = GlobalKey<NavigatorState>();
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: Routes.splash,
     redirect: (context, state) {
       final currentPath = state.uri.path;
@@ -167,7 +175,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (authState.status == AuthStatus.authenticated) {
         if (isPublicRoute) {
           // Allow certain public routes even when authenticated
-          if (currentPath == Routes.resetPassword || currentPath == Routes.passwordChanged) {
+          if (currentPath == Routes.resetPassword || currentPath == Routes.passwordChanged || currentPath == Routes.country) {
             return null;
           }
           final userRole = authState.user?.role ?? UserRole.seeker;
@@ -195,13 +203,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             return query.isNotEmpty ? '${Routes.onboarding}?$query' : Routes.onboarding;
           }
           
-          // Country selection flow
-          if (onboardingComplete && selectedCountry == null && currentPath != Routes.country) {
-            return Routes.country;
-          }
-          
-          // Auth flow
-          if (onboardingComplete && selectedCountry != null && 
+          // Auth flow: once onboarding is complete, direct unauthenticated users to auth routes.
+          // Country selection is no longer a global gate; it can be accessed from specific flows.
+          if (onboardingComplete &&
               currentPath != Routes.auth && currentPath != Routes.register && currentPath != Routes.role &&
               currentPath != Routes.forgotPassword && currentPath != Routes.otpVerification &&
               currentPath != Routes.resetPassword && currentPath != Routes.passwordChanged) {
@@ -228,7 +232,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.country,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const EnhancedCountrySelectScreen()),
+        pageBuilder: (context, state) {
+          final next = state.uri.queryParameters['next'];
+          return _fadeSlidePage(child: EnhancedCountrySelectScreen(nextPath: next));
+        },
       ),
       GoRoute(
         path: Routes.auth,
@@ -268,7 +275,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.resetPassword,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           final email = extra['email'] ?? '';
@@ -278,24 +285,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.passwordChanged,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const PasswordChangedSuccessScreen()),
       ),
       GoRoute(
         path: Routes.terms,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ModularTermsScreen()),
       ),
       GoRoute(
         path: Routes.privacy,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ModularPrivacyScreen()),
       ),
 
       // Immersive routes rendered above the Shell (no bottom nav)
       GoRoute(
         path: '/owner/availability/:listingId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final listingId = state.pathParameters['listingId'] ?? '';
           return _fadeSlidePage(child: OwnerAvailabilityScreen(listingId: listingId));
@@ -303,49 +310,71 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.profile,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ModernProfileScreen()),
       ),
       
       GoRoute(
         path: Routes.recommendations,
         name: 'recommendations',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const SmartRecommendationsScreen()),
       ),
       GoRoute(
         path: Routes.ownerAnalytics,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final propertyId = state.uri.queryParameters['propertyId'];
           return _fadeSlidePage(child: PropertyAnalyticsDashboard(propertyId: propertyId));
         },
       ),
       GoRoute(
+        path: Routes.addResidentialListing,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(child: const FixedAddListingScreen()),
+      ),
+      GoRoute(
+        path: Routes.addCommercialListing,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(child: const FixedAddCommercialListingScreen()),
+      ),
+      GoRoute(
+        path: Routes.addVenueListing,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) =>
+            _fadeSlidePage(child: const VenueListingFormScreen()),
+      ),
+   
+      GoRoute(
         path: Routes.addListing,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _fadeSlidePage(child: const FixedAddListingScreen()),
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final category = state.uri.queryParameters['category'];
+          return _fadeSlidePage(child: FixedAddListingScreen(initialCategory: category));
+        },
       ),
       GoRoute(
         path: Routes.addVehicleListing,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ModularAddVehicleListingScreen()),
       ),
       GoRoute(
         path: Routes.kyc,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const KYCVerificationScreen()),
       ),
       GoRoute(
         path: Routes.promoteListing,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const PromoteListingScreen()),
       ),
 
       // Full-page Listing Detail outside the Shell (separate page, no bottom bar)
       GoRoute(
         path: '${Routes.listing}/:id',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           return _fadeSlidePage(
             child: ModularListingDetailScreen(listingId: state.pathParameters['id'] ?? '0'),
@@ -356,7 +385,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Other immersive routes rendered above the Shell
       GoRoute(
         path: '/book/:listingId/payment',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final listingId = state.pathParameters['listingId'] ?? '';
           final extras = (state.extra as Map<String, dynamic>?) ?? const {};
@@ -374,7 +403,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/booking/confirmed/:bookingId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final bookingId = state.pathParameters['bookingId'] ?? '';
           return _fadeSlidePage(child: BookingConfirmationScreen(bookingId: bookingId));
@@ -382,7 +411,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/booking/requested/:bookingId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final bookingId = state.pathParameters['bookingId'] ?? '';
           return _fadeSlidePage(child: BookingRequestSentScreen(bookingId: bookingId));
@@ -390,7 +419,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/book/:id',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final extras = (state.extra as Map<String, dynamic>?) ?? const {};
           DateTime? parseDt(dynamic v) {
@@ -417,7 +446,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/monthly/start/:listingId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final listingId = state.pathParameters['listingId'] ?? '';
           final extra = (state.extra as Map<String, dynamic>?) ?? const {};
@@ -438,7 +467,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/recurring/setup/:listingId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final listingId = state.pathParameters['listingId'] ?? '';
           final extras = (state.extra as Map<String, dynamic>?) ?? const {};
@@ -461,7 +490,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/guest-profile/:guestId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final guestId = state.pathParameters['guestId'] ?? '';
           final extras = (state.extra as Map<String, dynamic>?) ?? const {};
@@ -478,21 +507,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '${Routes.reviews}/:listingId',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final propertyId = state.pathParameters['listingId'] ?? '';
           return _fadeSlidePage(child: ModularReviewsScreen(propertyId: propertyId));
         },
       ),
+      GoRoute(
+        path: Routes.walletMethods,
+        name: 'wallet-methods',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final tab = state.uri.queryParameters['tab'] ?? 'add';
+          return _fadeSlidePage(child: WalletMethodsScreen(initialTab: tab));
+        },
+      ),
       // Settings & Monetization flows (immersive, outside Shell)
       GoRoute(
         path: Routes.paymentMethods,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const pay_methods.PaymentMethodsScreen()),
       ),
       GoRoute(
         path: Routes.gallery,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final extras = (state.extra as Map<String, dynamic>?) ?? const {};
           final images = (extras['images'] as List<dynamic>? ?? const [])
@@ -511,7 +549,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.paymentIntegration,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final extra = (state.extra as Map<String, dynamic>?) ?? const {};
           final bookingId = extra['bookingId'] ?? state.uri.queryParameters['bookingId'];
@@ -533,13 +571,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.referrals,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ReferralDashboardScreen()),
       ),
       // Referral deep link: /ref/:code -> forward to Register with prefilled code
       GoRoute(
         path: '/ref/:code',
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final code = state.pathParameters['code'] ??
               (state.uri.pathSegments.isNotEmpty ? state.uri.pathSegments.last : null);
@@ -548,35 +586,33 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.wallet,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const CleanWalletScreen()),
       ),
       GoRoute(
         path: Routes.payoutMethods,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const PayoutMethodsScreen()),
       ),
       GoRoute(
         path: Routes.subscriptionPlans,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const SubscriptionPlansScreen()),
       ),
-      // Security
       GoRoute(
         path: Routes.twoFactor,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const TwoFactorSetupScreen()),
       ),
-      // Support tools
       GoRoute(
         path: Routes.contactSupport,
-        parentNavigatorKey: _rootNavigatorKey,
+        parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) => _fadeSlidePage(child: const ContactSupportScreen()),
       ),
       
       // Protected routes with shell
       ShellRoute(
-        navigatorKey: _shellNavigatorKey,
+        navigatorKey: shellNavigatorKey,
         builder: (context, state, child) => MainShell(state: state, child: child),
         routes: [
           // Seeker routes

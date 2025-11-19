@@ -43,7 +43,11 @@ class _OptimizedButtonState extends State<OptimizedButton> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 50), // Very fast animation
           curve: Curves.linear,
-          transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
+          transform: Matrix4.diagonal3Values(
+            _isPressed ? 0.98 : 1.0,
+            _isPressed ? 0.98 : 1.0,
+            1.0,
+          ),
           child: Container(
             padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             decoration: BoxDecoration(
@@ -51,7 +55,7 @@ class _OptimizedButtonState extends State<OptimizedButton> {
               borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
               boxShadow: _isPressed ? null : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -129,7 +133,7 @@ class OptimizedNavButton extends StatelessWidget {
                 size: 16,
                 color: isSelected 
                     ? theme.colorScheme.primary 
-                    : theme.colorScheme.onSurface.withOpacity(0.6),
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               const SizedBox(height: 1),
               Text(
@@ -137,7 +141,7 @@ class OptimizedNavButton extends StatelessWidget {
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: isSelected 
                       ? theme.colorScheme.primary 
-                      : theme.colorScheme.onSurface.withOpacity(0.6),
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   height: 1.0,
                   fontSize: 10,

@@ -43,10 +43,10 @@ class ContinueButton extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppConstants.radiusXL),
           onTap: isEnabled ? () => _handleContinue(ref) : null,
           hoverColor: isEnabled 
-              ? Colors.white.withOpacity(0.15)
+              ? Colors.white.withValues(alpha: 0.15)
               : Colors.transparent,
           splashColor: isEnabled 
-              ? Colors.white.withOpacity(0.25)
+              ? Colors.white.withValues(alpha: 0.25)
               : Colors.transparent,
           child: Container(
             padding: EdgeInsets.symmetric(
@@ -77,17 +77,17 @@ class ContinueButton extends ConsumerWidget {
               colors: isDark ? [
                 EnterpriseDarkTheme.primaryAccent,
                 EnterpriseDarkTheme.secondaryAccent,
-                EnterpriseDarkTheme.primaryAccent.withOpacity(0.8),
+                EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.8),
               ] : [
                 EnterpriseLightTheme.primaryAccent,
                 EnterpriseLightTheme.secondaryAccent,
-                EnterpriseLightTheme.primaryAccent.withOpacity(0.8),
+                EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.8),
               ],
             )
           : LinearGradient(
               colors: [
-                theme.colorScheme.onSurface.withOpacity(0.3),
-                theme.colorScheme.onSurface.withOpacity(0.2),
+                theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                theme.colorScheme.onSurface.withValues(alpha: 0.2),
               ],
             ),
       borderRadius: BorderRadius.circular(AppConstants.radiusXL),
@@ -103,7 +103,7 @@ class ContinueButton extends ConsumerWidget {
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
           valueColor: AlwaysStoppedAnimation<Color>(
-            Colors.white.withOpacity(0.8),
+            Colors.white.withValues(alpha: 0.8),
           ),
         ),
       ),
@@ -117,7 +117,7 @@ class ContinueButton extends ConsumerWidget {
         width: isDesktop ? 32.0 : 28.0, // Fixed container size
         height: isDesktop ? 32.0 : 28.0, // Fixed container size
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           shape: BoxShape.circle,
         ),
         child: Center( // Ensure perfect centering
@@ -143,7 +143,7 @@ class ContinueButton extends ConsumerWidget {
           style: AppTextStyles.button(isDesktop).copyWith(
             color: isEnabled 
                 ? Colors.white 
-                : theme.colorScheme.onSurface.withOpacity(0.5),
+                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         );
       },

@@ -150,13 +150,13 @@ class ListingCard extends rp.ConsumerWidget {
               borderRadius: BorderRadius.circular(cardTheme?.cardRadius ?? 12),
               border: Border.all(
                 color: cardTheme?.cardBorderColor ?? (isDark
-                    ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                    ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
                     : EnterpriseLightTheme.secondaryBorder),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                   blurRadius: 10,
                   offset: const Offset(-5, -5),
                   spreadRadius: 0,
@@ -165,7 +165,7 @@ class ListingCard extends rp.ConsumerWidget {
                   color: (isDark
                           ? EnterpriseDarkTheme.primaryAccent
                           : EnterpriseLightTheme.primaryAccent)
-                      .withOpacity(isDark ? 0.18 : 0.12),
+                      .withValues(alpha: isDark ? 0.18 : 0.12),
                   blurRadius: 10,
                   offset: const Offset(5, 5),
                   spreadRadius: 0,
@@ -281,12 +281,12 @@ class ListingCard extends rp.ConsumerWidget {
                                   margin: const EdgeInsets.only(right: 6),
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: cardTheme?.chipBackgroundColor ?? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04)),
+                                    color: cardTheme?.chipBackgroundColor ?? (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                       color: cardTheme?.chipBorderColor ?? (isDark
-                                          ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                                          : Colors.grey.withOpacity(0.4)),
+                                          ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
+                                          : Colors.grey.withValues(alpha: 0.4)),
                                       width: 1,
                                     ),
                                   ),
@@ -329,7 +329,7 @@ class ListingCard extends rp.ConsumerWidget {
                                   decoration: isLiked
                                       ? null
                                       : BoxDecoration(
-                                          color: Colors.black.withOpacity(0.3),
+                                          color: Colors.black.withValues(alpha: 0.3),
                                           shape: BoxShape.circle,
                                         ),
                                   alignment: Alignment.center,
@@ -363,10 +363,10 @@ class ListingCard extends rp.ConsumerWidget {
                                 margin: const EdgeInsets.only(right: 6),
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: cardTheme?.chipBackgroundColor ?? (isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04)),
+                                  color: cardTheme?.chipBackgroundColor ?? (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: cardTheme?.chipBorderColor ?? (isDark ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5) : Colors.grey.withOpacity(0.4)),
+                                    color: cardTheme?.chipBorderColor ?? (isDark ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.4)),
                                     width: 1,
                                   ),
                                 ),
@@ -425,7 +425,7 @@ class ListingCard extends rp.ConsumerWidget {
                                       color: (isDark
                                               ? EnterpriseDarkTheme.secondaryText
                                               : EnterpriseLightTheme.secondaryText)
-                                          .withOpacity(0.9),
+                                          .withValues(alpha: 0.9),
                                       decoration: TextDecoration.lineThrough,
                                     ),
                                   ),
@@ -434,9 +434,9 @@ class ListingCard extends rp.ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: cardTheme?.discountBadgeBackgroundColor ?? (isDark ? const Color(0xFFE11D48).withOpacity(0.22) : const Color(0xFFE11D48).withOpacity(0.12)),
+                                        color: cardTheme?.discountBadgeBackgroundColor ?? (isDark ? const Color(0xFFE11D48).withValues(alpha: 0.22) : const Color(0xFFE11D48).withValues(alpha: 0.12)),
                                         borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: cardTheme?.discountBadgeBorderColor ?? (isDark ? const Color(0xFFE11D48).withOpacity(0.35) : const Color(0xFFE11D48).withOpacity(0.35))),
+                                        border: Border.all(color: cardTheme?.discountBadgeBorderColor ?? (isDark ? const Color(0xFFE11D48).withValues(alpha: 0.35) : const Color(0xFFE11D48).withValues(alpha: 0.35))),
                                       ),
                                       child: Text(
                                         '-${model.discountPercent}%',
@@ -614,7 +614,7 @@ class ListingCard extends rp.ConsumerWidget {
                                                 color: (isDark
                                                         ? EnterpriseDarkTheme.secondaryText
                                                         : EnterpriseLightTheme.secondaryText)
-                                                    .withOpacity(0.9),
+                                                    .withValues(alpha: 0.9),
                                                 decoration: TextDecoration.lineThrough,
                                               ),
                                             ),
@@ -624,9 +624,9 @@ class ListingCard extends rp.ConsumerWidget {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
-                                                color: (cardTheme?.discountBadgeBackgroundColor ?? const Color(0xFFE11D48)).withOpacity(isDark ? 0.22 : 0.12),
+                                                color: (cardTheme?.discountBadgeBackgroundColor ?? const Color(0xFFE11D48)).withValues(alpha: isDark ? 0.22 : 0.12),
                                                 borderRadius: BorderRadius.circular(6),
-                                                border: Border.all(color: (cardTheme?.discountBadgeBorderColor ?? const Color(0xFFE11D48)).withOpacity(0.35)),
+                                                border: Border.all(color: (cardTheme?.discountBadgeBorderColor ?? const Color(0xFFE11D48)).withValues(alpha: 0.35)),
                                               ),
                                               child: Text(
                                                 '-${model.discountPercent}%',
@@ -688,18 +688,18 @@ class ListingCard extends rp.ConsumerWidget {
       decoration: BoxDecoration(
         gradient: isDark 
             ? LinearGradient(
-                colors: [EnterpriseDarkTheme.primaryAccent.withOpacity(0.2), EnterpriseDarkTheme.primaryAccent.withOpacity(0.1)],
+                colors: [EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.2), EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.1)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : LinearGradient(
-                colors: [const Color(0xFF1E3A8A).withOpacity(0.1), const Color(0xFF3B82F6).withOpacity(0.05)],
+                colors: [const Color(0xFF1E3A8A).withValues(alpha: 0.1), const Color(0xFF3B82F6).withValues(alpha: 0.05)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.3) : const Color(0xFF1E3A8A).withOpacity(0.2),
+          color: isDark ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.3) : const Color(0xFF1E3A8A).withValues(alpha: 0.2),
           width: 1,
         ),
       ),

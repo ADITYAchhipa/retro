@@ -22,15 +22,15 @@ class HomePromoBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       borderRadius: BorderRadius.circular(16),
       backgroundColor: isDark
-          ? Colors.white.withOpacity(0.06)
-          : EnterpriseLightTheme.primaryAccent.withOpacity(0.08),
+          ? Colors.white.withValues(alpha: 0.06)
+          : EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.08),
       borderColor: isDark
-          ? Colors.white.withOpacity(0.12)
+          ? Colors.white.withValues(alpha: 0.12)
           : EnterpriseLightTheme.secondaryBorder,
       boxShadow: [
         // Dual soft shadows (green-marked style)
         BoxShadow(
-          color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
           blurRadius: 10,
           offset: const Offset(-5, -5),
           spreadRadius: 0,
@@ -39,7 +39,7 @@ class HomePromoBanner extends StatelessWidget {
           color: (isDark
                   ? EnterpriseDarkTheme.primaryAccent
                   : EnterpriseLightTheme.primaryAccent)
-              .withOpacity(isDark ? 0.18 : 0.12),
+              .withValues(alpha: isDark ? 0.18 : 0.12),
           blurRadius: 10,
           offset: const Offset(5, 5),
           spreadRadius: 0,
@@ -74,13 +74,13 @@ class HomePromoBanner extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [accent.withOpacity(0.95), accent.withOpacity(0.75)],
+                      colors: [accent.withValues(alpha: 0.95), accent.withValues(alpha: 0.75)],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       // Dual soft shadows for the CTA
                       BoxShadow(
-                        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                         blurRadius: 10,
                         offset: const Offset(-5, -5),
                         spreadRadius: 0,
@@ -89,7 +89,7 @@ class HomePromoBanner extends StatelessWidget {
                         color: (isDark
                                 ? EnterpriseDarkTheme.primaryAccent
                                 : EnterpriseLightTheme.primaryAccent)
-                            .withOpacity(isDark ? 0.18 : 0.15),
+                            .withValues(alpha: isDark ? 0.18 : 0.15),
                         blurRadius: 10,
                         offset: const Offset(5, 5),
                         spreadRadius: 0,
@@ -111,17 +111,17 @@ class HomePromoBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withOpacity(0.12)
+                    ? Colors.white.withValues(alpha: 0.12)
                     : EnterpriseLightTheme.secondaryBorder,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                  color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                   blurRadius: 10,
                   offset: const Offset(-5, -5),
                   spreadRadius: 0,
@@ -130,7 +130,7 @@ class HomePromoBanner extends StatelessWidget {
                   color: (isDark
                           ? EnterpriseDarkTheme.primaryAccent
                           : EnterpriseLightTheme.primaryAccent)
-                      .withOpacity(isDark ? 0.18 : 0.12),
+                      .withValues(alpha: isDark ? 0.18 : 0.12),
                   blurRadius: 10,
                   offset: const Offset(5, 5),
                   spreadRadius: 0,

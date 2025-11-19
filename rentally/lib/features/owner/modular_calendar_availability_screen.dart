@@ -359,7 +359,7 @@ class _ModularCalendarAvailabilityScreenState
     }
     
     if (isToday) {
-      backgroundColor = backgroundColor.withOpacity(0.8);
+      backgroundColor = backgroundColor.withValues(alpha: 0.8);
     }
     
     return Container(

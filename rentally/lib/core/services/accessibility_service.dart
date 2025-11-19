@@ -100,8 +100,10 @@ class AccessibilityService {
       
       _announcementController.add(announcement);
       
-      // Use system announcement
-      SemanticsService.announce(
+      // Use system announcement (new API)
+      final view = WidgetsBinding.instance.platformDispatcher.views.first;
+      SemanticsService.sendAnnouncement(
+        view,
         message,
         interrupt ? TextDirection.ltr : TextDirection.rtl,
       );
@@ -455,9 +457,9 @@ class AccessibilityService {
   }
 
   double _calculateLuminance(Color color) {
-    final r = _sRGBtoLin(color.red / 255.0);
-    final g = _sRGBtoLin(color.green / 255.0);
-    final b = _sRGBtoLin(color.blue / 255.0);
+    final r = _sRGBtoLin(color.r);
+    final g = _sRGBtoLin(color.g);
+    final b = _sRGBtoLin(color.b);
     
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
@@ -478,8 +480,6 @@ class AccessibilityService {
       onSecondary: Colors.white,
       surface: Colors.white,
       onSurface: Colors.black,
-      background: Colors.white,
-      onBackground: Colors.black,
     );
   }
 

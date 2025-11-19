@@ -131,10 +131,12 @@ class MockApiService {
         }
       }
       debugPrint('❌ Failed to fetch featured properties: ${response.statusCode}');
-      return [];
+      // Fallback: return mock properties for offline/dev usage
+      return await getProperties();
     } catch (e) {
       debugPrint('❌ Error fetching featured properties: $e');
-      return [];
+      // Fallback: return mock properties for offline/dev usage
+      return await getProperties();
     }
   }
   

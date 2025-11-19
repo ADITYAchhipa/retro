@@ -18,7 +18,7 @@ If you follow this guide, you can build a production-grade backend that cleanly 
 - **Paradigm**: Start as a Modular Monolith with clean domain boundaries and an internal event bus. Split to microservices later as load increases.
 - **Recommended Stack**:
   - Runtime: TypeScript + NestJS (Node.js)
-  - Primary DB: PostgreSQL (SQL, ACID, advanced indexing)
+  - Primary DB: MongoDB (NoSQL, ACID, advanced indexing)
   - Cache / Locks / Queues: Redis
   - Async/Event Bus: Kafka (or NATS for lightweight), fallback to Redis Streams in monolith
   - Search: OpenSearch/Elasticsearch (for geo, full-text)

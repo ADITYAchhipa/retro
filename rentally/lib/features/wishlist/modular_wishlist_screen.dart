@@ -202,7 +202,7 @@ class _ModularWishlistScreenState
     final isDark = theme.brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -210,7 +210,7 @@ class _ModularWishlistScreenState
             _buildModernHeader(theme, isDark),
             Container(
               height: 1,
-              color: isDark ? theme.colorScheme.background : Colors.white,
+              color: isDark ? theme.colorScheme.surface : Colors.white,
             ),
             Expanded(
               child: _isLoading ? _buildLoadingState() : _buildContent(),
@@ -243,7 +243,7 @@ class _ModularWishlistScreenState
       margin: EdgeInsets.zero,
       borderRadius: BorderRadius.zero,
       backgroundColor: isDark
-          ? Colors.white.withOpacity(0.08)
+          ? Colors.white.withValues(alpha: 0.08)
           : Colors.white,
       borderColor: Colors.transparent,
       borderWidth: 0,
@@ -260,7 +260,7 @@ class _ModularWishlistScreenState
                 color: (isDark
                         ? EnterpriseDarkTheme.primaryAccent
                         : EnterpriseLightTheme.primaryAccent)
-                    .withOpacity(isDark ? 0.16 : 0.10),
+                    .withValues(alpha: isDark ? 0.16 : 0.10),
                 blurRadius: 14,
                 offset: const Offset(0, 6),
                 spreadRadius: 0.1,
@@ -440,42 +440,6 @@ class _ModularWishlistScreenState
     return items;
   }
 
-Widget _buildTopBar(ThemeData theme) {
-  final isDark = theme.brightness == Brightness.dark;
-  final listingState = ref.watch(listingProvider);
-  final wishlistState = ref.watch(wishlistProvider);
-  final items = _computeBaseItems(listingState, wishlistState);
-  
-  // Count items by category
-  int allCount = items.length;
-  int propertyCount = items.where((i) => (i['type'] ?? '').toString().toLowerCase() != 'vehicle').length;
-  int vehicleCount = items.where((i) => (i['type'] ?? '').toString().toLowerCase() == 'vehicle').length;
-  
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-    decoration: BoxDecoration(
-      color: isDark ? theme.colorScheme.background : Colors.white,
-      border: Border(
-        bottom: BorderSide(
-          color: isDark 
-              ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.3)
-              : theme.dividerColor.withOpacity(0.2),
-        ),
-      ),
-    ),
-    child: Row(
-      children: [
-        Expanded(child: _buildModernFilterChip('All', 'all', allCount, theme, isDark)),
-        const SizedBox(width: 8),
-        Expanded(child: _buildModernFilterChip('Properties', 'property', propertyCount, theme, isDark)),
-        const SizedBox(width: 8),
-        Expanded(child: _buildModernFilterChip('Vehicles', 'vehicle', vehicleCount, theme, isDark)),
-      ],
-    ),
-  );
-  }
-
   Widget _buildModernFilterChip(String label, String value, int count, ThemeData theme, bool isDark) {
     final selected = _category == value;
     
@@ -493,20 +457,20 @@ Widget _buildTopBar(ThemeData theme) {
           decoration: BoxDecoration(
             color: selected
                 ? theme.colorScheme.primary
-                : (isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white),
+                : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: selected
                   ? theme.colorScheme.primary
                   : (isDark
-                      ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                      : theme.colorScheme.outline.withOpacity(0.2)),
+                      ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
+                      : theme.colorScheme.outline.withValues(alpha: 0.2)),
               width: 1.2,
             ),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.3),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                       spreadRadius: 0,
@@ -514,7 +478,7 @@ Widget _buildTopBar(ThemeData theme) {
                   ]
                 : [
                     BoxShadow(
-                      color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
                       blurRadius: 8,
                       offset: const Offset(-4, -4),
                       spreadRadius: 0,
@@ -523,7 +487,7 @@ Widget _buildTopBar(ThemeData theme) {
                       color: (isDark
                               ? EnterpriseDarkTheme.primaryAccent
                               : EnterpriseLightTheme.primaryAccent)
-                          .withOpacity(isDark ? 0.15 : 0.10),
+                          .withValues(alpha: isDark ? 0.15 : 0.10),
                       blurRadius: 8,
                       offset: const Offset(4, 4),
                       spreadRadius: 0,
@@ -552,8 +516,8 @@ Widget _buildTopBar(ThemeData theme) {
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: selected
-                        ? Colors.white.withOpacity(0.25)
-                        : theme.colorScheme.primary.withOpacity(0.15),
+                        ? Colors.white.withValues(alpha: 0.25)
+                        : theme.colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -637,9 +601,9 @@ Widget _buildTopBar(ThemeData theme) {
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         border: Border.all(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -827,7 +791,7 @@ Widget _buildTopBar(ThemeData theme) {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.favorite_border_rounded, color: Colors.red, size: 28),
@@ -847,7 +811,7 @@ Widget _buildTopBar(ThemeData theme) {
             Icon(
               Icons.delete_outline_rounded,
               size: 60,
-              color: Colors.red.withOpacity(0.3),
+              color: Colors.red.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1020,7 +984,7 @@ Widget _buildTopBar(ThemeData theme) {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.delete_sweep_rounded, color: Colors.orange, size: 28),
@@ -1040,9 +1004,9 @@ Widget _buildTopBar(ThemeData theme) {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.08),
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1135,7 +1099,7 @@ Widget _buildTopBar(ThemeData theme) {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
@@ -1155,7 +1119,7 @@ Widget _buildTopBar(ThemeData theme) {
             Icon(
               Icons.heart_broken_rounded,
               size: 60,
-              color: Colors.red.withOpacity(0.3),
+              color: Colors.red.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1172,7 +1136,7 @@ Widget _buildTopBar(ThemeData theme) {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.red.withOpacity(0.8),
+                color: Colors.red.withValues(alpha: 0.8),
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -1231,9 +1195,9 @@ Widget _buildTopBar(ThemeData theme) {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          border: Border(top: BorderSide(color: theme.dividerColor.withOpacity(0.4))),
+          border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 3, offset: const Offset(0, -2)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, -2)),
           ],
         ),
         child: Row(

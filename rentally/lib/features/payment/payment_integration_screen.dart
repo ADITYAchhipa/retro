@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/auth_router.dart';
 import '../../core/providers/ui_visibility_provider.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../services/user_preferences_service.dart';
 
 enum PaymentMethod {
   creditCard,
@@ -133,6 +134,7 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
     final cards = ref.watch(paymentServiceProvider);
     final theme = Theme.of(context);
     final t = AppLocalizations.of(context);
+    final currency = ref.watch(currentCurrencyProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -143,7 +145,7 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
       body: Column(
         children: [
           // Booking Summary
-          if (widget.amount != null) _buildBookingSummary(theme),
+          if (widget.amount != null) _buildBookingSummary(theme, currency),
           
           Expanded(
             child: SingleChildScrollView(
@@ -169,34 +171,58 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...cards.map((card) => _buildSavedCardTile(card, theme)),
+                    RadioGroup<PaymentCard>(
+                      groupValue: _selectedCard,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCard = value;
+                          _selectedMethod = null;
+                        });
+                      },
+                      child: Column(
+                        children: cards.map((card) => _buildSavedCardTile(card, theme)).toList(),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
                   
                   // Add New Card
-                  _buildPaymentMethodTile(
-                    PaymentMethod.creditCard,
-                    'Credit/Debit Card',
-                    Icons.credit_card,
-                    theme,
-                  ),
-                  _buildPaymentMethodTile(
-                    PaymentMethod.paypal,
-                    'PayPal',
-                    Icons.account_balance_wallet,
-                    theme,
-                  ),
-                  _buildPaymentMethodTile(
-                    PaymentMethod.applePay,
-                    'Apple Pay',
-                    Icons.phone_iphone,
-                    theme,
-                  ),
-                  _buildPaymentMethodTile(
-                    PaymentMethod.googlePay,
-                    'Google Pay',
-                    Icons.payment,
-                    theme,
+                  RadioGroup<PaymentMethod>(
+                    groupValue: _selectedMethod,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedMethod = value;
+                        _selectedCard = null;
+                      });
+                    },
+                    child: Column(
+                      children: [
+                        _buildPaymentMethodTile(
+                          PaymentMethod.creditCard,
+                          'Credit/Debit Card',
+                          Icons.credit_card,
+                          theme,
+                        ),
+                        _buildPaymentMethodTile(
+                          PaymentMethod.paypal,
+                          'PayPal',
+                          Icons.account_balance_wallet,
+                          theme,
+                        ),
+                        _buildPaymentMethodTile(
+                          PaymentMethod.applePay,
+                          'Apple Pay',
+                          Icons.phone_iphone,
+                          theme,
+                        ),
+                        _buildPaymentMethodTile(
+                          PaymentMethod.googlePay,
+                          'Google Pay',
+                          Icons.payment,
+                          theme,
+                        ),
+                      ],
+                    ),
                   ),
                   
                   // New Card Form
@@ -210,16 +236,16 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
           ),
           
           // Payment Button
-          _buildPaymentButton(theme),
+          _buildPaymentButton(theme, currency),
         ],
       ),
     );
   }
 
-  Widget _buildBookingSummary(ThemeData theme) {
+  Widget _buildBookingSummary(ThemeData theme, String currency) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -246,7 +272,7 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
                 ),
               ),
               Text(
-                CurrencyFormatter.formatPrice(widget.amount!),
+                CurrencyFormatter.formatPrice(widget.amount!, currency: currency),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
@@ -266,13 +292,6 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
       margin: const EdgeInsets.only(bottom: 8),
       child: RadioListTile<PaymentCard>(
         value: card,
-        groupValue: _selectedCard,
-        onChanged: (value) {
-          setState(() {
-            _selectedCard = value;
-            _selectedMethod = null;
-          });
-        },
         title: Row(
           children: [
             Icon(_getCardIcon(card.brand)),
@@ -332,13 +351,6 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
       margin: const EdgeInsets.only(bottom: 8),
       child: RadioListTile<PaymentMethod>(
         value: method,
-        groupValue: _selectedMethod,
-        onChanged: (value) {
-          setState(() {
-            _selectedMethod = value;
-            _selectedCard = null;
-          });
-        },
         title: Row(
           children: [
             Icon(icon),
@@ -439,7 +451,7 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
     );
   }
 
-  Widget _buildPaymentButton(ThemeData theme) {
+  Widget _buildPaymentButton(ThemeData theme, String currency) {
     final hasSelectedPayment = _selectedCard != null || _selectedMethod != null;
     
     return Container(
@@ -448,7 +460,7 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, -2),
           ),
@@ -501,7 +513,7 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
                     )
                   : Text(
                       widget.amount != null
-                          ? 'Pay ${CurrencyFormatter.formatPrice(widget.amount!)}'
+                          ? 'Pay ${CurrencyFormatter.formatPrice(widget.amount!, currency: currency)}'
                           : 'Continue',
                       style: const TextStyle(
                         fontSize: 16,
@@ -563,7 +575,11 @@ class _PaymentIntegrationScreenState extends ConsumerState<PaymentIntegrationScr
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to previous screen
+                  if (widget.amount != null && (widget.propertyTitle == 'Wallet Top-Up')) {
+                    Navigator.of(context).pop({'walletTopUp': widget.amount});
+                  } else {
+                    Navigator.of(context).pop(); // Go back to previous screen
+                  }
                 },
                 child: const Text('Done'),
               ),

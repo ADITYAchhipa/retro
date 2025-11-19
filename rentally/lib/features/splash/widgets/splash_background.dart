@@ -37,9 +37,9 @@ class SplashBackground extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.background,
-            theme.colorScheme.surface.withOpacity(0.95),
-            theme.colorScheme.background,
+            theme.colorScheme.surface,
+            theme.colorScheme.surface.withValues(alpha: 0.95),
+            theme.colorScheme.surface,
           ],
           stops: const [0.0, 0.5, 1.0],
         ),

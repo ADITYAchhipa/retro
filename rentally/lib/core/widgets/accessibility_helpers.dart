@@ -13,7 +13,8 @@ class AccessibilityHelpers {
 
   /// Announce to screen readers
   static void announce(BuildContext context, String message) {
-    SemanticsService.announce(message, TextDirection.ltr);
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    SemanticsService.sendAnnouncement(view, message, TextDirection.ltr);
   }
 
   /// Create accessible button
@@ -223,10 +224,12 @@ class AccessibilityHelpers {
       label: label,
       inMutuallyExclusiveGroup: true,
       checked: value == groupValue,
-      child: Radio<T>(
-        value: value,
+      child: RadioGroup<T>(
         groupValue: groupValue,
         onChanged: onChanged,
+        child: Radio<T>(
+          value: value,
+        ),
       ),
     );
   }

@@ -12,7 +12,7 @@ import '../../core/widgets/role_switcher.dart';
 import '../../core/providers/user_provider.dart';
 import '../../app/app_state.dart' show AppNotifiers;
 import '../../app/app_state.dart' as app;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/database/models/user_model.dart';
 // Navigations now use GoRouter Routes; direct screen imports removed
@@ -126,12 +126,11 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         onPressed: () {
                           setModalState(() => preparing = true);
                           Future.delayed(const Duration(milliseconds: 1500), () {
-                            if (Navigator.of(context).mounted) {
-                              setModalState(() {
-                                preparing = false;
-                                ready = true;
-                              });
-                            }
+                            if (!context.mounted) return;
+                            setModalState(() {
+                              preparing = false;
+                              ready = true;
+                            });
                           });
                         },
                         icon: const Icon(Icons.settings_backup_restore_outlined),
@@ -157,6 +156,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         OutlinedButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
+                            if (!context.mounted) return;
                             SnackBarUtils.showSuccess(context, 'We\'ll email your data shortly.');
                           },
                           icon: const Icon(Icons.email_outlined),
@@ -166,6 +166,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         FilledButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
+                            if (!context.mounted) return;
                             SnackBarUtils.showSuccess(context, 'Download started (mock).');
                           },
                           icon: const Icon(Icons.download),
@@ -206,7 +207,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                     gradient: LinearGradient(
                       colors: [
                         theme.colorScheme.primary,
-                        theme.colorScheme.primary.withOpacity(0.7),
+                        theme.colorScheme.primary.withValues(alpha: 0.7),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -280,10 +281,10 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
                           ),
                         ),
                         child: Column(
@@ -492,7 +493,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.logout_rounded, color: Colors.orange, size: 28),
@@ -512,7 +513,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             Icon(
               Icons.waving_hand_rounded,
               size: 60,
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -631,18 +632,18 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
         boxShadow: isDark
             ? [
                 BoxShadow(
-                  color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.12),
+                  color: EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.12),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -688,21 +689,21 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surface.withOpacity(0.5) : Colors.white,
+        color: isDark ? theme.colorScheme.surface.withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey[300]!,
+          color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey[300]!,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
             blurRadius: 12,
             offset: const Offset(-6, -6),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.2 : 0.15),
+                .withValues(alpha: isDark ? 0.2 : 0.15),
             blurRadius: 12,
             offset: const Offset(6, 6),
           ),
@@ -728,7 +729,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 hintText: 'Search settings...',
                 hintStyle: TextStyle(
                   fontSize: 13,
-                  color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                  color: isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[500],
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -746,7 +747,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(isDark ? 0.2 : 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -780,7 +781,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.10),
+              color: Colors.orange.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.notifications_active_outlined, color: Colors.orange),
@@ -806,7 +807,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: (canExact ? Colors.green : Colors.red).withOpacity(0.10),
+                  color: (canExact ? Colors.green : Colors.red).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -846,7 +847,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.10),
+              color: Colors.green.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.people, color: Colors.green),
@@ -868,7 +869,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.10),
+              color: Colors.purple.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.account_balance_wallet, color: Colors.purple),
@@ -890,7 +891,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.10),
+              color: Colors.indigo.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.account_balance_outlined, color: Colors.indigo),
@@ -912,7 +913,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.10),
+              color: Colors.blue.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.star, color: Colors.blue),
@@ -949,21 +950,21 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           margin: const EdgeInsets.only(bottom: 4),
           padding: EdgeInsets.all(isPhone ? 14 : 18),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                 blurRadius: 12,
                 offset: const Offset(-6, -6),
               ),
               BoxShadow(
                 color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                    .withOpacity(isDark ? 0.15 : 0.08),
+                    .withValues(alpha: isDark ? 0.15 : 0.08),
                 blurRadius: 12,
                 offset: const Offset(6, 6),
               ),
@@ -979,7 +980,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                     children: [
                       CircleAvatar(
                         radius: 22,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                         child: Text(
                           (name.isNotEmpty ? name[0] : 'U').toUpperCase(),
                           style: TextStyle(
@@ -1015,7 +1016,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.08),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -1057,7 +1058,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                             child: Text(
                               (name.isNotEmpty ? name[0] : 'U').toUpperCase(),
                               style: TextStyle(
@@ -1101,7 +1102,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.08),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1126,7 +1127,8 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                           child: ElevatedButton.icon(
                             onPressed: () async {
                               final ok = await userProvider.switchRole(UserRole.owner);
-                              if (mounted && ok) {
+                              if (!context.mounted) return;
+                              if (ok) {
                                 try {
                                   final container = ProviderScope.containerOf(context);
                                   container.read(app.authProvider.notifier).switchRole(app.UserRole.owner);
@@ -1153,7 +1155,8 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                           child: ElevatedButton.icon(
                             onPressed: () async {
                               final ok = await userProvider.switchRole(UserRole.seeker);
-                              if (mounted && ok) {
+                              if (!context.mounted) return;
+                              if (ok) {
                                 try {
                                   final container = ProviderScope.containerOf(context);
                                   container.read(app.authProvider.notifier).switchRole(app.UserRole.seeker);
@@ -1185,7 +1188,8 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         ElevatedButton.icon(
                           onPressed: () async {
                             final ok = await userProvider.switchRole(UserRole.owner);
-                            if (mounted && ok) {
+                            if (!context.mounted) return;
+                            if (ok) {
                               try {
                                 final container = ProviderScope.containerOf(context);
                                 container.read(app.authProvider.notifier).switchRole(app.UserRole.owner);
@@ -1209,7 +1213,8 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                         ElevatedButton.icon(
                           onPressed: () async {
                             final ok = await userProvider.switchRole(UserRole.seeker);
-                            if (mounted && ok) {
+                            if (!context.mounted) return;
+                            if (ok) {
                               try {
                                 final container = ProviderScope.containerOf(context);
                                 container.read(app.authProvider.notifier).switchRole(app.UserRole.seeker);
@@ -1314,22 +1319,22 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         ),
       ),
       switchTheme: SwitchThemeData(
-        trackOutlineColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.disabled)) {
-            return theme.colorScheme.outline.withOpacity(0.3);
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return theme.colorScheme.outline.withValues(alpha: 0.3);
           }
-          return states.contains(MaterialState.selected)
+          return states.contains(WidgetState.selected)
               ? theme.colorScheme.primary
               : theme.colorScheme.outline;
         }),
-        trackOutlineWidth: MaterialStateProperty.resolveWith((states) => isPhone ? 1.4 : 1.6),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          return states.contains(MaterialState.selected)
-              ? theme.colorScheme.primary.withOpacity(0.40)
-              : theme.colorScheme.surfaceVariant.withOpacity(0.90);
+        trackOutlineWidth: WidgetStateProperty.resolveWith((states) => isPhone ? 1.4 : 1.6),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected)
+              ? theme.colorScheme.primary.withValues(alpha: 0.40)
+              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.90);
         }),
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          return states.contains(MaterialState.selected)
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected)
               ? theme.colorScheme.onPrimary
               : theme.colorScheme.onSurfaceVariant;
         }),
@@ -1396,7 +1401,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.08),
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.account_circle, color: theme.colorScheme.primary),
@@ -1412,7 +1417,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.10),
+              color: Colors.teal.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.payment, color: Colors.teal),
@@ -1440,8 +1445,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
       case UserRole.owner:
         return 'Owner';
       case UserRole.guest:
-        return 'Guest';
-      default:
         return 'Guest';
     }
   }
@@ -1492,7 +1495,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.10),
+              color: Colors.indigo.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.dark_mode, color: Colors.indigo),
@@ -1508,7 +1511,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.10),
+              color: Colors.blue.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.language, color: Colors.blue),
@@ -1534,7 +1537,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.10),
+              color: Colors.orange.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.notifications, color: Colors.orange),
@@ -1550,7 +1553,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.10),
+              color: Colors.teal.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.phone_android, color: Colors.teal),
@@ -1566,7 +1569,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.10),
+              color: Colors.blue.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.email, color: Colors.blue),
@@ -1582,7 +1585,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.10),
+              color: Colors.purple.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.sms, color: Colors.purple),
@@ -1607,7 +1610,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.10),
+              color: Colors.green.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.location_on, color: Colors.green),
@@ -1623,7 +1626,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.10),
+              color: Colors.indigo.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.analytics, color: Colors.indigo),
@@ -1639,7 +1642,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.10),
+              color: Colors.red.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.bug_report, color: Colors.red),
@@ -1655,7 +1658,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blueGrey.withOpacity(0.10),
+              color: Colors.blueGrey.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.download, color: Colors.blueGrey),
@@ -1680,7 +1683,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blueGrey.withOpacity(0.10),
+              color: Colors.blueGrey.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.lock, color: Colors.blueGrey),
@@ -1718,7 +1721,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.cyan.withOpacity(0.10),
+              color: Colors.cyan.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.verified_user, color: Colors.cyan),
@@ -1734,7 +1737,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.deepPurple.withOpacity(0.10),
+              color: Colors.deepPurple.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.shield_moon_outlined, color: Colors.deepPurple),
@@ -1765,7 +1768,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.10),
+              color: Colors.blue.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.chat, color: Colors.blue),
@@ -1787,7 +1790,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.10),
+              color: Colors.amber.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.feedback, color: Colors.amber),
@@ -1812,7 +1815,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blueGrey.withOpacity(0.10),
+              color: Colors.blueGrey.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.info, color: Colors.blueGrey),
@@ -1827,7 +1830,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.10),
+              color: Colors.blue.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.description, color: Colors.blue),
@@ -1844,7 +1847,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.10),
+              color: Colors.green.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.privacy_tip, color: Colors.green),
@@ -1861,7 +1864,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.10),
+              color: Colors.red.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.logout, color: Colors.red[600]),
@@ -1883,21 +1886,21 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
             blurRadius: 10,
             offset: const Offset(-5, -5),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.12 : 0.06),
+                .withValues(alpha: isDark ? 0.12 : 0.06),
             blurRadius: 10,
             offset: const Offset(5, 5),
           ),
@@ -1913,7 +1916,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: theme.colorScheme.primary, size: isPhone ? 20 : 22),
@@ -1983,9 +1986,8 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           await prefs.setString('localeCode', tempSelectedCode);
         }
       } catch (_) {}
-      if (mounted) {
-        SnackBarUtils.showSuccess(parentContext, 'Language changed to ${isSystem ? 'System' : tempSelectedLabel}');
-      }
+      if (!context.mounted) return;
+      SnackBarUtils.showSuccess(parentContext, 'Language changed to ${isSystem ? 'System' : tempSelectedLabel}');
     }
 
     Widget buildSheetContent(void Function(VoidCallback fn) setModalState, BuildContext popCtx, {bool expanded = false}) {
@@ -2020,23 +2022,23 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 gradient: selected
                     ? LinearGradient(
                         colors: [
-                          theme.colorScheme.primary.withOpacity(0.12),
-                          theme.colorScheme.primary.withOpacity(0.06),
+                          theme.colorScheme.primary.withValues(alpha: 0.12),
+                          theme.colorScheme.primary.withValues(alpha: 0.06),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
                     : null,
-                color: selected ? null : theme.colorScheme.surface.withOpacity(0.5),
+                color: selected ? null : theme.colorScheme.surface.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
                 border: Border.all(
-                  color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.3),
+                  color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.3),
                   width: selected ? 2.0 : 1.0,
                 ),
                 boxShadow: selected
                     ? [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.2),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -2053,7 +2055,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                       gradient: LinearGradient(
                         colors: [
                           langColor,
-                          langColor.withOpacity(0.7),
+                          langColor.withValues(alpha: 0.7),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -2061,7 +2063,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                       borderRadius: BorderRadius.circular(isPhone ? 10 : 12),
                       boxShadow: [
                         BoxShadow(
-                          color: langColor.withOpacity(0.3),
+                          color: langColor.withValues(alpha: 0.3),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -2112,7 +2114,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                           ? LinearGradient(
                               colors: [
                                 theme.colorScheme.primary,
-                                theme.colorScheme.primary.withOpacity(0.8),
+                                theme.colorScheme.primary.withValues(alpha: 0.8),
                               ],
                             )
                           : null,
@@ -2139,15 +2141,15 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              theme.colorScheme.primary.withOpacity(0.1),
-              theme.colorScheme.secondary.withOpacity(0.05),
+              theme.colorScheme.primary.withValues(alpha: 0.1),
+              theme.colorScheme.secondary.withValues(alpha: 0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: theme.colorScheme.primary.withOpacity(0.2),
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -2159,13 +2161,13 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 gradient: LinearGradient(
                   colors: [
                     theme.colorScheme.primary,
-                    theme.colorScheme.primary.withOpacity(0.8),
+                    theme.colorScheme.primary.withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -2201,7 +2203,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
               icon: const Icon(Icons.close_rounded),
               onPressed: () => Navigator.of(popCtx).pop(),
               style: IconButton.styleFrom(
-                backgroundColor: theme.colorScheme.surface.withOpacity(0.5),
+                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -2212,21 +2214,21 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surface.withOpacity(0.5) : Colors.white,
+          color: isDark ? theme.colorScheme.surface.withValues(alpha: 0.5) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.15) : Colors.grey[300]!,
+            color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey[300]!,
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
               blurRadius: 12,
               offset: const Offset(-6, -6),
             ),
             BoxShadow(
               color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                  .withOpacity(isDark ? 0.2 : 0.15),
+                  .withValues(alpha: isDark ? 0.2 : 0.15),
               blurRadius: 12,
               offset: const Offset(6, 6),
             ),
@@ -2245,7 +2247,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                   hintText: 'Search languages...',
                   hintStyle: TextStyle(
                     fontSize: 13,
-                    color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                    color: isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[500],
                   ),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -2290,7 +2292,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -2349,7 +2351,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),
@@ -2380,7 +2382,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
         context: context,
         barrierDismissible: true,
         barrierLabel: 'Language',
-        barrierColor: Colors.black.withOpacity(0.5),
+        barrierColor: Colors.black.withValues(alpha: 0.5),
         transitionDuration: const Duration(milliseconds: 200),
         pageBuilder: (dialogContext, anim1, anim2) {
           return Center(
@@ -2395,12 +2397,12 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 32,
                         offset: const Offset(0, 16),
                         spreadRadius: -8,
@@ -2444,7 +2446,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             Text(
               error ?? 'An unexpected error occurred',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -2774,13 +2776,13 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
                       gradient: LinearGradient(
                         colors: [
                           widget.theme.colorScheme.primary,
-                          widget.theme.colorScheme.primary.withOpacity(0.7),
+                          widget.theme.colorScheme.primary.withValues(alpha: 0.7),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                          color: widget.theme.colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -2824,12 +2826,12 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: widget.isDark 
-                      ? Colors.white.withOpacity(0.05) 
+                      ? Colors.white.withValues(alpha: 0.05) 
                       : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: widget.isDark 
-                        ? Colors.white.withOpacity(0.1) 
+                        ? Colors.white.withValues(alpha: 0.1) 
                         : Colors.grey.shade200,
                   ),
                 ),
@@ -2885,12 +2887,12 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: widget.isDark 
-                      ? Colors.white.withOpacity(0.05) 
+                      ? Colors.white.withValues(alpha: 0.05) 
                       : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: widget.isDark 
-                        ? Colors.white.withOpacity(0.1) 
+                        ? Colors.white.withValues(alpha: 0.1) 
                         : Colors.grey.shade200,
                   ),
                 ),
@@ -2927,7 +2929,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
                                     setState(() => _selectedCategory = category);
                                   }
                                 },
-                                selectedColor: widget.theme.colorScheme.primary.withOpacity(0.2),
+                                selectedColor: widget.theme.colorScheme.primary.withValues(alpha: 0.2),
                                 labelStyle: TextStyle(
                                   fontSize: 12,
                                   fontWeight: _selectedCategory == category 
@@ -2956,18 +2958,18 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
                   hintText: 'Tell us what you think...',
                   hintStyle: TextStyle(
                     color: widget.isDark 
-                        ? Colors.white.withOpacity(0.4) 
+                        ? Colors.white.withValues(alpha: 0.4) 
                         : Colors.grey[400],
                   ),
                   filled: true,
                   fillColor: widget.isDark 
-                      ? Colors.white.withOpacity(0.05) 
+                      ? Colors.white.withValues(alpha: 0.05) 
                       : Colors.grey[50],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
                       color: widget.isDark 
-                          ? Colors.white.withOpacity(0.1) 
+                          ? Colors.white.withValues(alpha: 0.1) 
                           : Colors.grey[300]!,
                     ),
                   ),
@@ -2975,7 +2977,7 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
                       color: widget.isDark 
-                          ? Colors.white.withOpacity(0.1) 
+                          ? Colors.white.withValues(alpha: 0.1) 
                           : Colors.grey[300]!,
                     ),
                   ),

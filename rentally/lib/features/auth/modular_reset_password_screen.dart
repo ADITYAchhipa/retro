@@ -56,7 +56,7 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
     final isDark = theme.brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.grey[50],
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -103,7 +103,7 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                           },
                           icon: Icon(
                             _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                             size: 18,
                           ),
                         ),
@@ -129,7 +129,7 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                           },
                           icon: Icon(
                             _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                             size: 18,
                           ),
                         ),
@@ -169,8 +169,8 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
     
     return NeoGlass(
       padding: const EdgeInsets.all(16),
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       blur: isDark ? 10 : 0,
       child: Column(
@@ -183,8 +183,8 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.2),
-                      theme.colorScheme.primary.withOpacity(0.1),
+                      theme.colorScheme.primary.withValues(alpha: 0.2),
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -250,14 +250,14 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: isMet 
-                  ? Colors.green.withOpacity(0.15) 
-                  : (isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1)),
+                  ? Colors.green.withValues(alpha: 0.15) 
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1)),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isMet ? Icons.check_circle : Icons.circle_outlined,
               size: 16,
-              color: isMet ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.4),
+              color: isMet ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(width: 10),

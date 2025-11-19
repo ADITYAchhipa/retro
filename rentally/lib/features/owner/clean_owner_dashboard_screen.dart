@@ -156,7 +156,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
             width: 28,
             height: 28,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
             child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(width: 10),
@@ -186,7 +186,12 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     }
 
     return Card(
+      elevation: 0,
       margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
         child: Column(
@@ -278,7 +283,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                         width: 26,
                         height: 26,
                         alignment: Alignment.center,
-                        decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+                        decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
                         child: const Icon(Icons.percent, color: Colors.redAccent, size: 14),
                       ),
                       const SizedBox(width: 10),
@@ -460,9 +465,9 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
@@ -1006,7 +1011,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
-                colors: [theme.colorScheme.primary.withOpacity(0.25), theme.colorScheme.primary.withOpacity(0.05)],
+                colors: [theme.colorScheme.primary.withValues(alpha: 0.25), theme.colorScheme.primary.withValues(alpha: 0.05)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -1049,6 +1054,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
   PreferredSizeWidget _buildAppBar(ThemeData theme) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     return AppBar(
+      titleSpacing: 16,
       title: Text(
         ProductionConfig.appName,
         style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(
@@ -1075,7 +1081,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
       ),
       iconTheme: const IconThemeData(color: Colors.white),
       actionsIconTheme: IconThemeData(color: Colors.white, size: isPhone ? 22 : 24),
-      toolbarHeight: isPhone ? 40 : null,
+      toolbarHeight: 60,
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
@@ -1179,7 +1185,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   width: isPhone ? 22 : 24,
                   height: isPhone ? 22 : 24,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.28),
+                    color: Colors.black.withValues(alpha: 0.28),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white54, width: 1),
                   ),
@@ -1199,7 +1205,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   width: isPhone ? 22 : 24,
                   height: isPhone ? 22 : 24,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.28),
+                    color: Colors.black.withValues(alpha: 0.28),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white54, width: 1),
                   ),
@@ -1219,7 +1225,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   width: isPhone ? 22 : 24,
                   height: isPhone ? 22 : 24,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.28),
+                    color: Colors.black.withValues(alpha: 0.28),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white54, width: 1),
                   ),
@@ -1297,7 +1303,6 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 case KycStatus.rejected:
                   baseColor = Colors.red; label = 'KYC Rejected'; icon = Icons.error_outline; ctaLabel = 'Fix & Resubmit'; break;
                 case KycStatus.notStarted:
-                default:
                   baseColor = Colors.orange; label = 'KYC Required'; icon = Icons.verified_user_outlined; ctaLabel = 'Start KYC'; break;
               }
               return Padding(
@@ -1310,9 +1315,9 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: baseColor.withOpacity(0.08),
+                        color: baseColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: baseColor.withOpacity(0.2)),
+                        border: Border.all(color: baseColor.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1354,14 +1359,17 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
     required ThemeData theme,
     required bool isPhone,
     String? changeText,
-    Color? changeColor,
     double? valueNumber,
     String Function(double)? valueFormatter,
     String? tooltip,
   }) {
     return Card(
+      elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 8 : 16),
         child: LayoutBuilder(
@@ -1381,9 +1389,9 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                         height: isPhone ? 24 : 32,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: color.withOpacity(0.2)),
+                          border: Border.all(color: color.withValues(alpha: 0.2)),
                         ),
                         child: Icon(icon, color: color, size: isPhone ? 14 : 18),
                       ),
@@ -1449,15 +1457,18 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
   Widget _buildSubscriptionPromptCard(ThemeData theme) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     return Card(
-      elevation: 2,
+      elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              theme.colorScheme.primary.withOpacity(0.08),
-              theme.colorScheme.secondary.withOpacity(0.06),
+              theme.colorScheme.primary.withValues(alpha: 0.08),
+              theme.colorScheme.secondary.withValues(alpha: 0.06),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -1478,7 +1489,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
               height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.14),
+                color: Colors.orange.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: isPhone ? 18 : 20),
@@ -1547,7 +1558,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                           children: [
                             CircleAvatar(
                               radius: isPhone ? 16 : 20,
-                              backgroundColor: theme.primaryColor.withOpacity(0.1),
+                              backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
                               child: Icon(
                                 item.icon,
                                 size: isPhone ? 16 : 20,
@@ -1570,7 +1581,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                         if (i != items.length - 1)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 10),
-                            child: Divider(height: 1, color: theme.colorScheme.outline.withOpacity(0.2)),
+                            child: Divider(height: 1, color: theme.colorScheme.outline.withValues(alpha: 0.2)),
                           ),
                       ],
                     );
@@ -1596,9 +1607,9 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+              border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1617,7 +1628,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
   Widget _buildTrendPill(String text, ThemeData theme, {required bool positive}) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final Color fg = positive ? Colors.green : Colors.red;
-    final Color bg = positive ? Colors.green.withOpacity(0.12) : Colors.red.withOpacity(0.12);
+    final Color bg = positive ? Colors.green.withValues(alpha: 0.12) : Colors.red.withValues(alpha: 0.12);
     final IconData arrow = positive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: isPhone ? 6 : 8, vertical: isPhone ? 2 : 4),
@@ -1648,9 +1659,9 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.3)),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1684,7 +1695,12 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 : 5.0; // desktop+
 
     return Card(
+      elevation: 0,
       margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           isPhone ? 8 : 12,
@@ -1718,13 +1734,13 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   onTap: () async {
                     try {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(duration: Duration(milliseconds: 800), content: Text('Opening Promote Listing...')));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(duration: Duration(milliseconds: 800), content: Text('Opening Boost Listing...')));
                       }
                       ref.read(immersiveRouteOpenProvider.notifier).state = true;
                       await context.push('/promote-listing');
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open Promote Listing: $e')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open Boost Listing: $e')));
                       }
                     } finally {
                       ref.read(immersiveRouteOpenProvider.notifier).state = false;
@@ -1761,34 +1777,16 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   },
                 ),
                 tile(
-                  color: Colors.indigo,
-                  icon: Icons.account_balance_outlined,
-                  label: 'Payouts',
-                  onTap: () {
-                    ref.read(immersiveRouteOpenProvider.notifier).state = true;
-                    context.push('/payouts').whenComplete(() {
-                      if (!mounted) return;
-                      ref.read(immersiveRouteOpenProvider.notifier).state = false;
-                    });
-                  },
-                ),
-                tile(
                   color: Colors.teal,
                   icon: Icons.download_outlined,
                   label: 'Withdraw',
                   onTap: () {
                     ref.read(immersiveRouteOpenProvider.notifier).state = true;
-                    context.push('/payouts/withdraw').whenComplete(() {
+                    context.push('/wallet/methods?tab=withdraw').whenComplete(() {
                       if (!mounted) return;
                       ref.read(immersiveRouteOpenProvider.notifier).state = false;
                     });
                   },
-                ),
-                tile(
-                  color: Colors.deepPurple,
-                  icon: Icons.campaign_outlined,
-                  label: 'Promote',
-                  onTap: () => context.push('/promote-listing'),
                 ),
               ],
             ),
@@ -1866,13 +1864,13 @@ Widget _buildStatsGrid(ThemeData theme, bool isDark) {
 Widget _buildStatCard(String title, String value, IconData icon, Color color, ThemeData theme, bool isDark) {
   final size = MediaQuery.sizeOf(context);
   final isPhone = size.width < 600;
-  final outline = theme.colorScheme.outline.withOpacity(isDark ? 0.75 : 0.55);
+  final outline = theme.colorScheme.outline.withValues(alpha: isDark ? 0.75 : 0.55);
   return Card(
     margin: EdgeInsets.zero,
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
-      side: BorderSide(color: outline, width: 2.0),
+      side: BorderSide(color: outline, width: 1.2),
     ),
     child: LayoutBuilder(
       builder: (ctx, cons) {
@@ -1894,9 +1892,9 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                 height: box,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: color.withOpacity(0.24), width: 1),
+                  border: Border.all(color: color.withValues(alpha: 0.24), width: 1),
                 ),
                 child: Icon(icon, color: color, size: iconSizeLocal),
               ),
@@ -1905,7 +1903,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                 title,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface.withOpacity(0.80),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.80),
                   height: 1.1,
                 ),
                 maxLines: 1,
@@ -1946,7 +1944,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
         children: [
           CircleAvatar(
             radius: isPhone ? 16 : 20,
-            backgroundColor: theme.primaryColor.withOpacity(0.1),
+            backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
             child: Text(
               booking['guestName'][0],
               style: TextStyle(fontSize: isPhone ? 12 : 14, fontWeight: FontWeight.bold),
@@ -1970,7 +1968,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                 Text(
                   '${booking['checkIn']} - ${booking['checkOut']}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                    color: (theme.textTheme.bodySmall?.color ?? theme.colorScheme.onSurface).withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -2103,7 +2101,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
     String? deltaText,
     bool? deltaPositive,
   }) {
-    final outline = theme.colorScheme.outline.withOpacity(theme.brightness == Brightness.dark ? 0.75 : 0.55);
+    final outline = theme.colorScheme.outline.withValues(alpha: theme.brightness == Brightness.dark ? 0.75 : 0.55);
     final isXSLocal = MediaQuery.sizeOf(context).width < 360;
     return Card(
       elevation: 0,
@@ -2135,9 +2133,9 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                   height: box,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: color.withOpacity(0.24), width: 1),
+                    border: Border.all(color: color.withValues(alpha: 0.24), width: 1),
                   ),
                   child: Icon(icon, color: color, size: iconSizeLocal),
                 ),
@@ -2146,7 +2144,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                   title,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface.withOpacity(0.80),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.80),
                     height: 1.2,
                   ),
                   maxLines: 1,
@@ -2154,25 +2152,26 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                   textAlign: TextAlign.center,
                   softWrap: false,
                 ),
-                if (showDelta) ...[
-                  SizedBox(height: isPhone ? 2 : 4),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: isPhone ? 5 : 8, vertical: isPhone ? 1 : 2),
-                    decoration: BoxDecoration(
-                      color: (deltaPositive ? Colors.green : Colors.red).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: (deltaPositive ? Colors.green : Colors.red).withOpacity(0.3)),
-                    ),
+                if (showDelta)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(deltaPositive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: isPhone ? 9 : 12, color: deltaPositive ? Colors.green : Colors.red),
-                        const SizedBox(width: 3),
-                        Text(deltaText, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: deltaPositive ? Colors.green : Colors.red, height: 1.0)),
+                        _buildMiniTrendIcon(deltaPositive),
+                        const SizedBox(width: 4),
+                        Text(
+                          deltaText,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: deltaPositive ? Colors.green : Colors.red,
+                            height: 1.0,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
                 SizedBox(height: preValueGap),
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -2278,7 +2277,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
     final primary = _earningsShowNet ? currentNet : currentGross;
     final secondary = _comparePrevious ? (_earningsShowNet ? prevNet : prevGross) : List<double>.filled(primary.length, 0.0);
     final labels = _seriesLabels;
-    final outline = theme.colorScheme.outline.withOpacity(theme.brightness == Brightness.dark ? 0.75 : 0.55);
+    final outline = theme.colorScheme.outline.withValues(alpha: theme.brightness == Brightness.dark ? 0.75 : 0.55);
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: outline, width: 2.0)),
@@ -2390,7 +2389,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                   labels,
                   _earningsHoverIndex,
                   _earningsShowNet ? Colors.green : theme.colorScheme.primary,
-                  theme.colorScheme.onSurface.withOpacity(0.35),
+                  theme.colorScheme.onSurface.withValues(alpha: 0.35),
                   showSecondary: _comparePrevious,
                 ),
               ),
@@ -2399,7 +2398,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             Wrap(spacing: 12, runSpacing: 6, children: [
               _legendChip(color: _earningsShowNet ? Colors.green : theme.colorScheme.primary, label: 'Current ${_earningsShowNet ? '(Net)' : '(Gross)'}'),
               if (_comparePrevious)
-                _legendChip(color: theme.colorScheme.onSurface.withOpacity(0.35), label: 'Previous ${_earningsShowNet ? '(Net)' : '(Gross)'}'),
+                _legendChip(color: theme.colorScheme.onSurface.withValues(alpha: 0.35), label: 'Previous ${_earningsShowNet ? '(Net)' : '(Gross)'}'),
             ]),
           ],
         ),
@@ -2419,7 +2418,8 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           width: 28,
           height: 28,
           alignment: Alignment.center,
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+        // migrated above usages; leave this one if already updated elsewhere
           child: Icon(icon, color: color, size: 16),
         ),
         const SizedBox(width: 8),
@@ -2509,7 +2509,12 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     Widget cell(String title, String val, Color color, IconData icon) {
       return Card(
+        elevation: 0,
         margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+        ),
         child: Padding(
           padding: EdgeInsets.all(isPhone ? 12 : 16),
           child: Row(
@@ -2519,7 +2524,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: color, size: 16),
@@ -2548,6 +2553,10 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
         child: Column(
@@ -2736,8 +2745,8 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           drawVerticalLine: true,
           verticalInterval: 1,
           horizontalInterval: 0.5,
-          getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1, dashArray: [4, 4]),
-          getDrawingVerticalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.12), strokeWidth: 1),
+          getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.15), strokeWidth: 1, dashArray: [4, 4]),
+          getDrawingVerticalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.12), strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: isPhone ? 28 : 36, interval: 0.5, getTitlesWidget: (v, m) => Text('${v.toStringAsFixed(1)}k', style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[600])))),
@@ -2782,7 +2791,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             isCurved: true,
             barWidth: 3,
             color: lineColor,
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [lineColor.withOpacity(0.25), lineColor.withOpacity(0.05)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [lineColor.withValues(alpha: 0.25), lineColor.withValues(alpha: 0.05)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
             dotData: FlDotData(
               show: true,
               getDotPainter: (s, p, b, i) {
@@ -2814,14 +2823,14 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             if (avg > 0)
               HorizontalLine(
                 y: avg / 1000.0,
-                color: Colors.grey.withOpacity(0.35),
+                color: Colors.grey.withValues(alpha: 0.35),
                 strokeWidth: 1,
                 dashArray: [6, 4],
                 label: HorizontalLineLabel(
                   show: true,
                   alignment: Alignment.topLeft,
                   padding: const EdgeInsets.only(left: 4, bottom: 2),
-                  style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey.shade700.withValues(alpha: 0.7), fontWeight: FontWeight.w600),
                   labelResolver: (line) => 'Avg ${CurrencyFormatter.formatPrice(avg)}',
                 ),
               ),
@@ -2830,7 +2839,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             if (primary.isNotEmpty)
               VerticalLine(
                 x: minIdx.toDouble(),
-                color: Colors.redAccent.withOpacity(0.45),
+                color: Colors.redAccent.withValues(alpha: 0.45),
                 strokeWidth: 1,
                 dashArray: const [6, 6],
                 label: VerticalLineLabel(
@@ -2844,7 +2853,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             if (primary.isNotEmpty)
               VerticalLine(
                 x: maxIdx.toDouble(),
-                color: Colors.green.withOpacity(0.45),
+                color: Colors.green.withValues(alpha: 0.45),
                 strokeWidth: 1,
                 dashArray: const [6, 6],
                 label: VerticalLineLabel(
@@ -2858,7 +2867,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             if (hoverIndex != null && hoverIndex >= 0 && hoverIndex < labels.length)
               VerticalLine(
                 x: hoverIndex.toDouble(),
-                color: theme.colorScheme.primary.withOpacity(0.35),
+                color: theme.colorScheme.primary.withValues(alpha: 0.35),
                 strokeWidth: 1,
                 dashArray: const [2, 2],
                 label: VerticalLineLabel(
@@ -2975,13 +2984,13 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.1),
-                      theme.colorScheme.secondary.withOpacity(0.05),
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
+                      theme.colorScheme.secondary.withValues(alpha: 0.05),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(0.1),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Column(
@@ -2992,7 +3001,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.15),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -3036,10 +3045,10 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -3058,10 +3067,10 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.1),
+                                color: Colors.orange.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: Colors.orange.withOpacity(0.3),
+                                  color: Colors.orange.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -3258,7 +3267,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.15),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -3377,14 +3386,14 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+          border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(width: 16),
@@ -3415,17 +3424,17 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.primary.withOpacity(0.08),
-            theme.colorScheme.primary.withOpacity(0.03),
+            theme.colorScheme.primary.withValues(alpha: 0.08),
+            theme.colorScheme.primary.withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.2),
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -3437,7 +3446,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           Container(
             padding: EdgeInsets.all(isPhone ? 10 : (isDesktop ? 10 : 8)),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.15),
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -3501,17 +3510,17 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.orange.withOpacity(0.08),
-            Colors.orange.withOpacity(0.03),
+            Colors.orange.withValues(alpha: 0.08),
+            Colors.orange.withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.orange.withOpacity(0.2),
+          color: Colors.orange.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.08),
+            color: Colors.orange.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -3523,7 +3532,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           Container(
             padding: EdgeInsets.all(isPhone ? 10 : (isDesktop ? 10 : 8)),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.15),
+              color: Colors.orange.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -3552,7 +3561,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -3612,17 +3621,17 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.green.withOpacity(0.08),
-            Colors.green.withOpacity(0.03),
+            Colors.green.withValues(alpha: 0.08),
+            Colors.green.withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.green.withOpacity(0.2),
+          color: Colors.green.withValues(alpha: 0.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.08),
+            color: Colors.green.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -3634,7 +3643,7 @@ Widget _buildStatCard(String title, String value, IconData icon, Color color, Th
           Container(
             padding: EdgeInsets.all(isPhone ? 10 : (isDesktop ? 10 : 8)),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.15),
+              color: Colors.green.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(

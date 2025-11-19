@@ -140,7 +140,7 @@ class _RecurringPaymentSetupScreenState extends ConsumerState<RecurringPaymentSe
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -339,13 +339,13 @@ class _RecurringPaymentSetupScreenState extends ConsumerState<RecurringPaymentSe
                 if (tokensDiscount > 0) {
                   final ok = await ref.read(referralServiceProvider.notifier)
                       .redeemTokens(tokensDiscount, 'Monthly discount for ${widget.listingId}');
-                  if (ok && mounted) {
+                  if (ok && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Redeemed $tokensDiscount tokens')),
                     );
                   }
                 }
-                if (!mounted) return;
+                if (!context.mounted) return;
                 context.go(Routes.bookingHistory);
               },
               icon: const Icon(Icons.autorenew_rounded),

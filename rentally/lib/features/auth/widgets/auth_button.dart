@@ -38,7 +38,7 @@ class AuthButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.5),
+          disabledBackgroundColor: theme.colorScheme.primary.withValues(alpha: 0.5),
         ),
         child: isLoading
             ? SizedBox(
@@ -95,7 +95,7 @@ class AuthSecondaryButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.3),
+            color: theme.colorScheme.outline.withValues(alpha: 0.3),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

@@ -32,7 +32,7 @@ class SocialLoginButton extends StatelessWidget {
         border: Border.all(
           color: isDark 
               ? EnterpriseDarkTheme.primaryBorder
-              : theme.colorScheme.outline.withOpacity(0.3),
+              : theme.colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Material(
@@ -45,7 +45,7 @@ class SocialLoginButton extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: iconColor ?? theme.colorScheme.onSurface.withOpacity(0.8),
+                color: iconColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.8),
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -88,7 +88,7 @@ class SocialLoginSection extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 1,
-                color: theme.colorScheme.outline.withOpacity(0.3),
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
               ),
             ),
             Padding(
@@ -96,7 +96,7 @@ class SocialLoginSection extends StatelessWidget {
               child: Text(
                 'Or continue with',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -104,7 +104,7 @@ class SocialLoginSection extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 1,
-                color: theme.colorScheme.outline.withOpacity(0.3),
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
               ),
             ),
           ],

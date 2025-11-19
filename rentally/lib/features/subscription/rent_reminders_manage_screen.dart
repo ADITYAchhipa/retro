@@ -52,9 +52,9 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
     }
     return Container(
       decoration: BoxDecoration(
-        color: Colors.redAccent.withOpacity(0.08),
+        color: Colors.redAccent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
       ),
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -155,25 +155,6 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
     } catch (e) {
       if (!mounted) return;
       SnackBarUtils.showError(context, 'Failed to cancel termination: $e');
-    }
-  }
-
-  Future<void> _debugFireIn60s(RentReminder r) async {
-    final nowPlus = DateTime.now().add(const Duration(minutes: 1));
-    try {
-      await RentReminderService.reschedule(
-        listingId: r.listingId,
-        billingDay: nowPlus.day,
-        hour: nowPlus.hour,
-        minute: nowPlus.minute,
-      );
-      await _load();
-      if (!mounted) return;
-      final t = TimeOfDay.fromDateTime(nowPlus).format(context);
-      SnackBarUtils.showSuccess(context, 'Debug scheduled in ~60s (at $t)');
-    } catch (e) {
-      if (!mounted) return;
-      SnackBarUtils.showError(context, 'Failed to schedule debug: $e');
     }
   }
 
@@ -317,7 +298,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     
     return Scaffold(
-      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.background : Colors.grey.shade50,
+      backgroundColor: theme.brightness == Brightness.dark ? theme.colorScheme.surface : Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('Rent Reminders'),
         elevation: 0,
@@ -338,8 +319,8 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  theme.colorScheme.primary.withOpacity(0.1),
-                                  theme.colorScheme.secondary.withOpacity(0.05),
+                                  theme.colorScheme.primary.withValues(alpha: 0.1),
+                                  theme.colorScheme.secondary.withValues(alpha: 0.05),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(16),
@@ -347,7 +328,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                             child: Icon(
                               Icons.notifications_none,
                               size: 64,
-                              color: theme.colorScheme.primary.withOpacity(0.5),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -361,7 +342,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                           Text(
                             'Create a sample to test reminder system',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -376,7 +357,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -406,15 +387,15 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                theme.colorScheme.primary.withOpacity(0.1),
-                                theme.colorScheme.secondary.withOpacity(0.05),
+                                theme.colorScheme.primary.withValues(alpha: 0.1),
+                                theme.colorScheme.secondary.withValues(alpha: 0.05),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.2),
                               width: 1,
                             ),
                           ),
@@ -432,7 +413,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.colorScheme.primary.withOpacity(0.3),
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 3),
                                     ),
@@ -460,7 +441,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                     Text(
                                       '${_reminders.length} reminder${_reminders.length == 1 ? '' : 's'} configured',
                                       style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                       ),
                                     ),
                                   ],
@@ -492,12 +473,12 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryColor.withOpacity(0.15),
+                                  color: primaryColor.withValues(alpha: 0.15),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
                                 BoxShadow(
-                                  color: secondaryColor.withOpacity(0.1),
+                                  color: secondaryColor.withValues(alpha: 0.1),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
                                 ),
@@ -533,7 +514,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                           borderRadius: BorderRadius.circular(12),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: primaryColor.withOpacity(0.3),
+                                              color: primaryColor.withValues(alpha: 0.3),
                                               blurRadius: 8,
                                               offset: const Offset(0, 3),
                                             ),
@@ -557,7 +538,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                               Text(
                                                 '${r.currency} ${r.monthlyAmount!.toStringAsFixed(2)}/month',
                                                 style: theme.textTheme.bodySmall?.copyWith(
-                                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -573,7 +554,7 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                           borderRadius: BorderRadius.circular(999),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: primaryColor.withOpacity(0.3),
+                                              color: primaryColor.withValues(alpha: 0.3),
                                               blurRadius: 6,
                                               offset: const Offset(0, 2),
                                             ),
@@ -606,10 +587,10 @@ class _RentRemindersManageScreenState extends ConsumerState<RentRemindersManageS
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: primaryColor.withOpacity(0.05),
+                                      color: primaryColor.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: primaryColor.withOpacity(0.1),
+                                        color: primaryColor.withValues(alpha: 0.1),
                                       ),
                                     ),
                                     child: Column(

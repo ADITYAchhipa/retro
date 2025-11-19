@@ -6,7 +6,6 @@ import '../../../app/auth_router.dart';
 import '../../../core/theme/enterprise_dark_theme.dart';
 import '../../../core/theme/enterprise_light_theme.dart';
 import '../../../core/providers/property_provider.dart';
-import '../../../core/database/models/property_model.dart';
 import '../../../core/widgets/loading_states.dart';
 import '../../../core/providers/vehicle_provider.dart';
 import '../../../core/widgets/listing_card.dart';
@@ -194,11 +193,11 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ).copyWith(
-                    overlayColor: MaterialStateProperty.resolveWith((states) {
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
                       final c = widget.isDark
                           ? EnterpriseDarkTheme.primaryAccent
                           : EnterpriseLightTheme.primaryAccent;
-                      return c.withOpacity(0.12);
+                      return c.withValues(alpha: 0.12);
                     }),
                   ),
                   child: Text(
@@ -312,7 +311,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                                     // Apply background shadow for the active visible card on phone
                                     boxShadow: isActive ? [
                                       BoxShadow(
-                                        color: widget.isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                                        color: widget.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                                         blurRadius: 10,
                                         offset: const Offset(-5, -5),
                                         spreadRadius: 0,
@@ -321,7 +320,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                                         color: (widget.isDark
                                                 ? EnterpriseDarkTheme.primaryAccent
                                                 : EnterpriseLightTheme.primaryAccent)
-                                            .withOpacity(widget.isDark ? 0.18 : 0.12),
+                                            .withValues(alpha: widget.isDark ? 0.18 : 0.12),
                                         blurRadius: 10,
                                         offset: const Offset(5, 5),
                                         spreadRadius: 0,
@@ -483,7 +482,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                       // Apply background shadow for the active visible card on phone
                       boxShadow: isActive ? [
                         BoxShadow(
-                          color: widget.isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                          color: widget.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                           blurRadius: 10,
                           offset: const Offset(-5, -5),
                           spreadRadius: 0,
@@ -492,7 +491,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                           color: (widget.isDark
                                   ? EnterpriseDarkTheme.primaryAccent
                                   : EnterpriseLightTheme.primaryAccent)
-                              .withOpacity(widget.isDark ? 0.18 : 0.12),
+                              .withValues(alpha: widget.isDark ? 0.18 : 0.12),
                           blurRadius: 10,
                           offset: const Offset(5, 5),
                           spreadRadius: 0,
@@ -559,7 +558,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
             color: isDark ? EnterpriseDarkTheme.cardBackground : EnterpriseLightTheme.cardBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.6) : Colors.grey.withOpacity(0.3),
+              color: isDark ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.6) : Colors.grey.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
@@ -646,11 +645,6 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
   // _pauseAutoScrollFor and _autoPageOnceFixed removed (auto-scroll disabled)
 
   // Helpers (restored)
-  String? _getPropertyImageUrl(PropertyModel p) {
-    if (p.images.isEmpty) return null;
-    final url = p.images.first;
-    return url.isEmpty ? null : url;
-  }
 
   double _getSectionHeight(double screenWidth) {
     // Compute dynamically from the ACTUAL page item width (viewportFraction),
@@ -702,28 +696,4 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
         + containerVerticalPadding;
   }
 
-  IconData _getPropertyIcon(PropertyType type) {
-    switch (type) {
-      case PropertyType.apartment:
-        return Icons.apartment;
-      case PropertyType.house:
-        return Icons.house;
-      case PropertyType.villa:
-        return Icons.villa;
-      case PropertyType.condo:
-        return Icons.business;
-      case PropertyType.studio:
-        return Icons.meeting_room;
-      case PropertyType.loft:
-        return Icons.stairs;
-      case PropertyType.cabin:
-        return Icons.cabin;
-      case PropertyType.cottage:
-        return Icons.cottage;
-      case PropertyType.penthouse:
-        return Icons.apartment;
-      case PropertyType.townhouse:
-        return Icons.home_work;
-    }
-  }
 }

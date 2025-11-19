@@ -121,7 +121,7 @@ class _BidirectionalReviewScreenState extends ConsumerState<BidirectionalReviewS
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -242,7 +242,7 @@ class _BidirectionalReviewScreenState extends ConsumerState<BidirectionalReviewS
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(

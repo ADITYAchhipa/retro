@@ -342,7 +342,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -398,7 +398,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                 Expanded(
                   child: LinearProgressIndicator(
                     value: (_stats!.ratingDistribution[rating] ?? 0) / _stats!.totalReviews,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       Theme.of(context).colorScheme.primary,
                     ),
@@ -460,7 +460,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, 2),
           ),
@@ -473,7 +473,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: ClipOval(
                   child: CachedNetworkImage(
                     imageUrl: review.userAvatar,
@@ -803,7 +803,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.08),
+                    color: Colors.amber.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -849,20 +849,20 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
                   decoration: InputDecoration(
                     hintText: 'Share your experience...',
                     hintStyle: TextStyle(
-                      color: isDark ? Colors.white.withOpacity(0.4) : Colors.grey[400],
+                      color: isDark ? Colors.white.withValues(alpha: 0.4) : Colors.grey[400],
                     ),
                     filled: true,
-                    fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -962,7 +962,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.flag_rounded, color: Colors.red, size: 28),
@@ -982,7 +982,7 @@ class _ModularReviewsScreenState extends ConsumerState<ModularReviewsScreen>
             Icon(
               Icons.report_problem_rounded,
               size: 60,
-              color: Colors.red.withOpacity(0.3),
+              color: Colors.red.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(

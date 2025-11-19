@@ -40,7 +40,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   List<BoxShadow> _homeStyleShadows(ThemeData theme, bool isDark) {
     return [
       BoxShadow(
-        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
         blurRadius: 10,
         offset: const Offset(-5, -5),
         spreadRadius: 0,
@@ -49,7 +49,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         color: (isDark
             ? EnterpriseDarkTheme.primaryAccent
             : EnterpriseLightTheme.primaryAccent)
-            .withOpacity(isDark ? 0.18 : 0.12),
+            .withValues(alpha: isDark ? 0.18 : 0.12),
         blurRadius: 10,
         offset: const Offset(5, 5),
         spreadRadius: 0,
@@ -68,7 +68,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     return TabBackHandler(
       tabController: _tabController,
       child: Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
       appBar: AppBar(
         title: Text(t.referralAndEarn),
         elevation: 0,
@@ -84,7 +84,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
           indicatorSize: TabBarIndicatorSize.tab,
           indicatorWeight: 3,
           splashBorderRadius: BorderRadius.circular(8),
-          overlayColor: MaterialStateProperty.all(theme.colorScheme.primary.withOpacity(0.1)),
+          overlayColor: WidgetStateProperty.all(theme.colorScheme.primary.withValues(alpha: 0.1)),
           tabs: [
             Tab(text: t.dashboard),
             Tab(text: t.rewards),
@@ -106,7 +106,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  Widget _buildDashboardTab(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
+  Widget _buildDashboardTab(ThemeData theme, dynamic t, UserReferralStats stats) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
@@ -146,7 +146,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  Widget _buildRewardsTab(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
+  Widget _buildRewardsTab(ThemeData theme, dynamic t, UserReferralStats stats) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isDark = theme.brightness == Brightness.dark;
     return SingleChildScrollView(
@@ -186,7 +186,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                 Text(
                   t.availableBalance,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -213,7 +213,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  Widget _buildHistoryTab(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
+  Widget _buildHistoryTab(ThemeData theme, dynamic t, UserReferralStats stats) {
     final transactions = stats.transactions;
 
     if (transactions.isEmpty) {
@@ -227,7 +227,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -270,14 +270,14 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   }
 
   // Hero Stats Card - Combined stats with gradient
-  Widget _buildHeroStatsCard(ThemeData theme, AppLocalizations t, UserReferralStats stats, bool isPhone, bool isDark) {
+  Widget _buildHeroStatsCard(ThemeData theme, dynamic t, UserReferralStats stats, bool isPhone, bool isDark) {
     return Container(
       padding: EdgeInsets.all(isPhone ? 20 : 28),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.primary,
-            theme.colorScheme.primary.withOpacity(0.8),
+            theme.colorScheme.primary.withValues(alpha: 0.8),
             theme.colorScheme.secondary,
           ],
           begin: Alignment.topLeft,
@@ -286,7 +286,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -299,7 +299,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -316,7 +316,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                     Text(
                       'Your Rewards',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: isPhone ? 14 : 16,
                         fontWeight: FontWeight.w500,
                       ),
@@ -325,7 +325,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                     Text(
                       'Earn tokens by referring friends',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontSize: isPhone ? 11 : 13,
                       ),
                     ),
@@ -349,7 +349,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               Container(
                 width: 1,
                 height: isPhone ? 60 : 70,
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
               ),
               Expanded(
                 child: _buildHeroStatItem(
@@ -379,7 +379,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         Container(
           padding: EdgeInsets.all(isPhone ? 10 : 12),
           decoration: BoxDecoration(
-            color: (iconColor ?? Colors.white).withOpacity(0.2),
+            color: (iconColor ?? Colors.white).withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -401,7 +401,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         Text(
           title,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: isPhone ? 12 : 14,
             fontWeight: FontWeight.w500,
           ),
@@ -410,7 +410,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  Widget _buildReferralCodeSection(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
+  Widget _buildReferralCodeSection(ThemeData theme, dynamic t, UserReferralStats stats) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isDark = theme.brightness == Brightness.dark;
     return Container(
@@ -418,7 +418,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       decoration: BoxDecoration(
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
         boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
@@ -429,7 +429,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -466,11 +466,11 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
             padding: EdgeInsets.all(isPhone ? 16 : 20),
             decoration: BoxDecoration(
               color: isDark 
-                  ? theme.colorScheme.surface.withOpacity(0.5)
-                  : theme.colorScheme.primaryContainer.withOpacity(0.3),
+                  ? theme.colorScheme.surface.withValues(alpha: 0.5)
+                  : theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.5),
+                color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
@@ -483,7 +483,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                       Text(
                         'CODE',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary.withOpacity(0.7),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.7),
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.bold,
                         ),
@@ -547,7 +547,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                       label: const Text('Copy Link'),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 16, vertical: isPhone ? 10 : 12),
-                        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
+                        side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
                       ),
                     ),
                   ),
@@ -558,7 +558,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                     label: const Text('QR'),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 16, vertical: isPhone ? 10 : 12),
-                      side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
+                      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
                     ),
                   ),
                 ],
@@ -570,7 +570,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
     );
   }
 
-  Widget _buildTransactionItem(ThemeData theme, AppLocalizations t, ReferralTransaction transaction, {bool isCompact = false}) {
+  Widget _buildTransactionItem(ThemeData theme, dynamic t, ReferralTransaction transaction, {bool isCompact = false}) {
     final isEarning = transaction.tokensEarned > 0;
     final isDark = theme.brightness == Brightness.dark;
     
@@ -580,7 +580,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       decoration: BoxDecoration(
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
         boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Row(
@@ -589,8 +589,8 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: isEarning 
-                ? Colors.green.withOpacity(0.1)
-                : Colors.red.withOpacity(0.1),
+                ? Colors.green.withValues(alpha: 0.1)
+                : Colors.red.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -617,7 +617,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                   Text(
                     _formatDate(transaction.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -652,7 +652,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   }
 
   // Compact quick actions
-  Widget _buildQuickActions(ThemeData theme, AppLocalizations t) {
+  Widget _buildQuickActions(ThemeData theme, dynamic t) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -742,7 +742,6 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       case ReferralLevel.silver:
         label = 'Silver'; color = Colors.blueGrey; boost = 0.10; levelIcon = Icons.shield_rounded; break;
       case ReferralLevel.bronze:
-      default:
         label = 'Bronze'; color = Colors.brown; boost = 0.0; levelIcon = Icons.badge_rounded; break;
     }
     int nextTarget;
@@ -765,17 +764,17 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.15),
-            color.withOpacity(0.05),
+            color.withValues(alpha: 0.15),
+            color.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -790,14 +789,14 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [color, color.withOpacity(0.7)],
+                    colors: [color, color.withValues(alpha: 0.7)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.4),
+                      color: color.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -823,9 +822,9 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.15),
+                            color: Colors.green.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             '+${(boost * 100).round()}% Boost',
@@ -879,7 +878,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 8,
-                    backgroundColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+                    backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation(color),
                   ),
                 ),
@@ -905,9 +904,9 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       child: Container(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -929,7 +928,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   }
 
   // Compact earnings chart
-  Widget _buildEarningsChart(ThemeData theme, AppLocalizations t) {
+  Widget _buildEarningsChart(ThemeData theme, dynamic t) {
     final earningsMap = ref.read(referralServiceProvider.notifier).getMonthlyEarnings();
     final entries = earningsMap.entries.toList()..sort((a, b) => b.key.compareTo(a.key));
     final last6 = entries.take(6).toList().reversed.toList();
@@ -943,7 +942,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       decoration: BoxDecoration(
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
         boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
@@ -977,7 +976,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                         Container(
                           height: isPhone ? 8 : 12,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
@@ -986,7 +985,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                           child: Container(
                             height: isPhone ? 8 : 12,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: [theme.colorScheme.primary.withOpacity(0.9), theme.colorScheme.secondary.withOpacity(0.9)]),
+                              gradient: LinearGradient(colors: [theme.colorScheme.primary.withValues(alpha: 0.9), theme.colorScheme.secondary.withValues(alpha: 0.9)]),
                               borderRadius: BorderRadius.circular(999),
                             ),
                           ),
@@ -1018,7 +1017,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       decoration: BoxDecoration(
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
         boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
@@ -1090,7 +1089,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
           height: 32,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color, color.withOpacity(0.7)],
+              colors: [color, color.withValues(alpha: 0.7)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -1111,7 +1110,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -1143,7 +1142,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   }
 
   // Recent activity
-  Widget _buildRecentActivity(ThemeData theme, AppLocalizations t, UserReferralStats stats) {
+  Widget _buildRecentActivity(ThemeData theme, dynamic t, UserReferralStats stats) {
     final recentTransactions = stats.transactions.take(3).toList();
     if (recentTransactions.isEmpty) return const SizedBox.shrink();
 
@@ -1162,7 +1161,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   }
 
   // Rewards list
-  List<Widget> _buildRewardItems(ThemeData theme, AppLocalizations t) {
+  List<Widget> _buildRewardItems(ThemeData theme, dynamic t) {
     final rewardItems = [
       {'type': ReferralRewardType.signup, 'title': t.userSignup, 'tokens': 50},
       {'type': ReferralRewardType.firstBooking, 'title': t.firstBooking, 'tokens': 100},
@@ -1180,14 +1179,14 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               decoration: BoxDecoration(
                 color: isDark ? theme.colorScheme.surface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+                border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: EdgeInsets.all(isPhone ? 6 : 8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(_getRewardIcon(item['type'] as ReferralRewardType), color: theme.colorScheme.primary),
@@ -1198,7 +1197,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                   ),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: isPhone ? 10 : 12, vertical: isPhone ? 4 : 6),
-                    decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                    decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
                     child: Text(
                       '+${item['tokens']} tokens',
                       style: (isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium)?.copyWith(
@@ -1214,7 +1213,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
   }
 
   // Token Usage Guide - Modern design with gradient cards
-  Widget _buildTokenUsageGuide(ThemeData theme, AppLocalizations t) {
+  Widget _buildTokenUsageGuide(ThemeData theme, dynamic t) {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isDark = theme.brightness == Brightness.dark;
     
@@ -1224,7 +1223,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
           width: 1,
         ),
         boxShadow: _homeStyleShadows(theme, isDark),
@@ -1239,7 +1238,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary,
-                  theme.colorScheme.primary.withOpacity(0.7),
+                  theme.colorScheme.primary.withValues(alpha: 0.7),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1251,7 +1250,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -1277,7 +1276,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                       Text(
                         'Get instant discounts on bookings',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 12,
                         ),
                       ),
@@ -1327,15 +1326,15 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.amber.withOpacity(isDark ? 0.15 : 0.1),
-                  Colors.orange.withOpacity(isDark ? 0.1 : 0.05),
+                  Colors.amber.withValues(alpha: isDark ? 0.15 : 0.1),
+                  Colors.orange.withValues(alpha: isDark ? 0.1 : 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.amber.withOpacity(0.3),
+                color: Colors.amber.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -1344,7 +1343,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withOpacity(0.2),
+                    color: Colors.amber.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -1386,15 +1385,15 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            accentColor.withOpacity(isDark ? 0.15 : 0.08),
-            accentColor.withOpacity(isDark ? 0.08 : 0.03),
+            accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+            accentColor.withValues(alpha: isDark ? 0.08 : 0.03),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: accentColor.withOpacity(0.3),
+          color: accentColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -1404,14 +1403,14 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [accentColor, accentColor.withOpacity(0.7)],
+                colors: [accentColor, accentColor.withValues(alpha: 0.7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.3),
+                  color: accentColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1445,7 +1444,7 @@ class _ReferralDashboardScreenState extends ConsumerState<ReferralDashboardScree
           Icon(
             Icons.arrow_forward_ios_rounded,
             size: 16,
-            color: accentColor.withOpacity(0.5),
+            color: accentColor.withValues(alpha: 0.5),
           ),
         ],
       ),

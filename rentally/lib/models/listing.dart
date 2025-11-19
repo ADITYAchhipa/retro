@@ -57,9 +57,7 @@ class Listing {
       rentalUnit: json['rentalUnit'] ?? json['unit'],
       isAvailable: json['isAvailable'] ?? true,
       requireSeekerId: json['requireSeekerId'] ?? false,
-      discountPercent: (json['discountPercent'] ?? json['discount']) == null
-          ? null
-          : (json['discountPercent'] ?? json['discount']).toDouble(),
+      discountPercent: ((json['discountPercent'] ?? json['discount']) as num?)?.toDouble(),
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : DateTime.now(),

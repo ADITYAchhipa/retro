@@ -82,7 +82,7 @@ class CommercialDetailsForm extends StatelessWidget {
       );
     }
 
-    if (propertyType == 'office') {
+    if (propertyType == 'office' || propertyType == 'coworking') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -106,7 +106,7 @@ class CommercialDetailsForm extends StatelessWidget {
       );
     }
 
-    if (propertyType == 'shop') {
+    if (propertyType == 'shop' || propertyType == 'showroom') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -119,7 +119,7 @@ class CommercialDetailsForm extends StatelessWidget {
           ]),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: shopFootfall,
+            initialValue: shopFootfall,
             decoration: InputDecoration(
               labelText: 'Footfall',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -141,7 +141,7 @@ class CommercialDetailsForm extends StatelessWidget {
       );
     }
 
-    if (propertyType == 'warehouse') {
+    if (propertyType == 'warehouse' || propertyType == 'industrial') {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

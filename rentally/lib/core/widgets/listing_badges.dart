@@ -67,48 +67,48 @@ class ListingBadge extends StatelessWidget {
         return _BadgeConfig(
           label: 'Verified',
           icon: Icons.verified,
-          backgroundColor: const Color(0xFF20C997).withOpacity(0.1),
+          backgroundColor: const Color(0xFF20C997).withValues(alpha: 0.1),
           textColor: const Color(0xFF20C997),
-          borderColor: const Color(0xFF20C997).withOpacity(0.3),
+          borderColor: const Color(0xFF20C997).withValues(alpha: 0.3),
         );
       case ListingBadgeType.instantBook:
         return _BadgeConfig(
           label: 'Instant Book',
           icon: Icons.flash_on,
-          backgroundColor: const Color(0xFF6F42C1).withOpacity(0.1),
+          backgroundColor: const Color(0xFF6F42C1).withValues(alpha: 0.1),
           textColor: const Color(0xFF6F42C1),
-          borderColor: const Color(0xFF6F42C1).withOpacity(0.3),
+          borderColor: const Color(0xFF6F42C1).withValues(alpha: 0.3),
         );
       case ListingBadgeType.superhost:
         return _BadgeConfig(
           label: 'Superhost',
           icon: Icons.star,
-          backgroundColor: const Color(0xFFFFB800).withOpacity(0.1),
+          backgroundColor: const Color(0xFFFFB800).withValues(alpha: 0.1),
           textColor: const Color(0xFFFFB800),
-          borderColor: const Color(0xFFFFB800).withOpacity(0.3),
+          borderColor: const Color(0xFFFFB800).withValues(alpha: 0.3),
         );
       case ListingBadgeType.newListing:
         return _BadgeConfig(
           label: 'New',
-          backgroundColor: isDark ? Colors.blue.withOpacity(0.15) : Colors.blue.withOpacity(0.1),
+          backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.15) : Colors.blue.withValues(alpha: 0.1),
           textColor: Colors.blue,
-          borderColor: Colors.blue.withOpacity(0.3),
+          borderColor: Colors.blue.withValues(alpha: 0.3),
         );
       case ListingBadgeType.topRated:
         return _BadgeConfig(
           label: 'Top Rated',
           icon: Icons.trending_up,
-          backgroundColor: const Color(0xFFE91E63).withOpacity(0.1),
+          backgroundColor: const Color(0xFFE91E63).withValues(alpha: 0.1),
           textColor: const Color(0xFFE91E63),
-          borderColor: const Color(0xFFE91E63).withOpacity(0.3),
+          borderColor: const Color(0xFFE91E63).withValues(alpha: 0.3),
         );
       case ListingBadgeType.featured:
         return _BadgeConfig(
           label: 'Featured',
           icon: Icons.star_border,
-          backgroundColor: isDark ? Colors.orange.withOpacity(0.15) : Colors.orange.withOpacity(0.1),
+          backgroundColor: isDark ? Colors.orange.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.1),
           textColor: Colors.orange,
-          borderColor: Colors.orange.withOpacity(0.3),
+          borderColor: Colors.orange.withValues(alpha: 0.3),
         );
     }
   }

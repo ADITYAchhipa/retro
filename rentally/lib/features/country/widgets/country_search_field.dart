@@ -35,7 +35,7 @@ class CountrySearchField extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             EnterpriseDarkTheme.cardBackground,
-            EnterpriseDarkTheme.cardBackground.withOpacity(0.8),
+            EnterpriseDarkTheme.cardBackground.withValues(alpha: 0.8),
           ],
         ) : null,
         color: isDark ? null : Colors.white,
@@ -43,19 +43,19 @@ class CountrySearchField extends StatelessWidget {
         border: Border.all(
           color: isDark 
               ? EnterpriseDarkTheme.primaryBorder
-              : EnterpriseLightTheme.primaryAccent.withOpacity(0.3),
+              : EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark 
-                ? EnterpriseDarkTheme.primaryShadow.withOpacity(0.35)
-                : EnterpriseLightTheme.primaryAccent.withOpacity(0.05),
+                ? EnterpriseDarkTheme.primaryShadow.withValues(alpha: 0.35)
+                : EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.05),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
           if (isDark) BoxShadow(
-            color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.08),
+            color: EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.08),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -73,7 +73,7 @@ class CountrySearchField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search for your country...',
           hintStyle: TextStyle(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             fontSize: isDesktop 
                 ? AppConstants.fontSizeBodyDesktop 
                 : AppConstants.fontSizeBodyMobile,

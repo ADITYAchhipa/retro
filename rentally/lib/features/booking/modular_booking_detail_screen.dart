@@ -223,9 +223,9 @@ class _ModularBookingDetailScreenState extends ConsumerState<ModularBookingDetai
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -271,7 +271,7 @@ class _ModularBookingDetailScreenState extends ConsumerState<ModularBookingDetai
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -326,9 +326,9 @@ class _ModularBookingDetailScreenState extends ConsumerState<ModularBookingDetai
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.12),
+              color: Colors.orange.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -1108,10 +1108,10 @@ class _ModularBookingDetailScreenState extends ConsumerState<ModularBookingDetai
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: statusInfo['color'].withOpacity(0.1),
+        color: statusInfo['color'].withValues(alpha: 0.1),
         border: Border(
           bottom: BorderSide(
-            color: statusInfo['color'].withOpacity(0.3),
+            color: statusInfo['color'].withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -1138,7 +1138,7 @@ class _ModularBookingDetailScreenState extends ConsumerState<ModularBookingDetai
                 Text(
                   'Booking ID: ${widget.bookingId}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: statusInfo['color'].withOpacity(0.8),
+                    color: statusInfo['color'].withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -1383,7 +1383,7 @@ class _ModularBookingDetailScreenState extends ConsumerState<ModularBookingDetai
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

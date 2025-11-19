@@ -20,6 +20,10 @@ import '../../services/recently_viewed_service.dart';
 import '../../services/availability_service.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
+import '../../core/repositories/listing_repository.dart';
+import '../../core/database/models/property_model.dart';
+import '../../core/database/models/vehicle_model.dart';
+import '../../services/listing_service.dart' as owner_svc;
 
 /// Industrial-Grade Modular Listing Detail Screen
 /// 
@@ -91,6 +95,10 @@ class _ModularListingDetailScreenState
   Listing? _listing;
   String? _error;
   bool _descExpanded = false;
+  owner_svc.Listing? _ownerListing;
+  PropertyModel? _property;
+  VehicleModel? _vehicle;
+  final ListingRepository _listingRepo = ListingRepository();
   
   // Auto-hide header variables
   bool _isAppBarVisible = true;
@@ -126,8 +134,436 @@ class _ModularListingDetailScreenState
           return 'month';
       }
     }
+    // Fallback: treat category "vehicle" as hourly; others as daily
     final isVehicle = l.category.toLowerCase() == 'vehicle';
     return isVehicle ? 'hour' : 'day';
+  }
+
+  String _formatAmenityKey(String key) {
+    // Convert keys like 'pg_hot_water' -> 'PG hot water', 'rent_escalation_percent' -> 'Rent escalation percent'
+    if (key.isEmpty) return key;
+    final parts = key.split('_');
+    if (parts.isEmpty) return key;
+    final capitalized = parts.map((p) {
+      if (p.isEmpty) return p;
+      return p[0].toUpperCase() + p.substring(1);
+    }).toList();
+    return capitalized.join(' ');
+  }
+
+  String _formatAmenityValue(dynamic value) {
+    if (value == null) return '';
+    if (value is bool) return value ? 'Yes' : 'No';
+    if (value is String) return value.trim();
+    if (value is num) return value.toString();
+    if (value is List) {
+      return value.map((e) => e.toString()).where((e) => e.isNotEmpty).join(', ');
+    }
+    if (value is Map) {
+      return value.entries
+          .map((e) => '${_formatAmenityKey(e.key.toString())}: ${_formatAmenityValue(e.value)}')
+          .join(', ');
+    }
+    return value.toString();
+  }
+
+  String _sectionForAmenityKey(String key, String type) {
+    final lowerKey = key.toLowerCase();
+    final lowerType = type.toLowerCase();
+
+    if (lowerType == 'vehicle' || lowerKey.startsWith('vehicle_')) {
+      if (lowerKey.contains('fuel_policy') ||
+          lowerKey.contains('mileage_allowance') ||
+          lowerKey.contains('extra_per_km') ||
+          lowerKey.contains('driver_age') ||
+          lowerKey.contains('interstate')) {
+        return 'Vehicle rental terms';
+      }
+      return 'Vehicle specs';
+    }
+
+    if (lowerType.startsWith('venue_') ||
+        lowerKey.contains('venue') ||
+        lowerKey.contains('minimum_hours') ||
+        lowerKey.contains('curfew_time') ||
+        lowerKey.contains('event_type') ||
+        lowerKey.contains('service_charge') ||
+        lowerKey.contains('overtime_charge')) {
+      return 'Venue details';
+    }
+
+    if (lowerKey.startsWith('kitchen_')) {
+      return 'Kitchen & dining';
+    }
+    if (lowerKey.startsWith('bathroom_') ||
+        lowerKey.contains('geyser') ||
+        lowerKey.contains('exhaust')) {
+      return 'Bathroom';
+    }
+    if (lowerKey.startsWith('room_') || lowerKey.startsWith('pg_')) {
+      return 'Room / PG details';
+    }
+
+    if (lowerKey.contains('lease') ||
+        lowerKey.contains('lockin') ||
+        lowerKey.contains('notice_period') ||
+        lowerKey.contains('rent_escalation') ||
+        lowerKey.contains('security_deposit') ||
+        lowerKey.startsWith('monthly_') ||
+        lowerKey == 'rental_mode' ||
+        lowerKey == 'rental_unit') {
+      return 'Rent & lease terms';
+    }
+
+    if (lowerKey.contains('plot_area') ||
+        lowerKey.contains('carpet_area') ||
+        lowerKey == 'floor' ||
+        lowerKey == 'total_floors' ||
+        lowerKey.contains('building_age') ||
+        lowerKey.contains('parking_spaces') ||
+        lowerKey.contains('studio_size')) {
+      return 'Property & building';
+    }
+
+    if (lowerKey.contains('contact_') ||
+        lowerKey.contains('business_name') ||
+        lowerKey.contains('website') ||
+        lowerKey.contains('social_links') ||
+        lowerKey.contains('menu_link')) {
+      return 'Contact & business';
+    }
+
+    if (lowerKey.contains('cancellation') ||
+        lowerKey.contains('policy') ||
+        lowerKey.contains('rescheduling') ||
+        lowerKey.contains('restrictions') ||
+        lowerKey.contains('rules') ||
+        lowerKey.contains('visitors') ||
+        lowerKey.contains('smoking') ||
+        lowerKey.contains('drinking') ||
+        lowerKey.contains('pet_') ||
+        lowerKey.contains('gate_closing')) {
+      return 'Rules & policies';
+    }
+
+    if (lowerKey.contains('availability') ||
+        lowerKey.contains('available_from') ||
+        lowerKey.contains('max_occupancy') ||
+        lowerKey.contains('move_in')) {
+      return 'Availability';
+    }
+
+    if (lowerKey.contains('insurance')) {
+      return 'Insurance & protection';
+    }
+
+    if (lowerKey.contains('gst') ||
+        lowerKey.contains('maintenance') ||
+        lowerKey.contains('service_charge') ||
+        lowerKey.contains('overtime_charge')) {
+      return 'Financials';
+    }
+
+    return 'Other details';
+  }
+
+  Widget _buildDynamicDetailsSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Owner-created listing with rich amenities map
+    if (_ownerListing != null) {
+      return _buildOwnerDetailsSection(theme, isDark);
+    }
+
+    // Property details
+    if (_property != null) {
+      final p = _property!;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+        child: NeoGlass(
+          padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(18),
+          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+          borderColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[200]!,
+          borderWidth: 1,
+          blur: isDark ? 10 : 0,
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+              blurRadius: 8,
+              offset: const Offset(-4, -4),
+            ),
+            BoxShadow(
+              color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                  .withValues(alpha: isDark ? 0.1 : 0.05),
+              blurRadius: 8,
+              offset: const Offset(4, 4),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.home_work_outlined,
+                        color: theme.colorScheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Property details',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _detailChip(theme, Icons.apartment, p.type.displayName),
+                  _detailChip(theme, Icons.bed, '${p.bedrooms} bedrooms'),
+                  _detailChip(theme, Icons.bathtub, '${p.bathrooms} bathrooms'),
+                  if (p.maxGuests > 0)
+                    _detailChip(theme, Icons.people_outline, 'Up to ${p.maxGuests} guests'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Vehicle details
+    if (_vehicle != null) {
+      final v = _vehicle!;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+        child: NeoGlass(
+          padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(18),
+          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+          borderColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[200]!,
+          borderWidth: 1,
+          blur: isDark ? 10 : 0,
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+              blurRadius: 8,
+              offset: const Offset(-4, -4),
+            ),
+            BoxShadow(
+              color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                  .withValues(alpha: isDark ? 0.1 : 0.05),
+              blurRadius: 8,
+              offset: const Offset(4, 4),
+            ),
+          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.directions_car,
+                        color: theme.colorScheme.primary, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Vehicle details',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _detailChip(theme, Icons.category, v.category),
+                  _detailChip(theme, Icons.event_seat, '${v.seats} seats'),
+                  _detailChip(theme, Icons.settings,
+                      v.transmission.isNotEmpty ? v.transmission : 'Transmission'),
+                  _detailChip(
+                    theme,
+                    v.fuel.toLowerCase() == 'electric'
+                        ? Icons.electric_bolt
+                        : Icons.local_gas_station,
+                    v.fuel,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildOwnerDetailsSection(ThemeData theme, bool isDark) {
+    final o = _ownerListing;
+    if (o == null) return const SizedBox.shrink();
+
+    final typeLower = o.type.toLowerCase();
+    String categoryLabel;
+    IconData leadingIcon;
+    if (typeLower == 'vehicle') {
+      categoryLabel = 'Vehicle listing';
+      leadingIcon = Icons.directions_car;
+    } else if (typeLower.startsWith('venue_')) {
+      categoryLabel = 'Venue listing';
+      leadingIcon = Icons.apartment;
+    } else if ({'office', 'retail', 'showroom', 'warehouse', 'shop'}
+        .contains(typeLower)) {
+      categoryLabel = 'Commercial property';
+      leadingIcon = Icons.business_rounded;
+    } else {
+      categoryLabel = 'Residential property';
+      leadingIcon = Icons.home_rounded;
+    }
+
+    final amenities = o.amenities;
+    final Map<String, List<MapEntry<String, String>>> sections = {};
+
+    void addToSection(String section, String key, dynamic value) {
+      final valueStr = _formatAmenityValue(value);
+      if (valueStr.isEmpty) return;
+      final label = _formatAmenityKey(key);
+      sections.putIfAbsent(section, () => []).add(MapEntry(label, valueStr));
+    }
+
+    amenities.forEach((key, value) {
+      if (value == null) return;
+      final section = _sectionForAmenityKey(key, o.type);
+      addToSection(section, key, value);
+    });
+
+    final List<Widget> sectionWidgets = [];
+    sections.forEach((title, entries) {
+      sectionWidgets.add(const SizedBox(height: 12));
+      sectionWidgets.add(Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: theme.colorScheme.primary,
+        ),
+      ));
+      sectionWidgets.add(const SizedBox(height: 6));
+      sectionWidgets.add(Column(
+        children: entries
+            .map((e) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 6,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : Colors.grey[800],
+                            ),
+                            children: [
+                              TextSpan(
+                                text: '${e.key}: ',
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              TextSpan(text: e.value),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ))
+            .toList(),
+      ));
+    });
+
+    if (sectionWidgets.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+      child: NeoGlass(
+        padding: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(18),
+        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+        borderColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[200]!,
+        borderWidth: 1,
+        blur: isDark ? 10 : 0,
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
+            blurRadius: 8,
+            offset: const Offset(-4, -4),
+          ),
+          BoxShadow(
+            color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
+                .withValues(alpha: isDark ? 0.1 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(4, 4),
+          ),
+        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(leadingIcon,
+                      color: theme.colorScheme.primary, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    categoryLabel,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            ...sectionWidgets,
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildAvailabilitySection() {
@@ -313,14 +749,99 @@ class _ModularListingDetailScreenState
         _isLoading = true;
         _error = null;
       });
+      // Try loading owner-created listing first (from local listing service)
+      owner_svc.Listing? ownerListing;
+      try {
+        final ownerState = ref.read(owner_svc.listingProvider);
+        final allOwner = [...ownerState.userListings, ...ownerState.listings];
+        ownerListing = allOwner.firstWhere((l) => l.id == widget.listingId);
+      } catch (_) {
+        ownerListing = null;
+      }
 
-      // Simulate API call with comprehensive mock data
-      await Future.delayed(const Duration(milliseconds: 1500));
-      
+      if (ownerListing != null) {
+        final listing = _buildListingFromOwner(ownerListing);
+        setState(() {
+          _ownerListing = ownerListing;
+          _property = null;
+          _vehicle = null;
+          _listing = listing;
+          _isLoading = false;
+        });
+
+        // Merge availability from service into local unavailable dates
+        try {
+          final avail = ref.read(availabilityProvider);
+          final a = avail.byListingId[_listing!.id];
+          if (a != null) {
+            final parsed = a.blockedDays.map((s) {
+              final parts = s.split('-');
+              return DateTime(
+                int.parse(parts[0]),
+                int.parse(parts[1]),
+                int.parse(parts[2]),
+              );
+            }).toSet();
+            setState(() {
+              _unavailableDates = parsed;
+            });
+          }
+        } catch (_) {}
+
+        // Record as recently viewed (fire and forget)
+        try {
+          final l = _listing!;
+          await RecentlyViewedService.addFromFields(
+            id: l.id,
+            title: l.title,
+            location: l.location,
+            price: l.price,
+            imageUrl: l.images.isNotEmpty ? l.images.first : null,
+          );
+        } catch (_) {}
+
+        return;
+      }
+
+      // Fetch properties and vehicles from repository
+      final properties = await _listingRepo.getProperties();
+      final vehicles = await _listingRepo.getVehicles();
+
+      PropertyModel? property;
+      VehicleModel? vehicle;
+
+      try {
+        property = properties.firstWhere((p) => p.id == widget.listingId);
+      } catch (_) {
+        property = null;
+      }
+
+      if (property == null) {
+        try {
+          vehicle = vehicles.firstWhere((v) => v.id == widget.listingId);
+        } catch (_) {
+          vehicle = null;
+        }
+      }
+
       if (!mounted) return;
 
+      if (property == null && vehicle == null) {
+        setState(() {
+          _error = 'Listing not found';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final listing = property != null
+          ? _buildListingFromProperty(property)
+          : _buildListingFromVehicle(vehicle!);
+
       setState(() {
-        _listing = _createMockListing();
+        _property = property;
+        _vehicle = vehicle;
+        _listing = listing;
         _isLoading = false;
       });
 
@@ -372,41 +893,137 @@ class _ModularListingDetailScreenState
     });
   }
 
-  Listing _createMockListing() {
-    return Listing(
-      id: widget.listingId,
-      title: 'Luxury Penthouse with City Views',
-      description: '''Experience the ultimate in luxury living with this stunning penthouse apartment. 
-    
-Features include:
-• Panoramic city views from floor-to-ceiling windows
-• Modern kitchen with premium appliances
-• Spacious living areas with designer furniture
-• Private rooftop terrace with outdoor seating
-• High-speed WiFi and smart home technology
-• 24/7 concierge and security services
-• Prime location in the heart of downtown
+  Listing _buildListingFromProperty(PropertyModel p) {
+    // Determine primary price and unit
+    double price;
+    String unit;
+    if (p.pricePerMonth != null && p.pricePerMonth! > 0) {
+      price = p.pricePerMonth!;
+      unit = 'month';
+    } else if (p.pricePerDay > 0) {
+      price = p.pricePerDay;
+      unit = 'day';
+    } else {
+      price = p.pricePerNight;
+      unit = 'night';
+    }
 
-Perfect for business travelers, couples, or small families looking for an unforgettable stay.''',
-      location: 'Manhattan, New York, NY',
-      price: 450.0,
-      images: [
-        'https://picsum.photos/800/600?random=20',
-        'https://picsum.photos/800/600?random=21',
-        'https://picsum.photos/800/600?random=22',
-        'https://picsum.photos/800/600?random=23',
-        'https://picsum.photos/800/600?random=24',
-      ],
-      rating: 4.9,
-      reviews: 247,
-      amenities: [
-        'WiFi', 'Kitchen', 'Parking', 'Pool', 'Gym', 'Air Conditioning',
-        'Heating', 'Washer', 'Dryer', 'TV', 'Balcony', 'Elevator'
-      ],
-      hostName: 'Alexandra Chen',
-      hostImage: 'https://picsum.photos/200/200?random=4',
+    final hostName = p.ownerName.isNotEmpty ? p.ownerName : 'Host';
+    final hostImage = p.ownerAvatar.isNotEmpty
+        ? p.ownerAvatar
+        : (p.images.isNotEmpty ? p.images.first : '');
+
+    return Listing(
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      location: p.location.isNotEmpty ? p.location : p.address,
+      price: price,
+      images: p.images,
+      rating: p.rating,
+      reviews: p.reviewCount,
+      amenities: p.amenities,
+      hostName: hostName,
+      hostImage: hostImage,
+      category: 'Property',
+      rentalUnit: unit,
+      isAvailable: p.isAvailable,
+      requireSeekerId: false,
+      discountPercent: p.discountPercent,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
     );
   }
+
+  Listing _buildListingFromVehicle(VehicleModel v) {
+    double price;
+    String unit;
+    if (v.pricePerHour != null && v.pricePerHour! > 0) {
+      price = v.pricePerHour!;
+      unit = 'hour';
+    } else {
+      price = v.pricePerDay;
+      unit = 'day';
+    }
+
+    final hostImage = v.images.isNotEmpty ? v.images.first : '';
+
+    return Listing(
+      id: v.id,
+      title: v.title,
+      description:
+          '${v.category} • ${v.seats} seats • ${v.transmission}, ${v.fuel}',
+      location: v.location,
+      price: price,
+      images: v.images,
+      rating: v.rating,
+      reviews: v.reviewCount,
+      amenities: <String>[
+        '${v.seats} seats',
+        v.transmission,
+        v.fuel,
+      ],
+      hostName: 'Host',
+      hostImage: hostImage,
+      category: 'Vehicle',
+      rentalUnit: unit,
+      isAvailable: true,
+      requireSeekerId: false,
+      discountPercent: v.discountPercent,
+    );
+  }
+
+  Listing _buildListingFromOwner(owner_svc.Listing o) {
+    final locationParts = <String>[];
+    if (o.address.isNotEmpty) locationParts.add(o.address);
+    if (o.city.isNotEmpty) locationParts.add(o.city);
+    if (o.state.isNotEmpty) locationParts.add(o.state);
+    final location = locationParts.isNotEmpty ? locationParts.join(', ') : o.address;
+
+    final images = o.images;
+    const hostName = 'Owner';
+    final hostImage = images.isNotEmpty ? images.first : '';
+
+    String category;
+    if (o.type == 'Vehicle') {
+      category = 'Vehicle';
+    } else if (o.type.startsWith('venue_')) {
+      category = 'Venue';
+    } else {
+      category = 'Property';
+    }
+
+    final amenitiesList = <String>[];
+    o.amenities.forEach((key, value) {
+      if (value == true) {
+        final label = _formatAmenityKey(key);
+        amenitiesList.add(label);
+      }
+    });
+
+    return Listing(
+      id: o.id,
+      title: o.title,
+      description: o.description,
+      location: location,
+      price: o.price,
+      images: images,
+      rating: o.rating ?? 0.0,
+      reviews: o.reviewCount,
+      amenities: amenitiesList,
+      hostName: hostName,
+      hostImage: hostImage,
+      category: category,
+      rentalUnit: o.rentalUnit,
+      isAvailable: o.isActive,
+      requireSeekerId: o.requireSeekerId,
+      discountPercent: o.discountPercent,
+      createdAt: o.createdAt,
+      updatedAt: o.updatedAt,
+    );
+  }
+
+  // _createMockListing removed (no longer used after wiring to real data sources)
 
   @override
   Widget build(BuildContext context) {
@@ -531,6 +1148,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                     children: [
                       _buildListingHeader(),
                       _buildHighlightsSection(),
+                      _buildDynamicDetailsSection(),
                       _buildBookingUrgencySection(),
                       _buildDescriptionSection(),
                       _buildAmenitiesSection(),
@@ -758,7 +1376,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                       decoration: BoxDecoration(
                         color: index == _currentImageIndex 
                             ? Colors.white 
-                            : Colors.white.withOpacity(0.4),
+                            : Colors.white.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     );
@@ -851,7 +1469,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.4)),
+                            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4)),
                           ),
                           child: Text(
                             _listing!.category,
@@ -866,7 +1484,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.4)),
+                            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.4)),
                           ),
                           child: Text(
                             'Rent',
@@ -914,9 +1532,9 @@ Perfect for business travelers, couples, or small families looking for an unforg
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE11D48).withOpacity(0.12),
+                              color: const Color(0xFFE11D48).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFE11D48).withOpacity(0.35)),
+                              border: Border.all(color: const Color(0xFFE11D48).withValues(alpha: 0.35)),
                             ),
                             child: Text(
                               '-${pct.round()}%',
@@ -988,7 +1606,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: [
@@ -1021,7 +1639,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
@@ -1041,7 +1659,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
             elevation: 1,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+              side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(22.0),
@@ -1118,7 +1736,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1185,7 +1803,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -1260,26 +1878,35 @@ Perfect for business travelers, couples, or small families looking for an unforg
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.25)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: theme.colorScheme.primary),
           const SizedBox(width: 6),
-          Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _detailChip(ThemeData theme, IconData icon, String label) {
+    return _chip(theme, icon, label);
   }
 
   Widget _enhancedChip(ThemeData theme, IconData icon, String label, Color accentColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.1),
+        color: accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accentColor.withOpacity(0.3)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1345,9 +1972,9 @@ Perfect for business travelers, couples, or small families looking for an unforg
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: theme.colorScheme.errorContainer.withOpacity(0.1),
+          color: theme.colorScheme.errorContainer.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.colorScheme.error.withOpacity(0.2)),
+          border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -1386,19 +2013,19 @@ Perfect for business travelers, couples, or small families looking for an unforg
       child: NeoGlass(
         padding: const EdgeInsets.all(20),
         borderRadius: BorderRadius.circular(20),
-        backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!,
         borderWidth: 1,
         blur: isDark ? 12 : 0,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
             blurRadius: 10,
             offset: const Offset(-5, -5),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.12 : 0.06),
+                .withValues(alpha: isDark ? 0.12 : 0.06),
             blurRadius: 10,
             offset: const Offset(5, 5),
           ),
@@ -1411,7 +2038,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.article_outlined, color: theme.colorScheme.primary, size: 20),
@@ -1436,7 +2063,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                 overflow: _descExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.6,
-                  color: isDark ? Colors.white.withOpacity(0.9) : Colors.grey[800],
+                  color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.grey[800],
                 ),
               ),
             ),
@@ -1484,19 +2111,19 @@ Perfect for business travelers, couples, or small families looking for an unforg
       child: NeoGlass(
         padding: const EdgeInsets.all(20),
         borderRadius: BorderRadius.circular(20),
-        backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!,
         borderWidth: 1,
         blur: isDark ? 12 : 0,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
             blurRadius: 10,
             offset: const Offset(-5, -5),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.12 : 0.06),
+                .withValues(alpha: isDark ? 0.12 : 0.06),
             blurRadius: 10,
             offset: const Offset(5, 5),
           ),
@@ -1509,7 +2136,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.star_border_rounded, color: theme.colorScheme.primary, size: 20),
@@ -1565,10 +2192,10 @@ Perfect for business travelers, couples, or small families looking for an unforg
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey[50],
+                        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey[50],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey[300]!,
+                          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[300]!,
                           width: 1,
                         ),
                       ),
@@ -1725,7 +2352,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.35), width: 1),
+          border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.35), width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1766,19 +2393,19 @@ Perfect for business travelers, couples, or small families looking for an unforg
       child: NeoGlass(
         padding: const EdgeInsets.all(20),
         borderRadius: BorderRadius.circular(20),
-        backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]!,
+        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]!,
         borderWidth: 1,
         blur: isDark ? 12 : 0,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.04) : Colors.white,
+            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
             blurRadius: 10,
             offset: const Offset(-5, -5),
           ),
           BoxShadow(
             color: (isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary)
-                .withOpacity(isDark ? 0.12 : 0.06),
+                .withValues(alpha: isDark ? 0.12 : 0.06),
             blurRadius: 10,
             offset: const Offset(5, 5),
           ),
@@ -1791,7 +2418,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 20),
@@ -1814,7 +2441,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: const EdgeInsets.only(left: 0, bottom: 12, top: 8),
                   iconColor: theme.colorScheme.primary,
-                  collapsedIconColor: theme.colorScheme.onSurface.withOpacity(0.6),
+                  collapsedIconColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               child: Column(
@@ -1823,7 +2450,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.08),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.home_outlined, size: 18, color: theme.colorScheme.primary),
@@ -1853,7 +2480,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.08),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.policy_outlined, size: 18, color: theme.colorScheme.primary),
@@ -1869,7 +2496,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                           'Free cancellation for 48 hours. Cancel before check-in on your arrival date for a partial refund.',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             height: 1.5,
-                            color: isDark ? Colors.white.withOpacity(0.85) : Colors.grey[700],
+                            color: isDark ? Colors.white.withValues(alpha: 0.85) : Colors.grey[700],
                           ),
                         ),
                       ),
@@ -1908,7 +2535,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
-                color: isDark ? Colors.white.withOpacity(0.85) : Colors.grey[700],
+                color: isDark ? Colors.white.withValues(alpha: 0.85) : Colors.grey[700],
               ),
             ),
           ),
@@ -1956,7 +2583,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
@@ -2050,7 +2677,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -2239,7 +2866,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.1),
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -2255,7 +2882,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.3) : Colors.grey[300],
+                  color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -2647,7 +3274,7 @@ Perfect for business travelers, couples, or small families looking for an unforg
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _priceRow('$unitLabel (${unitsCount} ×)', originalUnitTotal),
+                  _priceRow('$unitLabel ($unitsCount ×)', originalUnitTotal),
                   if (pct > 0)
                     _priceRow('Discount (${pct.round()}%)', -discountAmount),
                 ],

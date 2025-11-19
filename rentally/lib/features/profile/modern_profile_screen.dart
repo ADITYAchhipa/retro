@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
+import '../../app/app_state.dart';
+import '../../services/country_service.dart';
 
 class ModernProfileScreen extends ConsumerStatefulWidget {
   const ModernProfileScreen({super.key});
@@ -56,7 +58,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   List<BoxShadow> _homeStyleShadows(ThemeData theme, bool isDark) {
     return [
       BoxShadow(
-        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
         blurRadius: 10,
         offset: const Offset(-5, -5),
         spreadRadius: 0,
@@ -65,7 +67,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         color: (isDark
             ? EnterpriseDarkTheme.primaryAccent
             : EnterpriseLightTheme.primaryAccent)
-            .withOpacity(isDark ? 0.18 : 0.12),
+            .withValues(alpha: isDark ? 0.18 : 0.12),
         blurRadius: 10,
         offset: const Offset(5, 5),
         spreadRadius: 0,
@@ -123,7 +125,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -190,7 +192,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 18, color: theme.colorScheme.primary),
@@ -219,8 +221,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         ),
         borderRadius: BorderRadius.circular(16),
         blur: isDark ? 10 : 0,
-        backgroundColor: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
-        borderColor: (verified ? color : Colors.grey).withOpacity(isDark ? 0.28 : 0.35),
+        backgroundColor: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
+        borderColor: (verified ? color : Colors.grey).withValues(alpha: isDark ? 0.28 : 0.35),
         borderWidth: 1,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -267,7 +269,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
           color: isDark ? theme.colorScheme.surface : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
             width: 1,
           ),
           boxShadow: _homeStyleShadows(theme, isDark),
@@ -285,7 +287,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
+                        colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.1)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -318,7 +320,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                   ),
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                 ],
               ),
@@ -398,12 +400,12 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
             color: isDark ? theme.colorScheme.surface : Colors.white,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: achievementColor.withOpacity(0.1),
+                color: achievementColor.withValues(alpha: 0.1),
                 blurRadius: 40,
                 spreadRadius: 0,
                 offset: const Offset(0, 12),
@@ -418,8 +420,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      achievementColor.withOpacity(0.15),
-                      achievementColor.withOpacity(0.05),
+                      achievementColor.withValues(alpha: 0.15),
+                      achievementColor.withValues(alpha: 0.05),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -438,10 +440,10 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: achievementColor.withOpacity(0.15),
+                              color: achievementColor.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: achievementColor.withOpacity(0.3),
+                                color: achievementColor.withValues(alpha: 0.3),
                                 width: 3,
                               ),
                             ),
@@ -479,12 +481,12 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? theme.colorScheme.surface.withOpacity(0.5)
+                            ? theme.colorScheme.surface.withValues(alpha: 0.5)
                             : Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isDark
-                              ? Colors.white.withOpacity(0.1)
+                              ? Colors.white.withValues(alpha: 0.1)
                               : Colors.grey.shade200,
                         ),
                       ),
@@ -572,7 +574,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
         onPressed: _handleBack,
         style: IconButton.styleFrom(
-          backgroundColor: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
         ),
       ),
       actions: [
@@ -581,7 +583,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
           icon: const Icon(Icons.edit_outlined, size: 20),
           onPressed: _openEditSheet,
           style: IconButton.styleFrom(
-            backgroundColor: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
           ),
         ),
         const SizedBox(width: 8),
@@ -597,8 +599,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.8),
-                    theme.colorScheme.secondary.withOpacity(0.6),
+                    theme.colorScheme.primary.withValues(alpha: 0.8),
+                    theme.colorScheme.secondary.withValues(alpha: 0.6),
                   ],
                 ),
               ),
@@ -615,7 +617,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withValues(alpha: 0.4),
                   ],
                 ),
               ),
@@ -630,10 +632,10 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.white.withOpacity(0.10)
-                        : Colors.black.withOpacity(0.15),
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : Colors.black.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.7), width: 1),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -641,13 +643,13 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                       Icon(
                         Icons.edit_outlined,
                         size: 14,
-                        color: Colors.white.withOpacity(0.95),
+                        color: Colors.white.withValues(alpha: 0.95),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Cover',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.95),
+                          color: Colors.white.withValues(alpha: 0.95),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.3,
@@ -674,7 +676,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -685,7 +687,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                           backgroundColor: Colors.white,
                           child: CircleAvatar(
                             radius: isPhone ? 34 : 40,
-                            backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                             backgroundImage: avatar != null ? FileImage(File(avatar.path)) : null,
                             child: avatar == null
                                 ? Icon(
@@ -748,7 +750,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                                   fontWeight: FontWeight.bold,
                                   shadows: [
                                     Shadow(
-                                      color: Colors.black.withOpacity(0.3),
+                                      color: Colors.black.withValues(alpha: 0.3),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     ),
@@ -768,12 +770,12 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                         Text(
                           _emailCtrl.text,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             fontSize: isPhone ? 12 : 13,
                             fontWeight: FontWeight.w500,
                             shadows: [
                               Shadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: Colors.black.withValues(alpha: 0.3),
                                 blurRadius: 4,
                                 offset: const Offset(0, 1),
                               ),
@@ -815,7 +817,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 color: isDark ? theme.colorScheme.surface : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
                   width: 1,
                 ),
                 boxShadow: _homeStyleShadows(theme, isDark),
@@ -828,8 +830,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          color.withOpacity(0.2),
-                          color.withOpacity(0.1),
+                          color.withValues(alpha: 0.2),
+                          color.withValues(alpha: 0.1),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -904,7 +906,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
           width: 1,
         ),
         boxShadow: _homeStyleShadows(theme, isDark),
@@ -918,8 +920,48 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
           const SizedBox(height: 12),
           _infoRow(Icons.phone_outlined, _phoneCtrl.text),
           const SizedBox(height: 12),
+          _buildCountryRow(theme, isDark),
+          const SizedBox(height: 12),
           _infoRow(Icons.info_outline_rounded, _bioCtrl.text, maxLines: 3),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCountryRow(ThemeData theme, bool isDark) {
+    final selectedCountry = ref.watch(countryProvider);
+    final displayName = selectedCountry ?? 'Select country';
+    final flag = selectedCountry != null
+        ? CountryService.getFlagEmojiForCountry(selectedCountry)
+        : '🌍';
+    final isPhone = MediaQuery.of(context).size.width < 600;
+    return InkWell(
+      onTap: () => context.push('/country?next=/profile'),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: isPhone ? 4 : 6),
+        child: Row(
+          children: [
+            Text(
+              flag,
+              style: TextStyle(fontSize: isPhone ? 18 : 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: isPhone ? theme.textTheme.bodySmall : theme.textTheme.bodyMedium,
+              ),
+            ),
+            Icon(
+              Icons.edit_location_alt_outlined,
+              size: isPhone ? 18 : 20,
+              color: theme.colorScheme.primary,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -946,7 +988,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.12),
+                    color: (iconColor ?? theme.colorScheme.primary).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -967,7 +1009,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -981,7 +1023,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
           width: 1,
         ),
         boxShadow: _homeStyleShadows(theme, isDark),
@@ -1007,7 +1049,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
             height: 1,
             indent: isPhone ? 14 : 16,
             endIndent: isPhone ? 14 : 16,
-            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
           ),
           settingTile(
             icon: Icons.privacy_tip_outlined,
@@ -1056,7 +1098,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
                   blurRadius: 16,
                   offset: const Offset(0, -3),
                 ),
@@ -1077,7 +1119,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                         width: 48,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.3) : Colors.grey[300],
+                          color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -1089,7 +1131,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withOpacity(0.7)],
+                              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -1103,14 +1145,14 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                         IconButton(
                           onPressed: () => Navigator.pop(context),
                           style: IconButton.styleFrom(
-                            backgroundColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100],
+                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
                           ),
                           icon: const Icon(Icons.close_rounded),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Divider(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]),
+                    Divider(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
                     const SizedBox(height: 12),
                     Text(
                       'Basic information',
@@ -1183,7 +1225,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         hintText: 'Enter $label',
         labelStyle: theme.textTheme.bodySmall?.copyWith(
           fontSize: isPhone ? 12 : 13,
-          color: theme.colorScheme.onSurface.withOpacity(0.7),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
         ),
         hintStyle: theme.textTheme.bodySmall?.copyWith(
           fontSize: isPhone ? 12 : 13,
@@ -1191,11 +1233,11 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         ),
         prefixIcon: Icon(icon, size: 18, color: theme.colorScheme.primary),
         filled: true,
-        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade50,
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: isDark ? Colors.white.withOpacity(0.12) : Colors.grey.shade300),
+          borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

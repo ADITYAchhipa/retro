@@ -93,7 +93,7 @@ class ImagePickerWidget extends ConsumerWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.3),
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: ClipRRect(
@@ -105,7 +105,7 @@ class ImagePickerWidget extends ConsumerWidget {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: theme.colorScheme.surfaceVariant,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   child: const Center(
                     child: Icon(Icons.error, color: Colors.red),
                   ),
@@ -124,7 +124,7 @@ class ImagePickerWidget extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.8),
+                color: Colors.red.withValues(alpha: 0.8),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -233,7 +233,7 @@ class ProfileImagePicker extends ConsumerWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.3),
+            color: theme.colorScheme.outline.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
@@ -256,7 +256,7 @@ class ProfileImagePicker extends ConsumerWidget {
 
   Widget _buildPlaceholder(ThemeData theme) {
     return Container(
-      color: theme.colorScheme.surfaceVariant,
+      color: theme.colorScheme.surfaceContainerHighest,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

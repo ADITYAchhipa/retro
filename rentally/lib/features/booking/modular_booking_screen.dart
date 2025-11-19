@@ -279,12 +279,12 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(isDark ? 0.2 : 0.3),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: isDark ? 0.2 : 0.3),
         ),
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -300,7 +300,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
               gradient: LinearGradient(
                 colors: [
                   Colors.amber.shade50,
-                  Colors.amber.shade50.withOpacity(0.3),
+                  Colors.amber.shade50.withValues(alpha: 0.3),
                 ],
               ),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -319,7 +319,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.amber.withOpacity(0.3),
+                        color: Colors.amber.withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -370,7 +370,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     boxShadow: [
                       if (!isDark)
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withValues(alpha: 0.03),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -384,7 +384,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                       hintText: 'Enter amount',
                       filled: true,
                       fillColor: isDark 
-                          ? theme.colorScheme.surface.withOpacity(0.5)
+                          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
                           : Colors.grey.shade50,
                       prefixIcon: Container(
                         margin: const EdgeInsets.all(12),
@@ -428,13 +428,13 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -503,7 +503,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                       gradient: LinearGradient(
                         colors: [
                           Colors.green.shade50,
-                          Colors.green.shade50.withOpacity(0.5),
+                          Colors.green.shade50.withValues(alpha: 0.5),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(14),
@@ -521,7 +521,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.green.withOpacity(0.3),
+                                color: Colors.green.withValues(alpha: 0.3),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -584,7 +584,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark 
-                        ? theme.colorScheme.surfaceVariant.withOpacity(0.3)
+                        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
                         : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -775,7 +775,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
       pageController: _pageController,
       child: PopScope(
         canPop: true,
-        onPopInvoked: (didPop) {
+        onPopInvokedWithResult: (didPop, result) {
             if (didPop) return;
             // If we have previous pages, TabBackHandler will handle stepping back.
             final current = _pageController.hasClients
@@ -792,7 +792,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
             }
         },
         child: Scaffold(
-          backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+          backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
           appBar: _buildAppBar(),
           body: ResponsiveLayout(
             child: _isLoading ? _buildLoadingState() : _buildContent(),
@@ -933,6 +933,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
   }
 
   Widget _buildProgressIndicator() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
       height: 4,
       child: Padding(
@@ -946,7 +947,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                   decoration: BoxDecoration(
                     color: i <= _currentStep
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                        : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: isDark ? 0.2 : 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -964,7 +965,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
     final isDark = theme.brightness == Brightness.dark;
     
     return Container(
-      color: isDark ? theme.colorScheme.background : Colors.grey.shade50,
+      color: isDark ? theme.colorScheme.surface : Colors.grey.shade50,
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
         child: Column(
@@ -1044,41 +1045,42 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                 hintText: 'Add any special requests or notes for the host...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                 ),
                 filled: true,
-                fillColor: isDark ? Colors.white.withOpacity(0.03) : Colors.grey.shade50,
+                fillColor: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey.shade50,
               ),
               onChanged: (v) => _specialRequests = v.trim(),
             ),
           ),
         ],
-        ),
+      ),
       ),
     );
   }
 
   Widget _buildSectionCard({required IconData icon, required String title, required Widget child}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
+        color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1092,12 +1094,12 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -1118,7 +1120,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      color: isDark ? theme.colorScheme.background : Colors.grey.shade50,
+      color: isDark ? theme.colorScheme.surface : Colors.grey.shade50,
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1221,7 +1223,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1252,8 +1254,8 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.75),
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.black.withValues(alpha: 0.75),
                   ],
                 ),
               ),
@@ -1293,13 +1295,13 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.location_on_rounded, size: 15, color: Colors.white.withOpacity(0.95)),
+                      Icon(Icons.location_on_rounded, size: 15, color: Colors.white.withValues(alpha: 0.95)),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
                           _listing!.location,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.98),
+                            color: Colors.white.withValues(alpha: 0.98),
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             shadows: const [
@@ -1322,7 +1324,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -1359,13 +1361,13 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                   gradient: LinearGradient(
                     colors: [
                       Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.9),
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.9),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -1617,7 +1619,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                   gradient: LinearGradient(
                     colors: [
                       theme.colorScheme.primary,
-                      theme.colorScheme.primary.withOpacity(0.8),
+                      theme.colorScheme.primary.withValues(alpha: 0.8),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -1674,19 +1676,19 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: a.selected
-                          ? theme.colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08)
+                          ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08)
                           : (isDark ? theme.colorScheme.surface : Colors.white),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: a.selected
-                            ? theme.colorScheme.primary.withOpacity(0.5)
-                            : theme.colorScheme.outlineVariant.withOpacity(isDark ? 0.2 : 0.3),
+                            ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                            : theme.colorScheme.outlineVariant.withValues(alpha: isDark ? 0.2 : 0.3),
                         width: a.selected ? 2 : 1,
                       ),
                       boxShadow: a.selected
                           ? [
                               BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.15),
+                                color: theme.colorScheme.primary.withValues(alpha: 0.15),
                                 blurRadius: 6,
                                 offset: const Offset(0, 1),
                               ),
@@ -1694,7 +1696,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                           : [
                               if (!isDark)
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
@@ -1715,7 +1717,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                             border: Border.all(
                               color: a.selected
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.outline.withOpacity(0.5),
+                                  : theme.colorScheme.outline.withValues(alpha: 0.5),
                               width: 2,
                             ),
                           ),
@@ -1774,7 +1776,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                               Text(
                                 'Total: ${CurrencyFormatter.formatPrice(totalCost)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.primary.withOpacity(0.8),
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.8),
                                   fontSize: 9,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1797,7 +1799,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
               boxShadow: [
                 if (!isDark)
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -1809,7 +1811,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                 hintText: AppLocalizations.of(context)?.enterCouponOptional ?? 'Enter code here',
                 filled: true,
                 fillColor: isDark 
-                    ? theme.colorScheme.surface.withOpacity(0.5)
+                    ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
                     : Colors.grey.shade50,
                 prefixIcon: Container(
                   margin: const EdgeInsets.all(12),
@@ -1840,13 +1842,13 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -1870,7 +1872,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                 gradient: LinearGradient(
                   colors: [
                     Colors.green.shade50,
-                    Colors.green.shade50.withOpacity(0.5),
+                    Colors.green.shade50.withValues(alpha: 0.5),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(14),
@@ -1888,7 +1890,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.green.withOpacity(0.3),
+                          color: Colors.green.withValues(alpha: 0.3),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -1950,9 +1952,9 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.06),
+                color: Colors.green.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withOpacity(0.25)),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.25)),
               ),
               child: Row(
                 children: [
@@ -2004,9 +2006,9 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.08),
+              color: Colors.amber.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -2081,15 +2083,15 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  theme.colorScheme.primary.withOpacity(isDark ? 0.12 : 0.08),
-                  theme.colorScheme.primary.withOpacity(isDark ? 0.08 : 0.04),
+                  theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                  theme.colorScheme.primary.withValues(alpha: isDark ? 0.08 : 0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.2),
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -2101,13 +2103,13 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     gradient: LinearGradient(
                       colors: [
                         theme.colorScheme.primary,
-                        theme.colorScheme.primary.withOpacity(0.85),
+                        theme.colorScheme.primary.withValues(alpha: 0.85),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -2154,20 +2156,20 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.blue.withOpacity(isDark ? 0.15 : 0.1),
-                    Colors.blue.withOpacity(isDark ? 0.08 : 0.04),
+                    Colors.blue.withValues(alpha: isDark ? 0.15 : 0.1),
+                    Colors.blue.withValues(alpha: isDark ? 0.08 : 0.04),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.08),
+                    color: Colors.blue.withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -2187,7 +2189,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.blue.withOpacity(0.3),
+                              color: Colors.blue.withValues(alpha: 0.3),
                               blurRadius: 6,
                               offset: const Offset(0, 3),
                             ),
@@ -2238,20 +2240,20 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.blue.withOpacity(isDark ? 0.12 : 0.08),
-                    Colors.blue.withOpacity(isDark ? 0.06 : 0.03),
+                    Colors.blue.withValues(alpha: isDark ? 0.12 : 0.08),
+                    Colors.blue.withValues(alpha: isDark ? 0.06 : 0.03),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.08),
+                    color: Colors.blue.withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -2268,7 +2270,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blue.withOpacity(0.3),
+                          color: Colors.blue.withValues(alpha: 0.3),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         ),
@@ -2304,12 +2306,12 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
               color: isDark ? theme.colorScheme.surface : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: theme.colorScheme.outlineVariant.withOpacity(isDark ? 0.25 : 0.35),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: isDark ? 0.25 : 0.35),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.15 : 0.06),
+                  color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.06),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -2336,7 +2338,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                             border: Border.all(
                               color: _agreeToTerms
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.outline.withOpacity(0.5),
+                                  : theme.colorScheme.outline.withValues(alpha: 0.5),
                               width: 2,
                             ),
                           ),
@@ -2364,7 +2366,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                 ),
                 Divider(
                   height: 1,
-                  color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                 ),
                 InkWell(
                   onTap: () => setState(() => _acceptedHouseRules = !_acceptedHouseRules),
@@ -2385,7 +2387,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                             border: Border.all(
                               color: _acceptedHouseRules
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.outline.withOpacity(0.5),
+                                  : theme.colorScheme.outline.withValues(alpha: 0.5),
                               width: 2,
                             ),
                           ),
@@ -2448,7 +2450,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
         color: isDark ? theme.colorScheme.surface : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
             spreadRadius: 0,
@@ -2462,7 +2464,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
           decoration: BoxDecoration(
             border: Border(
               top: BorderSide(
-                color: theme.colorScheme.outlineVariant.withOpacity(isDark ? 0.15 : 0.2),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: isDark ? 0.15 : 0.2),
                 width: 1,
               ),
             ),
@@ -2530,7 +2532,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     side: BorderSide(
-                      color: theme.colorScheme.outline.withOpacity(isDark ? 0.3 : 0.5),
+                      color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.3 : 0.5),
                       width: 1.5,
                     ),
                     backgroundColor: isDark 
@@ -2558,7 +2560,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     ),
                     elevation: 0,
                     backgroundColor: theme.colorScheme.primary,
-                    disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.3),
+                    disabledBackgroundColor: theme.colorScheme.primary.withValues(alpha: 0.3),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -2880,33 +2882,32 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
 
   // Time selection helpers (for hourly vehicle bookings)
   Widget _buildTimeTile({required String label, required String value, required VoidCallback onTap}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade50,
+          color: isDark ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -3022,10 +3023,10 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade50,
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -3171,8 +3172,8 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     gradient: isApplied
                         ? LinearGradient(
                             colors: [
-                              theme.colorScheme.primary.withOpacity(0.15),
-                              theme.colorScheme.primary.withOpacity(0.08),
+                              theme.colorScheme.primary.withValues(alpha: 0.15),
+                              theme.colorScheme.primary.withValues(alpha: 0.08),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -3184,16 +3185,16 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isApplied
-                          ? theme.colorScheme.primary.withOpacity(0.5)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.5)
                           : (isDark
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.grey.withOpacity(0.2)),
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.grey.withValues(alpha: 0.2)),
                       width: isApplied ? 2 : 1,
                     ),
                     boxShadow: isApplied
                         ? [
                             BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -3201,7 +3202,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                         : [
                             if (!isDark)
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -3217,7 +3218,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                             colors: isApplied
                                 ? [
                                     theme.colorScheme.primary,
-                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primary.withValues(alpha: 0.8),
                                   ]
                                 : [
                                     Colors.orange,
@@ -3232,7 +3233,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                               color: (isApplied
                                       ? theme.colorScheme.primary
                                       : Colors.orange)
-                                  .withOpacity(0.3),
+                                  .withValues(alpha: 0.3),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),
@@ -3304,7 +3305,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                               Text(
                                 coupon.description!,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                   fontSize: 11,
                                 ),
                                 maxLines: 1,
@@ -3361,7 +3362,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
                         Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 16,
-                          color: theme.colorScheme.onSurface.withOpacity(0.4),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                     ],
                   ),
@@ -3558,7 +3559,7 @@ class _AddOn {
   final double price; // base price
   final String category; // 'property' or 'vehicle'
   final bool perDay; // for vehicles: true = per day, false = one-time
-  bool selected;
+  bool selected = false;
   
   _AddOn(
     this.key,
@@ -3567,7 +3568,6 @@ class _AddOn {
     this.price, {
     this.category = 'property',
     this.perDay = false,
-    this.selected = false,
   });
   
   // Calculate total cost based on rental duration

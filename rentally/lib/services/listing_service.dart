@@ -104,9 +104,7 @@ class Listing {
     rating: json['rating']?.toDouble(),
     reviewCount: json['reviewCount'] ?? 0,
     requireSeekerId: json['requireSeekerId'] ?? false,
-    discountPercent: (json['discountPercent'] ?? json['discount']) == null
-        ? null
-        : (json['discountPercent'] ?? json['discount']).toDouble(),
+    discountPercent: ((json['discountPercent'] ?? json['discount']) as num?)?.toDouble(),
   );
 
   Listing copyWith({

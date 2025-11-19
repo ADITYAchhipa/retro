@@ -47,13 +47,13 @@ class HomeHeader extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark
-                            ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
-                            : Colors.black.withOpacity(0.06),
+                            ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
+                            : Colors.black.withValues(alpha: 0.06),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                           blurRadius: 10,
                           offset: const Offset(-5, -5),
                           spreadRadius: 0,
@@ -62,7 +62,7 @@ class HomeHeader extends StatelessWidget {
                           color: (isDark
                                   ? EnterpriseDarkTheme.primaryAccent
                                   : EnterpriseLightTheme.primaryAccent)
-                              .withOpacity(isDark ? 0.18 : 0.12),
+                              .withValues(alpha: isDark ? 0.18 : 0.12),
                           blurRadius: 10,
                           offset: const Offset(5, 5),
                           spreadRadius: 0,
@@ -94,13 +94,13 @@ class HomeHeader extends StatelessWidget {
                       borderRadius: BorderRadius.circular(22),
                       border: Border.all(
                         color: isDark
-                            ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
-                            : Colors.black.withOpacity(0.06),
+                            ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
+                            : Colors.black.withValues(alpha: 0.06),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                           blurRadius: 10,
                           offset: const Offset(-5, -5),
                           spreadRadius: 0,
@@ -109,7 +109,7 @@ class HomeHeader extends StatelessWidget {
                           color: (isDark
                                   ? EnterpriseDarkTheme.primaryAccent
                                   : EnterpriseLightTheme.primaryAccent)
-                              .withOpacity(isDark ? 0.18 : 0.12),
+                              .withValues(alpha: isDark ? 0.18 : 0.12),
                           blurRadius: 10,
                           offset: const Offset(5, 5),
                           spreadRadius: 0,

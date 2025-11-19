@@ -134,14 +134,14 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
                 child: Card(
                   elevation: isDark ? 8 : 12,
                   shadowColor: isDark 
-                      ? Colors.black.withOpacity(0.5)
-                      : Colors.black.withOpacity(0.2),
+                      ? Colors.black.withValues(alpha: 0.5)
+                      : Colors.black.withValues(alpha: 0.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
                   color: isDark 
                       ? const Color(0xFF21262D)
-                      : Colors.white.withOpacity(0.95),
+                      : Colors.white.withValues(alpha: 0.95),
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
@@ -193,7 +193,7 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
                               BoxShadow(
                                 color: (isDark 
                                     ? const Color(0xFF58A6FF)
-                                    : const Color(0xFF1565C0)).withOpacity(0.3),
+                                    : const Color(0xFF1565C0)).withValues(alpha: 0.3),
                                 blurRadius: 16,
                                 offset: const Offset(0, 4),
                               ),
@@ -422,7 +422,7 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
               BoxShadow(
                 color: (isDark 
                     ? const Color(0xFF238636)
-                    : const Color(0xFF1565C0)).withOpacity(0.3),
+                    : const Color(0xFF1565C0)).withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),

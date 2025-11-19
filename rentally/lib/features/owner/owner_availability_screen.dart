@@ -104,7 +104,7 @@ class _OwnerAvailabilityScreenState extends ConsumerState<OwnerAvailabilityScree
                           return Container(
                             margin: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: disabled ? theme.colorScheme.error.withOpacity(0.15) : null,
+                              color: disabled ? theme.colorScheme.error.withValues(alpha: 0.15) : null,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(
@@ -123,7 +123,7 @@ class _OwnerAvailabilityScreenState extends ConsumerState<OwnerAvailabilityScree
                           return Container(
                             margin: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: disabled ? theme.colorScheme.error.withOpacity(0.2) : theme.colorScheme.primary.withOpacity(0.15),
+                              color: disabled ? theme.colorScheme.error.withValues(alpha: 0.2) : theme.colorScheme.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(
@@ -142,11 +142,11 @@ class _OwnerAvailabilityScreenState extends ConsumerState<OwnerAvailabilityScree
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Container(width: 14, height: 14, decoration: BoxDecoration(color: theme.colorScheme.error.withOpacity(0.2), borderRadius: BorderRadius.circular(3))),
+                        Container(width: 14, height: 14, decoration: BoxDecoration(color: theme.colorScheme.error.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(3))),
                         const SizedBox(width: 6),
                         const Text('Blocked'),
                         const SizedBox(width: 16),
-                        Container(width: 14, height: 14, decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.2), borderRadius: BorderRadius.circular(3))),
+                        Container(width: 14, height: 14, decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(3))),
                         const SizedBox(width: 6),
                         const Text('Today'),
                       ],

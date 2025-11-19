@@ -14,7 +14,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/utils/currency_formatter.dart';
 
 class EnhancedCountrySelectScreen extends ConsumerStatefulWidget {
-  const EnhancedCountrySelectScreen({super.key});
+  final String? nextPath;
+
+  const EnhancedCountrySelectScreen({super.key, this.nextPath});
 
   @override
   ConsumerState<EnhancedCountrySelectScreen> createState() => _EnhancedCountrySelectScreenState();
@@ -163,6 +165,9 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
       // Auto-select currency based on chosen country and persist globally (if enabled)
       try {
         final prefs = await SharedPreferences.getInstance();
+        // Persist selected country so user doesn't have to choose again on next app launch
+        await prefs.setString('selectedCountry', selectedCountry!);
+
         final follow = prefs.getBool('currencyFollowCountry') ?? true;
         if (follow) {
           final code = CountryService.getCurrencyForCountry(selectedCountry!);
@@ -175,7 +180,17 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
       _showSuccessSnackBar();
       
       if (!mounted) return;
-      context.go('/auth');
+      final next = widget.nextPath;
+      if (next != null && next.isNotEmpty) {
+        context.go(next);
+      } else {
+        // Fallback: if we can pop back, do so; otherwise go to auth
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          context.go('/auth');
+        }
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -219,7 +234,7 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
     final isDark = theme.brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
       body: _buildBody(isDesktop, theme),
     );
   }
@@ -290,14 +305,14 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: isDark ? [
-                  const Color(0xFF3B82F6).withOpacity(0.15),
-                  const Color(0xFF1D4ED8).withOpacity(0.08),
-                  const Color(0xFF1E40AF).withOpacity(0.04),
+                  const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                  const Color(0xFF1D4ED8).withValues(alpha: 0.08),
+                  const Color(0xFF1E40AF).withValues(alpha: 0.04),
                   Colors.transparent,
                 ] : [
-                  Colors.white.withOpacity(0.25),
-                  Colors.white.withOpacity(0.15),
-                  Colors.white.withOpacity(0.08),
+                  Colors.white.withValues(alpha: 0.25),
+                  Colors.white.withValues(alpha: 0.15),
+                  Colors.white.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.3, 0.6, 1.0],
@@ -316,14 +331,14 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: isDark ? [
-                  const Color(0xFF10B981).withOpacity(0.12),
-                  const Color(0xFF059669).withOpacity(0.06),
-                  const Color(0xFF047857).withOpacity(0.03),
+                  const Color(0xFF10B981).withValues(alpha: 0.12),
+                  const Color(0xFF059669).withValues(alpha: 0.06),
+                  const Color(0xFF047857).withValues(alpha: 0.03),
                   Colors.transparent,
                 ] : [
-                  Colors.white.withOpacity(0.3),
-                  Colors.white.withOpacity(0.18),
-                  Colors.white.withOpacity(0.09),
+                  Colors.white.withValues(alpha: 0.3),
+                  Colors.white.withValues(alpha: 0.18),
+                  Colors.white.withValues(alpha: 0.09),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.35, 0.65, 1.0],
@@ -342,12 +357,12 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: isDark ? [
-                  const Color(0xFF8B5CF6).withOpacity(0.1),
-                  const Color(0xFF7C3AED).withOpacity(0.05),
+                  const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  const Color(0xFF7C3AED).withValues(alpha: 0.05),
                   Colors.transparent,
                 ] : [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.1),
+                  Colors.white.withValues(alpha: 0.2),
+                  Colors.white.withValues(alpha: 0.1),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.5, 1.0],
@@ -366,12 +381,12 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: isDark ? [
-                  const Color(0xFFF59E0B).withOpacity(0.08),
-                  const Color(0xFFD97706).withOpacity(0.04),
+                  const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                  const Color(0xFFD97706).withValues(alpha: 0.04),
                   Colors.transparent,
                 ] : [
-                  Colors.white.withOpacity(0.18),
-                  Colors.white.withOpacity(0.09),
+                  Colors.white.withValues(alpha: 0.18),
+                  Colors.white.withValues(alpha: 0.09),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.4, 1.0],
@@ -422,47 +437,47 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF21262D).withOpacity(0.8),
-                      const Color(0xFF30363D).withOpacity(0.9),
+                      const Color(0xFF21262D).withValues(alpha: 0.8),
+                      const Color(0xFF30363D).withValues(alpha: 0.9),
                     ],
                   ) : null,
                   color: isDark 
-                      ? const Color(0xFF58A6FF).withOpacity(0.3)
-                      : Colors.white.withOpacity(0.3),
+                      ? const Color(0xFF58A6FF).withValues(alpha: 0.3)
+                      : Colors.white.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                   boxShadow: isDark ? [
                     BoxShadow(
-                      color: const Color(0xFF000000).withOpacity(0.50),
+                      color: const Color(0xFF000000).withValues(alpha: 0.50),
                       blurRadius: 24,
                       offset: const Offset(0, -10),
                     ),
                     BoxShadow(
-                      color: const Color(0xFF0969DA).withOpacity(0.08),
+                      color: const Color(0xFF0969DA).withValues(alpha: 0.08),
                       blurRadius: 40,
                       offset: const Offset(0, -20),
                     ),
                   ] : [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(isDark ? 0.15 : 0.08),
+                      color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.15 : 0.08),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                       spreadRadius: 0,
                     ),
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                     if (!isDark)
                       BoxShadow(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         blurRadius: 1,
                         offset: const Offset(0, 1),
                         spreadRadius: 0,
                       ),
                   ],
                   border: Border.all(
-                    color: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE2E8F0),
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
                     width: 0.5,
                   ),
                 ),
@@ -479,11 +494,11 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
                       }
                     });
                   },
-                  hoverColor: theme.colorScheme.primary.withOpacity(0.05),
-                  splashColor: theme.colorScheme.primary.withOpacity(0.1),
+                  hoverColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
                   child: Icon(
                     Icons.arrow_back_ios_new,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     size: AppConstants.iconSizeSmall,
                   ),
                 ),

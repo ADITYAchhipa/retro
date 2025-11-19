@@ -78,6 +78,9 @@ class UserSubscription {
   final bool isActive;
   final bool autoRenew;
   final String? stripeSubscriptionId;
+  final bool inTrial;
+  final DateTime? trialEndsAt;
+  final bool introDiscountApplied;
 
   const UserSubscription({
     required this.id,
@@ -89,6 +92,9 @@ class UserSubscription {
     required this.isActive,
     this.autoRenew = true,
     this.stripeSubscriptionId,
+    this.inTrial = false,
+    this.trialEndsAt,
+    this.introDiscountApplied = false,
   });
 
   bool get isExpired => DateTime.now().isAfter(endDate);
@@ -105,6 +111,9 @@ class UserSubscription {
       'isActive': isActive,
       'autoRenew': autoRenew,
       'stripeSubscriptionId': stripeSubscriptionId,
+      'inTrial': inTrial,
+      'trialEndsAt': trialEndsAt?.toIso8601String(),
+      'introDiscountApplied': introDiscountApplied,
     };
   }
 
@@ -119,6 +128,9 @@ class UserSubscription {
       isActive: json['isActive'],
       autoRenew: json['autoRenew'] ?? true,
       stripeSubscriptionId: json['stripeSubscriptionId'],
+      inTrial: json['inTrial'] ?? false,
+      trialEndsAt: json['trialEndsAt'] != null ? DateTime.parse(json['trialEndsAt']) : null,
+      introDiscountApplied: json['introDiscountApplied'] ?? false,
     );
   }
 }

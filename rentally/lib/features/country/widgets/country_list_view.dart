@@ -60,8 +60,8 @@ class CountryListView extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF161B22).withOpacity(0.9), // Modern glass surface
-            const Color(0xFF21262D).withOpacity(0.95), // Elevated glass
+            const Color(0xFF161B22).withValues(alpha: 0.9), // Modern glass surface
+            const Color(0xFF21262D).withValues(alpha: 0.95), // Elevated glass
             const Color(0xFF30363D), // Solid accent
           ],
           stops: const [0.0, 0.6, 1.0],
@@ -70,20 +70,20 @@ class CountryListView extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppConstants.radiusXXL),
         border: Border.all(
           color: isDark 
-              ? const Color(0xFF58A6FF).withOpacity(0.2)
+              ? const Color(0xFF58A6FF).withValues(alpha: 0.2)
               : const Color(0xFFCBD5E1), // stronger border in light mode for visibility
           width: isDark ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark 
-                ? const Color(0xFF000000).withOpacity(0.45)
-                : theme.colorScheme.primary.withOpacity(0.06),
+                ? const Color(0xFF000000).withValues(alpha: 0.45)
+                : theme.colorScheme.primary.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
           if (isDark) BoxShadow(
-            color: const Color(0xFF58A6FF).withOpacity(0.08),
+            color: const Color(0xFF58A6FF).withValues(alpha: 0.08),
             blurRadius: 40,
             offset: const Offset(0, 25),
           ),

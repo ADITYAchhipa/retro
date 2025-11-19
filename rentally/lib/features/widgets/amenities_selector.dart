@@ -116,12 +116,12 @@ class _AmenitiesSelectorState extends State<AmenitiesSelector> {
               selected: isSelected,
               onSelected: (_) => _toggleAmenity(amenity),
               selectedColor: theme.colorScheme.primaryContainer,
-              backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               checkmarkColor: theme.colorScheme.onPrimaryContainer,
               side: BorderSide(
                 color: isSelected 
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outline.withOpacity(0.5),
+                    : theme.colorScheme.outline.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
             );
@@ -203,10 +203,10 @@ class AmenitiesDisplayWidget extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.3),
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -235,10 +235,10 @@ class AmenitiesDisplayWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant,
+              color: theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.3),
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
               ),
             ),
             child: Text(

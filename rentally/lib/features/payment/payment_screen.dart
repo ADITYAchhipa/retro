@@ -257,9 +257,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.primaryColor.withOpacity(0.1),
+        color: theme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.primaryColor.withOpacity(0.3)),
+        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -270,7 +270,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
               Text(
                 'Total Amount',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 4),
@@ -301,7 +301,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, 2),
           ),
@@ -310,7 +310,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
       child: TabBar(
         controller: _tabController,
         labelColor: theme.primaryColor,
-        unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+        unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
         indicatorColor: theme.primaryColor,
         tabs: const [
           Tab(
@@ -502,9 +502,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -542,9 +542,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
               ),
               child: const Text('UPI is only available for INR payments. Change currency to INR to enable.'),
             ),
@@ -597,9 +597,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
             ),
             child: const Text('We will open your preferred UPI app (GPay/PhonePe/Paytm) to complete the payment.'),
           ),
@@ -678,9 +678,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -706,7 +706,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
         color: theme.scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, -2),
           ),

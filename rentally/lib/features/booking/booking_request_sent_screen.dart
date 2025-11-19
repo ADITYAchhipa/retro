@@ -45,7 +45,7 @@ class BookingRequestSentScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.6),
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

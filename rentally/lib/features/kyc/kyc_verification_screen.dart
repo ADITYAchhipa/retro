@@ -85,9 +85,11 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
       pageController: _pageController,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Identity Verification'),
-          backgroundColor: Colors.transparent,
+          titleSpacing: 16,
+          toolbarHeight: 60,
+          backgroundColor: theme.colorScheme.surface,
           elevation: 0,
+          title: const Text('Identity Verification'),
         ),
         body: SafeArea(
           top: false,
@@ -140,7 +142,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(bottom: BorderSide(color: theme.dividerColor.withOpacity(0.4))),
+        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -150,10 +152,10 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
             final bool isCompleted = i < _currentStep;
             final bool canTap = i <= _furthestStep;
             final Color bg = isActive
-                ? theme.colorScheme.primary.withOpacity(0.12)
+                ? theme.colorScheme.primary.withValues(alpha: 0.12)
                 : (isCompleted
-                    ? theme.colorScheme.primary.withOpacity(0.08)
-                    : theme.colorScheme.surfaceVariant.withOpacity(0.5));
+                    ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                    : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5));
             final Color fg = (isActive || isCompleted)
                 ? theme.colorScheme.primary
                 : (theme.textTheme.bodySmall?.color ?? Colors.black87);
@@ -178,18 +180,18 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     color: bg,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: isActive ? theme.colorScheme.primary : theme.dividerColor.withOpacity(0.3),
+                      color: isActive ? theme.colorScheme.primary : theme.dividerColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(icons[i], size: 14, color: fg.withOpacity(canTap ? 1 : 0.6)),
+                      Icon(icons[i], size: 14, color: fg.withValues(alpha: canTap ? 1 : 0.6)),
                       const SizedBox(width: 6),
                       Text(
                         labels[i],
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: fg.withOpacity(canTap ? 1 : 0.6),
+                          color: fg.withValues(alpha: canTap ? 1 : 0.6),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -286,7 +288,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
             Text(
               'Please enter your personal details as they appear on your ID document.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -309,7 +311,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               filled: true,
-                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
@@ -328,7 +330,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               filled: true,
-                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
@@ -347,7 +349,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         filled: true,
-                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                       readOnly: true,
                       onTap: _selectDateOfBirth,
@@ -366,7 +368,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         filled: true,
-                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                       validator: (value) => value?.isEmpty == true ? 'Required' : null,
                     ),
@@ -385,7 +387,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               filled: true,
-                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
@@ -404,7 +406,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                               filled: true,
-                              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                             ),
                             validator: (value) => value?.isEmpty == true ? 'Required' : null,
                           ),
@@ -423,7 +425,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         filled: true,
-                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                       ),
                       readOnly: true,
                       onTap: _selectCountry,
@@ -455,7 +457,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           Text(
             'Choose the type of government-issued ID you want to use for verification.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
@@ -512,7 +514,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(10),
-          color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : null,
+          color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
         ),
         child: Row(
           children: [
@@ -536,7 +538,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -569,16 +571,16 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           Text(
             'Take clear photos of both sides of your ${_getDocumentName()}. Ensure all text is readable.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 6),
           Card(
             elevation: 0,
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: theme.colorScheme.tertiary.withOpacity(0.4)),
+              side: BorderSide(color: theme.colorScheme.tertiary.withValues(alpha: 0.4)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(8),
@@ -593,9 +595,9 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text('• Good lighting, no glare', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
-                  Text('• Entire document in frame', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
-                  Text('• Text and photo clearly visible', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                  Text('• Good lighting, no glare', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                  Text('• Entire document in frame', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                  Text('• Text and photo clearly visible', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                 ],
               ),
             ),
@@ -640,7 +642,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
         decoration: BoxDecoration(
           border: Border.all(color: theme.colorScheme.outline),
           borderRadius: BorderRadius.circular(10),
-          color: image != null ? theme.colorScheme.primary.withOpacity(0.1) : null,
+          color: image != null ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
         ),
         child: image != null
           ? Row(
@@ -681,7 +683,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                       Text(
                         'Tap to retake photo',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -709,7 +711,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                 Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -737,16 +739,16 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           Text(
             'Take a clear selfie to verify your identity matches your document.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 6),
           Card(
             elevation: 0,
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: theme.colorScheme.tertiary.withOpacity(0.4)),
+              side: BorderSide(color: theme.colorScheme.tertiary.withValues(alpha: 0.4)),
             ),
             child: Padding(
               padding: const EdgeInsets.all(8),
@@ -761,9 +763,9 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text('• Face centered, well-lit background', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
-                  Text('• No hats, sunglasses, or filters', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
-                  Text('• Keep a neutral expression', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.8))),
+                  Text('• Face centered, well-lit background', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                  Text('• No hats, sunglasses, or filters', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                  Text('• Keep a neutral expression', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                 ],
               ),
             ),
@@ -827,7 +829,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                             child: Icon(
                               Icons.person,
                               size: 48,
-                              color: theme.colorScheme.primary.withOpacity(0.5),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -865,7 +867,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           Text(
             'Please review all information before submitting for verification.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 8),
@@ -954,7 +956,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
             Text(
               'Please wait while we process your documents',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ] else ...[
@@ -1004,7 +1006,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
               Text(
                 'Step ${_currentStep + 1} of 7',
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -1153,7 +1155,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           child: ListView.separated(
             shrinkWrap: true,
             itemCount: options.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withOpacity(0.5)),
+            separatorBuilder: (_, __) => Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.5)),
             itemBuilder: (context, index) {
               final country = options[index];
               return ListTile(

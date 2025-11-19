@@ -81,14 +81,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   bool _imagesOnly = false;
   int _builtUpMinSqFt = 0; // 0 = Any
   int _builtUpMaxSqFt = 0; // 0 = Any / 4000+ etc.
-  String _toRentCategory = 'residential'; // residential | commercial | plot (UI only)
+  String _toRentCategory = 'residential'; // residential | commercial (UI only)
   String _furnishType = 'any'; // any | full | semi | unfurnished
   String _preferredTenant = 'any'; // any | family | bachelors | students | male | female | others
   Set<String> _amenities = <String>{}; // wifi, parking, ac, heating, pets, kitchen, balcony, elevator
-  // Plots filters
-  int _plotMinSize = 0; // sq ft, 0 = Any
-  int _plotMaxSize = 0; // 0 = Any / 50000+ etc.
-  String _plotUsage = 'any'; // any | agriculture | commercial | events | construction
   // Location radius filter (km) and reference center (placeholder)
   double _radiusKm = 0; // 0 = Any
   final double _centerLat = 37.4219999;
@@ -99,8 +95,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     'all', 'apartment', 'house', 'villa', 'studio', 'room',
     // commercial basics for mock typing
     'office', 'retail', 'showroom', 'warehouse',
-    // plots and vehicles
-    'plot', 'vehicle'
+    // vehicles
+    'vehicle'
   ];
   
   @override
@@ -215,7 +211,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         if (_searchQuery.isNotEmpty) {
           results = results.where((r) => r.title.toLowerCase().contains(_searchQuery.toLowerCase()) || r.location.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
         }
-        // Apply top-level category filter (Residential / Commercial / Plots)
+        // Apply top-level category filter (Residential / Commercial)
         if (!_isVehicleMode) {
           const residentialTypes = {'apartment','house','villa','studio','room'};
           const commercialTypes = {'office','retail','showroom','warehouse'};
@@ -223,31 +219,26 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             results = results.where((r) => residentialTypes.contains(r.type.toLowerCase())).toList();
           } else if (_toRentCategory == 'commercial') {
             results = results.where((r) => commercialTypes.contains(r.type.toLowerCase())).toList();
-          } else if (_toRentCategory == 'plot') {
-            results = results.where((r) => r.type.toLowerCase() == 'plot').toList();
           }
         }
         // Apply property-specific filters from the filter sheet
         if (!_isVehicleMode) {
           results = results.where((r) {
             final bool isResidential = _toRentCategory == 'residential';
-            final bool isPlot = _toRentCategory == 'plot';
             final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
             final bool bedsOk = !isResidential || _bedrooms == 0 || r.bedrooms >= _bedrooms; // apply only for residential
             final bool bathsOk = !isResidential || _bathrooms == 0 || r.bathrooms >= _bathrooms; // apply only for residential
             final bool instantOk = !_instantBooking || r.instantBooking;
             final bool verifiedOk = !_verifiedOnly || r.isVerified;
             final bool imagesOk = !_imagesOnly || (r.imageUrl.trim().isNotEmpty);
-            // Built-up ignored for plots; add plot filters
-            final bool builtMinOk = isPlot || _builtUpMinSqFt == 0 || r.builtUpArea >= _builtUpMinSqFt;
-            final bool builtMaxOk = isPlot ? true : ((_builtUpMaxSqFt == 0 || _builtUpMaxSqFt == 4000) ? true : r.builtUpArea <= _builtUpMaxSqFt);
-            final bool plotMinOk = !isPlot || _plotMinSize == 0 || r.plotSize >= _plotMinSize;
-            final bool plotMaxOk = !isPlot || _plotMaxSize == 0 || r.plotSize <= _plotMaxSize;
-            final bool plotUsageOk = !isPlot || _plotUsage == 'any' || r.plotUsage == _plotUsage;
-            final bool furnishOk = isPlot ? true : (_furnishType == 'any' || r.furnishType == _furnishType);
+            final bool builtMinOk = _builtUpMinSqFt == 0 || r.builtUpArea >= _builtUpMinSqFt;
+            final bool builtMaxOk = (_builtUpMaxSqFt == 0 || _builtUpMaxSqFt == 4000)
+                ? true
+                : r.builtUpArea <= _builtUpMaxSqFt;
+            final bool furnishOk = _furnishType == 'any' || r.furnishType == _furnishType;
             final bool tenantOk = !isResidential || _preferredTenant == 'any' || r.preferredTenant == _preferredTenant; // apply only for residential
             final bool amenityOk = _amenities.isEmpty || _amenities.every((a) => r.amenities.contains(a));
-            return priceOk && bedsOk && bathsOk && instantOk && verifiedOk && imagesOk && builtMinOk && builtMaxOk && plotMinOk && plotMaxOk && plotUsageOk && furnishOk && tenantOk && amenityOk;
+            return priceOk && bedsOk && bathsOk && instantOk && verifiedOk && imagesOk && builtMinOk && builtMaxOk && furnishOk && tenantOk && amenityOk;
           }).toList();
         }
         // Apply vehicle-specific filters
@@ -369,20 +360,16 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     
     final amenityPool = ['wifi','parking','ac','heating','pets','kitchen','balcony','elevator'];
     // Property-only mock pool (exclude 'all' and 'vehicle')
-    final propertyTypesPool = ['apartment','house','villa','studio','room','office','retail','showroom','warehouse','plot'];
-    final plotUsages = ['agriculture','commercial','events','construction'];
+    final propertyTypesPool = ['apartment','house','villa','studio','room','office','retail','showroom','warehouse'];
     return List.generate(20, (index) {
       final type = propertyTypesPool[index % propertyTypesPool.length];
-      final isPlot = type == 'plot';
-      final int builtArea = isPlot ? 0 : (100 + (index % 50) * 100); // 0 for plots; 100..5000 for others
-      final int beds = isPlot ? 0 : ((index % 4) + 1);
-      final int baths = isPlot ? 0 : ((index % 3) + 1);
-      final int pSize = isPlot ? (1000 + (index % 20) * 500) : 0; // 1000..11500 sq ft
-      final String pUsage = isPlot ? plotUsages[index % plotUsages.length] : 'any';
+      final int builtArea = 100 + (index % 50) * 100; // 100..5000 for all property types
+      final int beds = (index % 4) + 1;
+      final int baths = (index % 3) + 1;
       
       return PropertyResult(
         id: 'prop_$index',
-        title: '${isPlot ? 'Open ' : 'Modern '}$type in City Center',
+        title: 'Modern $type in City Center',
         price: 50.0 + (index * 10),
         rating: 4.0 + (index % 10) / 10,
         imageUrl: 'https://picsum.photos/400/300?random=$index',
@@ -401,8 +388,6 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           amenityPool[index % amenityPool.length],
           amenityPool[(index + 2) % amenityPool.length],
         },
-        plotSize: pSize,
-        plotUsage: pUsage,
       );
     });
   }
@@ -462,7 +447,6 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       return count;
     } else {
       final bool isResidential = _toRentCategory == 'residential';
-      final bool isPlot = _toRentCategory == 'plot';
       if (_propertyType != 'all') count++;
       if (_priceRange.start > 0 || _priceRange.end < 5000) count++;
       if (isResidential && _bedrooms > 0) count++;
@@ -474,8 +458,6 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       if (_furnishType != 'any') count++;
       if (isResidential && _preferredTenant != 'any') count++;
       if (_amenities.isNotEmpty) count++;
-      if (isPlot && (_plotMinSize > 0 || _plotMaxSize > 0)) count++;
-      if (isPlot && _plotUsage != 'any') count++;
       if (_radiusKm > 0) count++;
       return count;
     }
@@ -493,19 +475,19 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         decoration: BoxDecoration(
           color: selected 
               ? theme.primaryColor 
-              : (isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white),
+              : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
                 ? theme.primaryColor
                 : (isDark
-                    ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                    : theme.colorScheme.outline.withOpacity(0.2)),
+                    ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
+                    : theme.colorScheme.outline.withValues(alpha: 0.2)),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
               blurRadius: 10,
               offset: const Offset(-5, -5),
               spreadRadius: 0,
@@ -514,7 +496,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               color: (isDark
                       ? EnterpriseDarkTheme.primaryAccent
                       : EnterpriseLightTheme.primaryAccent)
-                  .withOpacity(isDark ? 0.18 : 0.12),
+                  .withValues(alpha: isDark ? 0.18 : 0.12),
               blurRadius: 10,
               offset: const Offset(5, 5),
               spreadRadius: 0,
@@ -577,19 +559,19 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           decoration: BoxDecoration(
             color: _isGridView
                 ? theme.primaryColor
-                : (isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white),
+                : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _isGridView
                   ? theme.primaryColor
                   : (isDark
-                      ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                      : theme.colorScheme.outline.withOpacity(0.2)),
+                      ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
+                      : theme.colorScheme.outline.withValues(alpha: 0.2)),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                 blurRadius: 10,
                 offset: const Offset(-5, -5),
                 spreadRadius: 0,
@@ -598,7 +580,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                 color: (isDark
                         ? EnterpriseDarkTheme.primaryAccent
                         : EnterpriseLightTheme.primaryAccent)
-                    .withOpacity(isDark ? 0.18 : 0.12),
+                    .withValues(alpha: isDark ? 0.18 : 0.12),
                 blurRadius: 10,
                 offset: const Offset(5, 5),
                 spreadRadius: 0,
@@ -641,17 +623,17 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           height: 40,
           width: 40,
           decoration: BoxDecoration(
-            color: isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white,
+            color: isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark
-                  ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                  : theme.colorScheme.outline.withOpacity(0.2),
+                  ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
+                  : theme.colorScheme.outline.withValues(alpha: 0.2),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                 blurRadius: 10,
                 offset: const Offset(-5, -5),
                 spreadRadius: 0,
@@ -660,7 +642,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                 color: (isDark
                         ? EnterpriseDarkTheme.primaryAccent
                         : theme.primaryColor)
-                    .withOpacity(isDark ? 0.18 : 0.12),
+                    .withValues(alpha: isDark ? 0.18 : 0.12),
                 blurRadius: 10,
                 offset: const Offset(5, 5),
                 spreadRadius: 0,
@@ -714,13 +696,13 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               blur: isSelected ? 12 : 16,
               backgroundColor: isSelected
                   ? _getFilterBackgroundColor(filter.icon, theme.primaryColor)
-                  : (isDark ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.50)),
+                  : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.50)),
               borderColor: isSelected
                   ? _getFilterBorderColor(filter.icon, theme.primaryColor)
-                  : (isDark ? Colors.white.withOpacity(0.22) : Colors.white.withOpacity(0.85)),
+                  : (isDark ? Colors.white.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.85)),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(isDark ? 0.14 : 0.10),
+                  color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.14 : 0.10),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                   spreadRadius: isDark ? 0.2 : 0.3,
@@ -889,13 +871,13 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     
     switch (icon) {
       case Icons.flash_on:
-        return Colors.orange.withOpacity(0.15); // Light orange background
+        return Colors.orange.withValues(alpha: 0.15); // Light orange background
       case Icons.verified:
-        return Colors.green.withOpacity(0.15); // Light green background
+        return Colors.green.withValues(alpha: 0.15); // Light green background
       case Icons.electric_bolt:
-        return Colors.blue.withOpacity(0.15); // Light blue background
+        return Colors.blue.withValues(alpha: 0.15); // Light blue background
       case Icons.settings:
-        return Colors.purple.withOpacity(0.15); // Light purple background
+        return Colors.purple.withValues(alpha: 0.15); // Light purple background
       default:
         return defaultColor; // Use theme primary color for other filters
     }
@@ -906,13 +888,13 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     
     switch (icon) {
       case Icons.flash_on:
-        return Colors.orange.withOpacity(0.4); // Orange border
+        return Colors.orange.withValues(alpha: 0.4); // Orange border
       case Icons.verified:
-        return Colors.green.withOpacity(0.4); // Green border
+        return Colors.green.withValues(alpha: 0.4); // Green border
       case Icons.electric_bolt:
-        return Colors.blue.withOpacity(0.4); // Blue border
+        return Colors.blue.withValues(alpha: 0.4); // Blue border
       case Icons.settings:
-        return Colors.purple.withOpacity(0.4); // Purple border
+        return Colors.purple.withValues(alpha: 0.4); // Purple border
       default:
         return defaultColor; // Use theme primary color for other filters
     }
@@ -1007,16 +989,12 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         int localBhk = _bedrooms; // 0 for Any, else 1..5
         int localBaths = _bathrooms; // 0 = Any
         final Set<String> localAmenities = {..._amenities};
-        int localPlotMin = _plotMinSize;
-        int localPlotMax = _plotMaxSize;
-        String localPlotUsage = _plotUsage;
+        // Plot-specific locals removed; Plots is no longer a top-level category
 
         const List<String> propertyTypesResidential = ['all','apartment','house','villa','studio','room'];
         const List<String> propertyTypesCommercial = ['all','office','retail','showroom','warehouse'];
-        const List<String> propertyTypesPlot = ['all','plot'];
         final List<double> budgetOptions = [0, 100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000];
         final List<int> builtUpOptions = [0, 100, 200, 400, 600, 800, 1000, 1500, 2000, 3000, 4000];
-        final List<int> plotSizeOptions = [0, 1000, 2000, 5000, 10000, 20000, 50000];
 
         String typeLabel(String t) {
           switch (t) {
@@ -1029,7 +1007,6 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             case 'retail': return 'Retail Shop';
             case 'showroom': return 'Showroom';
             case 'warehouse': return 'Warehouse';
-            case 'plot': return 'Plot / Land';
             case 'all':
             default: return 'All';
           }
@@ -1043,17 +1020,17 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         InputDecoration ddDecoration() => InputDecoration(
           filled: true,
           isDense: true,
-          fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.06) : Colors.grey[100],
+          fillColor: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.06) : Colors.grey[100],
           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.2))),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.2))),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.2))),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.2))),
         );
 
         return StatefulBuilder(
           builder: (context, setLocal) {
             final types = localToRent == 'commercial'
                 ? propertyTypesCommercial
-                : (localToRent == 'plot' ? propertyTypesPlot : propertyTypesResidential);
+                : propertyTypesResidential;
             double floorBudget(double t) { double sel = budgetOptions.first; for (final v in budgetOptions) { if (v <= t) sel = v; } return sel; }
             double ceilBudget(double t) { double sel = budgetOptions.last; for (final v in budgetOptions) { if (v >= t) { sel = v; break; } } return sel; }
             return SizedBox(
@@ -1066,7 +1043,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.dividerColor.withOpacity(0.5),
+                      color: theme.dividerColor.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1079,7 +1056,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                       gradient: LinearGradient(
                         colors: [
                           theme.primaryColor,
-                          theme.primaryColor.withOpacity(0.85),
+                          theme.primaryColor.withValues(alpha: 0.85),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -1087,7 +1064,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.primaryColor.withOpacity(0.3),
+                          color: theme.primaryColor.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -1098,7 +1075,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -1123,7 +1100,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               Text(
                                 'Refine your search results',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 12,
                                 ),
                               ),
@@ -1145,11 +1122,11 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: theme.brightness == Brightness.dark
-                          ? theme.colorScheme.surface.withOpacity(0.3)
+                          ? theme.colorScheme.surface.withValues(alpha: 0.3)
                           : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: theme.dividerColor.withOpacity(0.1),
+                        color: theme.dividerColor.withValues(alpha: 0.1),
                         width: 1,
                       ),
                       boxShadow: [
@@ -1157,7 +1134,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                           color: (theme.brightness == Brightness.dark
                                   ? EnterpriseDarkTheme.primaryAccent
                                   : EnterpriseLightTheme.primaryAccent)
-                              .withOpacity(theme.brightness == Brightness.dark ? 0.18 : 0.08),
+                              .withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.08),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -1205,24 +1182,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 localBaths = 0;
                               }),
                             ),
-                            ChoiceChip(
-                              showCheckmark: false,
-                              label: Text('Plots', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: localToRent == 'plot' ? Colors.white : theme.colorScheme.onSurface)),
-                              selected: localToRent == 'plot',
-                              selectedColor: theme.colorScheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              onSelected: (v) => setLocal(() {
-                                localToRent = 'plot';
-                                localBhk = 0;
-                                localTenant = 'any';
-                                localBaths = 0;
-                                localBuiltMin = 0;
-                                localBuiltMax = 0;
-                              }),
-                            ),
+                            // Plots category removed from filters
                             ChoiceChip(
                               showCheckmark: false,
                               label: Text('Vehicles', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
@@ -1285,7 +1245,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                   children: [
                                     dropdownLabel('Min'),
                                     DropdownButtonFormField<double>(
-                                      value: floorBudget(localMinBudget),
+                                      initialValue: floorBudget(localMinBudget),
                                       style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
                                       items: budgetOptions.map((v) => DropdownMenuItem<double>(
                                         value: v,
@@ -1307,7 +1267,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                   children: [
                                     dropdownLabel('Max'),
                                     DropdownButtonFormField<double>(
-                                      value: ceilBudget(localMaxBudget),
+                                      initialValue: ceilBudget(localMaxBudget),
                                       style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
                                       items: budgetOptions.map((v) => DropdownMenuItem<double>(
                                         value: v,
@@ -1336,7 +1296,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                   children: [
                                     dropdownLabel('Min'),
                                     DropdownButtonFormField<int>(
-                                      value: builtUpOptions.contains(localBuiltMin) ? localBuiltMin : 0,
+                                      initialValue: builtUpOptions.contains(localBuiltMin) ? localBuiltMin : 0,
                                       style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
                                       items: builtUpOptions.map((v) => DropdownMenuItem<int>(
                                         value: v,
@@ -1355,7 +1315,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                   children: [
                                     dropdownLabel('Max'),
                                     DropdownButtonFormField<int>(
-                                      value: builtUpOptions.contains(localBuiltMax) ? localBuiltMax : 0,
+                                      initialValue: builtUpOptions.contains(localBuiltMax) ? localBuiltMax : 0,
                                       style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
                                       items: builtUpOptions.map((v) => DropdownMenuItem<int>(
                                         value: v,
@@ -1370,81 +1330,6 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Plot Size & Usage (visible when Plots selected)
-                          if (localToRent == 'plot') ...[
-                            Text('Plot Size', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Min'),
-                                      DropdownButtonFormField<int>(
-                                        value: plotSizeOptions.contains(localPlotMin) ? localPlotMin : 0,
-                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: plotSizeOptions.map((v) => DropdownMenuItem<int>(
-                                          value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
-                                        )).toList(),
-                                        onChanged: (v) => setLocal(() => localPlotMin = v ?? 0),
-                                        decoration: ddDecoration(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Max'),
-                                      DropdownButtonFormField<int>(
-                                        value: plotSizeOptions.contains(localPlotMax) ? localPlotMax : 0,
-                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: plotSizeOptions.map((v) => DropdownMenuItem<int>(
-                                          value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
-                                        )).toList(),
-                                        onChanged: (v) => setLocal(() => localPlotMax = v ?? 0),
-                                        decoration: ddDecoration(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text('Plot Usage', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: ['any','agriculture','commercial','events','construction'].map((u) {
-                                final sel = localPlotUsage == u;
-                                String label;
-                                switch (u) {
-                                  case 'agriculture': label = 'Agriculture'; break;
-                                  case 'commercial': label = 'Commercial'; break;
-                                  case 'events': label = 'Events'; break;
-                                  case 'construction': label = 'Construction'; break;
-                                  default: label = 'Any';
-                                }
-                                return ChoiceChip(
-                                  showCheckmark: false,
-                                  selected: sel,
-                                  selectedColor: theme.colorScheme.primary,
-                                  shape: const StadiumBorder(),
-                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  onSelected: (_) => setLocal(() => localPlotUsage = u),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
                           if (localToRent == 'residential') ...[
                             // Preferred Tenant
                             Text('Preferred Tenant', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
@@ -1488,7 +1373,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                     children: [
                                       dropdownLabel('Bedrooms (max)'),
                                       DropdownButtonFormField<int>(
-                                        value: [0,1,2,3,4,5].contains(localBhk) ? localBhk : 0,
+                                        initialValue: [0,1,2,3,4,5].contains(localBhk) ? localBhk : 0,
                                         isDense: true,
                                         decoration: ddDecoration(),
                                         items: [0,1,2,3,4,5]
@@ -1509,7 +1394,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                     children: [
                                       dropdownLabel('Bathrooms (min)'),
                                       DropdownButtonFormField<int>(
-                                        value: [0,1,2,3,4,5].contains(localBaths) ? localBaths : 0,
+                                        initialValue: [0,1,2,3,4,5].contains(localBaths) ? localBaths : 0,
                                         isDense: true,
                                         decoration: ddDecoration(),
                                         items: [0,1,2,3,4,5]
@@ -1593,7 +1478,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                     }
                                   }(),
                                   size: 16,
-                                  color: sel ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.85),
+                                  color: sel ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.85),
                                 ),
                                 label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
                                 selectedColor: theme.colorScheme.primary,
@@ -1629,13 +1514,13 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
-                      border: Border(top: BorderSide(color: theme.dividerColor.withOpacity(0.08))),
+                      border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.08))),
                       boxShadow: [
                         BoxShadow(
                           color: (theme.brightness == Brightness.dark
                                   ? EnterpriseDarkTheme.primaryAccent
                                   : EnterpriseLightTheme.primaryAccent)
-                              .withOpacity(theme.brightness == Brightness.dark ? 0.16 : 0.08),
+                              .withValues(alpha: theme.brightness == Brightness.dark ? 0.16 : 0.08),
                           blurRadius: 10,
                           offset: const Offset(0, -2),
                         ),
@@ -1647,12 +1532,12 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                           child: OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.3), width: 1.5),
+                              side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 1.5),
                               foregroundColor: theme.colorScheme.primary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                               backgroundColor: theme.brightness == Brightness.dark
-                                  ? theme.colorScheme.surface.withOpacity(0.05)
+                                  ? theme.colorScheme.surface.withValues(alpha: 0.05)
                                   : Colors.white,
                             ),
                             icon: const Icon(Icons.refresh_rounded, size: 20),
@@ -1665,15 +1550,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 _instantBooking = false;
                                 _verifiedOnly = false;
                                 _imagesOnly = false;
-                                _builtUpMinSqFt = 0;
-                                _builtUpMaxSqFt = 0;
                                 _toRentCategory = 'residential';
                                 _furnishType = 'any';
                                 _preferredTenant = 'any';
                                 _amenities = <String>{};
-                                _plotMinSize = 0;
-                                _plotMaxSize = 0;
-                                _plotUsage = 'any';
                               });
                               _performSearch();
                               Navigator.of(sheetContext).pop();
@@ -1701,9 +1581,6 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 _bedrooms = localBhk;
                                 _bathrooms = localBaths;
                                 _amenities = {...localAmenities};
-                                _plotMinSize = localPlotMin;
-                                _plotMaxSize = localPlotMax;
-                                _plotUsage = localPlotUsage;
                               });
                               _applyFilters();
                               Navigator.of(sheetContext).pop();
@@ -1714,7 +1591,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               elevation: 2,
-                              shadowColor: theme.colorScheme.primary.withOpacity(0.4),
+                              shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
                               textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                             ),
                             child: Row(
@@ -1755,9 +1632,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       _toRentCategory = 'residential';
       _furnishType = 'any';
       _preferredTenant = 'any';
-      _plotMinSize = 0;
-      _plotMaxSize = 0;
-      _plotUsage = 'any';
+      _amenities = <String>{};
     });
     _performSearch();
   }
@@ -1774,7 +1649,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (context.canPop()) {
           context.pop();
@@ -1783,7 +1658,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
         body: SafeArea(
           bottom: false,
           child: Column(
@@ -1792,7 +1667,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               // 1px seam mask matching page background to eliminate any anti-aliased line
               Container(
                 height: 1,
-                color: isDark ? theme.colorScheme.background : Colors.white,
+                color: isDark ? theme.colorScheme.surface : Colors.white,
               ),
               Expanded(
                 child: _buildSearchResults(theme),
@@ -1810,7 +1685,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       margin: EdgeInsets.zero,
       borderRadius: BorderRadius.zero,
       backgroundColor: isDark
-          ? Colors.white.withOpacity(0.08)
+          ? Colors.white.withValues(alpha: 0.08)
           : Colors.white, // distinct from results background (0xFFF3F4F6)
       borderColor: Colors.transparent,
       borderWidth: 0,
@@ -1827,7 +1702,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                 color: (isDark
                         ? EnterpriseDarkTheme.primaryAccent
                         : EnterpriseLightTheme.primaryAccent)
-                    .withOpacity(isDark ? 0.16 : 0.10),
+                    .withValues(alpha: isDark ? 0.16 : 0.10),
                 blurRadius: 14,
                 offset: const Offset(0, 6),
                 spreadRadius: 0.1,
@@ -1848,13 +1723,13 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
                       color: isDark
-                          ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
+                          ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
                           : EnterpriseLightTheme.secondaryBorder,
                       width: 1.1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                         blurRadius: 10,
                         offset: const Offset(-5, -5),
                         spreadRadius: 0,
@@ -1863,7 +1738,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                         color: (isDark
                                 ? EnterpriseDarkTheme.primaryAccent
                                 : EnterpriseLightTheme.primaryAccent)
-                            .withOpacity(isDark ? 0.18 : 0.12),
+                            .withValues(alpha: isDark ? 0.18 : 0.12),
                         blurRadius: 10,
                         offset: const Offset(5, 5),
                         spreadRadius: 0,
@@ -1937,19 +1812,19 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                       decoration: BoxDecoration(
                         color: _showFilters
                             ? theme.primaryColor
-                            : (isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white),
+                            : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _showFilters
                               ? theme.primaryColor
                               : (isDark
-                                  ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.5)
-                                  : theme.colorScheme.outline.withOpacity(0.2)),
+                                  ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
+                                  : theme.colorScheme.outline.withValues(alpha: 0.2)),
                           width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                            color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                             blurRadius: 10,
                             offset: const Offset(-5, -5),
                             spreadRadius: 0,
@@ -1958,7 +1833,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             color: (isDark
                                     ? EnterpriseDarkTheme.primaryAccent
                                     : EnterpriseLightTheme.primaryAccent)
-                                .withOpacity(isDark ? 0.18 : 0.12),
+                                .withValues(alpha: isDark ? 0.18 : 0.12),
                             blurRadius: 10,
                             offset: const Offset(5, 5),
                             spreadRadius: 0,
@@ -1986,7 +1861,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             border: Border.all(color: Colors.white, width: 1.5),
                             boxShadow: [
                               BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
+                                color: theme.colorScheme.primary.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -2060,7 +1935,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             gradient: LinearGradient(
               colors: [
                 theme.primaryColor,
-                theme.primaryColor.withOpacity(0.8),
+                theme.primaryColor.withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -2072,7 +1947,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -2096,7 +1971,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                     Text(
                       'Customize your search preferences',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                   ],
@@ -2109,7 +1984,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -2137,7 +2012,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
             border: Border(
               top: BorderSide(
-                color: theme.dividerColor.withOpacity(0.1),
+                color: theme.dividerColor.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -2430,7 +2305,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.1),
+          color: theme.dividerColor.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -2442,7 +2317,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: theme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -2477,7 +2352,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           color: selected ? theme.primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? theme.primaryColor : theme.dividerColor.withOpacity(0.3),
+            color: selected ? theme.primaryColor : theme.dividerColor.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -2500,10 +2375,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? theme.primaryColor.withOpacity(0.1) : Colors.transparent,
+          color: selected ? theme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? theme.primaryColor : theme.dividerColor.withOpacity(0.3),
+            color: selected ? theme.primaryColor : theme.dividerColor.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -2512,7 +2387,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           children: [
             Icon(
               selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-              color: selected ? theme.primaryColor : theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+              color: selected ? theme.primaryColor : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -2536,7 +2411,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.2),
+          color: theme.dividerColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -2548,7 +2423,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: value > min ? theme.primaryColor.withOpacity(0.1) : Colors.transparent,
+                color: value > min ? theme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
@@ -2561,7 +2436,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: theme.primaryColor.withOpacity(0.1),
+              color: theme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -2578,7 +2453,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: value < max ? theme.primaryColor.withOpacity(0.1) : Colors.transparent,
+                color: value < max ? theme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
@@ -2596,7 +2471,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   Widget _buildSearchResults(ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
     final Color listBg = isDark
-        ? theme.colorScheme.background
+        ? theme.colorScheme.surface
         : Colors.white;
     final double bottomInset = MediaQuery.of(context).padding.bottom;
     final double bottomPad = bottomInset + 72; // account for bottom nav + spacing
@@ -2682,14 +2557,14 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.4)),
+              Icon(Icons.search_off, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
               const SizedBox(height: 16),
               Text('No Results Found', style: theme.textTheme.headlineSmall),
               const SizedBox(height: 8),
               Text(
                 'Try adjusting your filters or search terms.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),

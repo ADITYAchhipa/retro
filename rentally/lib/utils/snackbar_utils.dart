@@ -214,13 +214,13 @@ class _ProfessionalSnackBarState extends State<_ProfessionalSnackBar>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.backgroundColor.withOpacity(0.22),
+                    color: widget.backgroundColor.withValues(alpha: 0.22),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                     spreadRadius: 0,
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(widget.isDark ? 0.30 : 0.08),
+                    color: Colors.black.withValues(alpha: widget.isDark ? 0.30 : 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -236,12 +236,12 @@ class _ProfessionalSnackBarState extends State<_ProfessionalSnackBar>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          widget.backgroundColor.withOpacity(0.9),
-                          widget.backgroundColor.withOpacity(0.8),
+                          widget.backgroundColor.withValues(alpha: 0.9),
+                          widget.backgroundColor.withValues(alpha: 0.8),
                         ],
                       ),
                       border: Border.all(
-                        color: widget.backgroundColor.withOpacity(0.3),
+                        color: widget.backgroundColor.withValues(alpha: 0.3),
                         width: 1,
                       ),
                       borderRadius: BorderRadius.circular(16),
@@ -254,7 +254,7 @@ class _ProfessionalSnackBarState extends State<_ProfessionalSnackBar>
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
@@ -284,7 +284,7 @@ class _ProfessionalSnackBarState extends State<_ProfessionalSnackBar>
                                 _dismiss();
                               },
                               style: TextButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.2),
+                                backgroundColor: Colors.white.withValues(alpha: 0.2),
                                 foregroundColor: widget.foregroundColor,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -309,7 +309,7 @@ class _ProfessionalSnackBarState extends State<_ProfessionalSnackBar>
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Icon(

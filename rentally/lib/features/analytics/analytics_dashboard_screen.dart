@@ -153,9 +153,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
       tabController: _tabController,
       child: Scaffold(
       appBar: AppBar(
+        titleSpacing: 16,
         title: const Text('Analytics Dashboard'),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        toolbarHeight: 60,
         actions: [
           PopupMenuButton<String>(
             initialValue: _selectedPeriod,
@@ -213,7 +215,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
 
   Widget _buildPeriodChips(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -222,23 +224,88 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               final selected = _selectedPeriod == period;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(_formatPeriod(period)),
+                child: _wishlistStyleChip(
+                  theme: theme,
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                  label: _formatPeriod(period),
                   selected: selected,
-                  onSelected: (_) => _onSelectPeriod(period),
+                  onTap: () => _onSelectPeriod(period),
                 ),
               );
             }),
-            const SizedBox(width: 8),
-            FilterChip(
-              label: const Text('Compare prev'),
+            _wishlistStyleChip(
+              theme: theme,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+              label: 'Compare prev',
               selected: _comparePrev,
-              onSelected: (v) async {
-                setState(() => _comparePrev = v);
-                await _saveComparePrev(v);
+              onTap: () async {
+                setState(() => _comparePrev = !_comparePrev);
+                await _saveComparePrev(_comparePrev);
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _wishlistStyleChip({
+    required ThemeData theme,
+    required bool isDark,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? theme.colorScheme.primary
+              : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withValues(alpha: 0.2),
+            width: 1.2,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+                    blurRadius: 6,
+                    offset: const Offset(-3, -3),
+                  ),
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(3, 3),
+                  ),
+                ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: selected ? Colors.white : theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );
@@ -530,7 +597,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
   
   Widget _buildMetricCard(MetricCard metric, ThemeData theme) {
     return Card(
-      elevation: 1, // Reduced elevation for calmer look
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12), // Reduced from 16 to 12
         child: Column(
@@ -544,7 +615,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Smaller badge
                   decoration: BoxDecoration(
-                    color: metric.isPositive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                    color: metric.isPositive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -570,7 +641,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                 Text(
                   metric.title,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 11, // Slightly smaller
                   ),
                 ),
@@ -604,7 +675,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               color: color,
               barWidth: 2,
               dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(show: true, color: color.withOpacity(0.08)),
+              belowBarData: BarAreaData(show: true, color: color.withValues(alpha: 0.08)),
             ),
           ],
           minY: 0,
@@ -619,6 +690,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
     final isHourly = _selectedPeriod == '24h';
     final int step = (points / 6).ceil().clamp(1, points).toInt();
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0), // Fix broken Padding call
         child: Column(
@@ -655,7 +731,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               Text(
                 '${_customRange!.start.month}/${_customRange!.start.day} - ${_customRange!.end.month}/${_customRange!.end.day}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             _buildSeriesLegend(current: theme.primaryColor, previous: theme.colorScheme.secondary),
@@ -726,7 +802,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: theme.primaryColor.withOpacity(0.1),
+                        color: theme.primaryColor.withValues(alpha: 0.1),
                       ),
                     ),
                     if (_comparePrev)
@@ -753,6 +829,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
 
   Widget _buildTopPerformers(ThemeData theme) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -772,7 +853,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (context, index) => ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: theme.primaryColor.withOpacity(0.1),
+                  backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
                   child: Text('${index + 1}'),
                 ),
                 title: Text('Modern Apartment ${index + 1}'),
@@ -1204,7 +1285,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
     final isHourly = _selectedPeriod == '24h';
     final int step = (points / 6).ceil().clamp(1, points).toInt();
     return Card(
-      elevation: 1,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1234,7 +1319,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               Text(
                 '${_customRange!.start.month}/${_customRange!.start.day} - ${_customRange!.end.month}/${_customRange!.end.day}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             _buildSeriesLegend(current: Colors.orange, previous: theme.colorScheme.secondary),
@@ -1296,7 +1381,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                         color: Colors.orange,
                         barWidth: 2,
                         dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(show: true, color: Colors.orange.withOpacity(0.1)),
+                        belowBarData: BarAreaData(show: true, color: Colors.orange.withValues(alpha: 0.1)),
                       ),
                       if (_comparePrev)
                         LineChartBarData(
@@ -1322,7 +1407,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
 
   Widget _buildUserDistributionPieChart(ThemeData theme) {
     return Card(
-      elevation: 1,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1448,7 +1537,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
 
   Widget _buildRevenueHeatmap(ThemeData theme) {
     return Card(
-      elevation: 1,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1472,7 +1565,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                   final intensity = (index % 5) / 4.0;
                   return Container(
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.2 + intensity * 0.6),
+                      color: Colors.blue.withValues(alpha: 0.2 + intensity * 0.6),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Center(
@@ -1490,7 +1583,11 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
 
   Widget _buildPropertyTypeDistribution(ThemeData theme) {
     return Card(
-      elevation: 1,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1563,7 +1660,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
               Text(
                 '${_customRange!.start.month}/${_customRange!.start.day} - ${_customRange!.end.month}/${_customRange!.end.day}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             _buildSeriesLegend(current: Colors.purple, previous: theme.colorScheme.secondary),
@@ -1612,7 +1709,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                         color: Colors.purple,
                         barWidth: 3,
                         dotData: const FlDotData(show: true),
-                        belowBarData: BarAreaData(show: true, color: Colors.purple.withOpacity(0.1)),
+                        belowBarData: BarAreaData(show: true, color: Colors.purple.withValues(alpha: 0.1)),
                       ),
                       if (_comparePrev)
                         LineChartBarData(
@@ -2030,7 +2127,7 @@ class _AnalyticsDashboardScreenState extends ConsumerState<AnalyticsDashboardScr
                                             dotData: const FlDotData(show: false),
                                             belowBarData: BarAreaData(
                                               show: true,
-                                              color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                             ),
                                           ),
                                         ],

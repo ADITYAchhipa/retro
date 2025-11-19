@@ -41,7 +41,7 @@ class TrustIndicators extends StatelessWidget {
   /// Builds the enhanced container decoration with better visibility.
   BoxDecoration _buildContainerDecoration() {
     return BoxDecoration(
-      color: Colors.white.withOpacity(0.9),
+      color: Colors.white.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(SplashConstants.trustBadgeContainerRadius),
       border: Border.all(
         color: const Color(0xFFE2E8F0),
@@ -49,7 +49,7 @@ class TrustIndicators extends StatelessWidget {
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.06),
+          color: Colors.black.withValues(alpha: 0.06),
           blurRadius: 8,
           offset: const Offset(0, 4),
         ),
@@ -150,8 +150,8 @@ class TrustBadge extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
+            color.withValues(alpha: 0.1),
+            color.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(SplashConstants.trustBadgeBorderRadius),

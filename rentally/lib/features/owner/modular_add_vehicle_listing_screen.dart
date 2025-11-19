@@ -36,6 +36,7 @@ class _ModularAddVehicleListingScreenState
   
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
+  late PageController _pageController;
   
   final bool _isLoading = false;
   bool _isSubmitting = false;
@@ -52,10 +53,16 @@ class _ModularAddVehicleListingScreenState
   final _yearController = TextEditingController();
   final _licensePlateController = TextEditingController();
   final _locationController = TextEditingController();
+  final _securityDepositController = TextEditingController();
+  final _mileageAllowanceController = TextEditingController();
+  final _extraPerKmController = TextEditingController();
+  final _insuranceProviderController = TextEditingController();
+  DateTime? _insuranceExpiry;
   
   String _selectedVehicleType = 'car';
   String _selectedTransmission = 'automatic';
   String _selectedFuelType = 'gasoline';
+  String _fuelPolicy = 'same_to_same';
   final List<String> _selectedFeatures = [];
   final List<String> _uploadedImages = [];
   final Map<String, bool> _availabilitySettings = {
@@ -64,11 +71,23 @@ class _ModularAddVehicleListingScreenState
     'airport_pickup': false,
   };
   bool _requireSeekerId = false;
+  int _minDriverAge = 21;
+  bool _petFriendly = false;
+  bool _smokingAllowed = false;
+  bool _interstateAllowed = true;
+  int _seats = 4;
+  int _doors = 4;
+  int _bags = 2;
+
+  bool _editMode = false;
+  svc.Listing? _editing;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    _pageController = PageController(initialPage: _currentStep);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeLoadEditFromRoute());
   }
 
   void _initializeAnimations() {
@@ -85,6 +104,8 @@ class _ModularAddVehicleListingScreenState
   @override
   Widget build(BuildContext context) {
     return ResponsiveLayout(
+      padding: EdgeInsets.zero,
+      maxWidth: MediaQuery.sizeOf(context).width,
       child: Scaffold(
         appBar: _buildAppBar(),
         body: _isLoading ? _buildLoadingState() : _buildContent(),
@@ -94,14 +115,44 @@ class _ModularAddVehicleListingScreenState
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final theme = Theme.of(context);
     return AppBar(
-      title: const Text('Add Vehicle Listing'),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      titleSpacing: 16,
+      toolbarHeight: 60,
+      title: Text(_editMode ? 'Edit Vehicle Listing' : 'Add Vehicle Listing'),
+      backgroundColor: theme.colorScheme.surface,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => context.pop(),
       ),
+      actions: _editMode && _editing != null
+          ? [
+              PopupMenuButton<String>(
+                onSelected: (val) async {
+                  final notifier = ref.read(svc.listingProvider.notifier);
+                  if (val == 'toggle' && _editing != null) {
+                    final updated = _editing!.copyWith(isActive: !_editing!.isActive);
+                    await notifier.updateListing(_editing!.id, updated);
+                    if (!mounted) return;
+                    setState(() => _editing = updated);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(updated.isActive ? 'Listing activated' : 'Listing deactivated')),
+                    );
+                  } else if (val == 'delete' && _editing != null) {
+                    await notifier.deleteListing(_editing!.id);
+                    if (!mounted) return;
+                    context.pop();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing deleted')));
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(value: 'toggle', child: Text(_editing!.isActive ? 'Deactivate' : 'Activate')),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              ),
+            ]
+          : null,
     );
   }
 
@@ -117,6 +168,8 @@ class _ModularAddVehicleListingScreenState
           _buildStepIndicator(),
           Expanded(
             child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
               children: [
                 _buildVehicleInfoStep(),
                 _buildSpecificationsStep(),
@@ -180,24 +233,59 @@ class _ModularAddVehicleListingScreenState
   }
 
   Widget _buildStepIndicator() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    const steps = ['Info', 'Specs', 'Features', 'Photos', 'Pricing', 'Location', 'Review'];
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: List.generate(7, (index) {
-          final isActive = index <= _currentStep;
-          return Expanded(
-            child: Container(
-              height: 4,
-              margin: EdgeInsets.only(right: index < 6 ? 8 : 0),
-              decoration: BoxDecoration(
-                color: isActive 
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(bottom: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.08))),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(steps.length, (i) {
+            final selected = _currentStep == i;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _currentStep = i);
+                  _pageController.animateToPage(i, duration: const Duration(milliseconds: 220), curve: Curves.easeOutCubic);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outline.withValues(alpha: 0.2),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      steps[i],
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: selected ? Colors.white : theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -340,6 +428,9 @@ class _ModularAddVehicleListingScreenState
               avatar: Icon(type['icon'] as IconData, size: 18),
               label: Text(type['label'] as String),
               selected: isSelected,
+              showCheckmark: false,
+              selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.9),
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
               onSelected: (selected) {
                 setState(() {
                   _selectedVehicleType = type['key'] as String;
@@ -382,9 +473,13 @@ class _ModularAddVehicleListingScreenState
         Wrap(
           spacing: 8,
           children: ['automatic', 'manual'].map((transmission) {
+            final isSelected = _selectedTransmission == transmission;
             return ChoiceChip(
               label: Text(transmission.toUpperCase()),
-              selected: _selectedTransmission == transmission,
+              selected: isSelected,
+              showCheckmark: false,
+              selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.9),
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
               onSelected: (selected) {
                 setState(() {
                   _selectedTransmission = transmission;
@@ -408,9 +503,13 @@ class _ModularAddVehicleListingScreenState
         Wrap(
           spacing: 8,
           children: fuelTypes.map((fuel) {
+            final isSelected = _selectedFuelType == fuel;
             return ChoiceChip(
               label: Text(fuel.toUpperCase()),
-              selected: _selectedFuelType == fuel,
+              selected: isSelected,
+              showCheckmark: false,
+              selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.9),
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
               onSelected: (selected) {
                 setState(() {
                   _selectedFuelType = fuel;
@@ -426,14 +525,14 @@ class _ModularAddVehicleListingScreenState
   Widget _buildCapacityCounters() {
     return Column(
       children: [
-        _buildCounter('Seats', 4),
-        _buildCounter('Doors', 4),
-        _buildCounter('Bags', 2),
+        _buildCounter('Seats', _seats, (v) => setState(() => _seats = v)),
+        _buildCounter('Doors', _doors, (v) => setState(() => _doors = v)),
+        _buildCounter('Bags', _bags, (v) => setState(() => _bags = v)),
       ],
     );
   }
 
-  Widget _buildCounter(String label, int value) {
+  Widget _buildCounter(String label, int value, ValueChanged<int> onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -443,16 +542,12 @@ class _ModularAddVehicleListingScreenState
           Row(
             children: [
               IconButton(
-                onPressed: () {
-                  // Decrease counter
-                },
+                onPressed: () { if (value > 0) onChanged(value - 1); },
                 icon: const Icon(Icons.remove_circle_outline),
               ),
               Text('$value'),
               IconButton(
-                onPressed: () {
-                  // Increase counter
-                },
+                onPressed: () { onChanged(value + 1); },
                 icon: const Icon(Icons.add_circle_outline),
               ),
             ],
@@ -487,6 +582,16 @@ class _ModularAddVehicleListingScreenState
               return FilterChip(
                 label: Text(feature),
                 selected: isSelected,
+                showCheckmark: false,
+                selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
+                backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)
+                        : Theme.of(context).colorScheme.outline.withValues(alpha: 0.4),
+                  ),
+                ),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -528,7 +633,7 @@ class _ModularAddVehicleListingScreenState
       height: 200,
       decoration: BoxDecoration(
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           style: BorderStyle.solid,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -565,6 +670,7 @@ class _ModularAddVehicleListingScreenState
       ),
       itemCount: _uploadedImages.length,
       itemBuilder: (context, index) {
+        final isCover = index == 0;
         return Stack(
           children: [
             Container(
@@ -576,9 +682,57 @@ class _ModularAddVehicleListingScreenState
                 ),
               ),
             ),
+            if (isCover)
+              Positioned(
+                left: 4,
+                top: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'COVER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            if (!isCover)
+              Positioned(
+                right: 4,
+                top: 4,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      final imgToMakeCover = _uploadedImages.removeAt(index);
+                      _uploadedImages.insert(0, imgToMakeCover);
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'Make cover',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             Positioned(
               top: 4,
-              right: 4,
+              right: isCover ? 4 : 46,
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () {
@@ -636,6 +790,107 @@ class _ModularAddVehicleListingScreenState
               return null;
             },
           ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _securityDepositController,
+            decoration: const InputDecoration(
+              labelText: 'Security Deposit (optional)',
+              hintText: 'Amount held as refundable deposit',
+              prefixIcon: Icon(Icons.lock_outline),
+            ),
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _mileageAllowanceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Mileage allowance / day (km)',
+                    prefixIcon: Icon(Icons.speed),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _extraPerKmController,
+                  decoration: const InputDecoration(
+                    labelText: 'Extra charge per km',
+                    prefixIcon: Icon(Icons.local_gas_station_outlined),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('Fuel Policy'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              {'k': 'same_to_same', 'l': 'Same to Same'},
+              {'k': 'return_full', 'l': 'Return Full'},
+              {'k': 'pre_purchase', 'l': 'Pre-Purchase'},
+            ].map((m) {
+              final isSelected = _fuelPolicy == m['k'];
+              return ChoiceChip(
+                label: Text(m['l'] as String),
+                selected: isSelected,
+                showCheckmark: false,
+                selectedColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.9),
+                backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                onSelected: (_) => setState(() => _fuelPolicy = m['k'] as String),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: _minDriverAge,
+                  decoration: const InputDecoration(
+                    labelText: 'Minimum driver age',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  items: const [18, 21, 23, 25]
+                      .map((age) => DropdownMenuItem(value: age, child: Text('$age years')))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val == null) return;
+                    setState(() => _minDriverAge = val);
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: _insuranceProviderController,
+                  decoration: const InputDecoration(
+                    labelText: 'Insurance provider (optional)',
+                    prefixIcon: Icon(Icons.verified_user_outlined),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final now = DateTime.now();
+                final picked = await showDatePicker(context: context, firstDate: now, lastDate: now.add(const Duration(days: 3650)), initialDate: _insuranceExpiry ?? now);
+                if (picked != null) setState(() => _insuranceExpiry = picked);
+              },
+              icon: const Icon(Icons.date_range),
+              label: Text(_insuranceExpiry == null ? 'Insurance expiry date (optional)' : 'Insurance expiry: ${_insuranceExpiry!.toString().split(' ').first}'),
+            ),
+          ),
           const SizedBox(height: 24),
           _buildAvailabilitySettings(),
           const SizedBox(height: 16),
@@ -644,6 +899,21 @@ class _ModularAddVehicleListingScreenState
             subtitle: const Text('Seeker must upload a government ID photo during booking'),
             value: _requireSeekerId,
             onChanged: (v) => setState(() => _requireSeekerId = v),
+          ),
+          SwitchListTile(
+            title: const Text('Pet friendly'),
+            value: _petFriendly,
+            onChanged: (v) => setState(() => _petFriendly = v),
+          ),
+          SwitchListTile(
+            title: const Text('Smoking allowed'),
+            value: _smokingAllowed,
+            onChanged: (v) => setState(() => _smokingAllowed = v),
+          ),
+          SwitchListTile(
+            title: const Text('Interstate travel allowed'),
+            value: _interstateAllowed,
+            onChanged: (v) => setState(() => _interstateAllowed = v),
           ),
         ],
       ),
@@ -767,7 +1037,7 @@ class _ModularAddVehicleListingScreenState
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, -2),
           ),
@@ -779,9 +1049,8 @@ class _ModularAddVehicleListingScreenState
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
-                  setState(() {
-                    _currentStep--;
-                  });
+                  setState(() { _currentStep--; });
+                  _pageController.animateToPage(_currentStep, duration: const Duration(milliseconds: 200), curve: Curves.easeOutCubic);
                 },
                 child: const Text('Back'),
               ),
@@ -796,7 +1065,7 @@ class _ModularAddVehicleListingScreenState
                       height: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : Text(_currentStep < 6 ? 'Next' : 'Submit'),
+                  : Text(_currentStep < 6 ? 'Next' : (_editMode ? 'Save Changes' : 'Submit')),
             ),
           ),
         ],
@@ -867,8 +1136,11 @@ class _ModularAddVehicleListingScreenState
       }
       // Build Listing model (services/listing_service.dart)
       final now = DateTime.now();
-      final id = 'veh_${now.millisecondsSinceEpoch}';
+      final id = _editMode && _editing != null ? _editing!.id : 'veh_${now.millisecondsSinceEpoch}';
       final pricePerDay = double.tryParse(_priceController.text.trim()) ?? 0.0;
+      final deposit = double.tryParse(_securityDepositController.text.trim());
+      final mileage = int.tryParse(_mileageAllowanceController.text.trim());
+      final extraKm = double.tryParse(_extraPerKmController.text.trim());
       final images = _uploadedImages.isNotEmpty
           ? List<String>.from(_uploadedImages)
           : <String>['https://picsum.photos/seed/vehicle/300/200'];
@@ -883,9 +1155,21 @@ class _ModularAddVehicleListingScreenState
         'model': _modelController.text.trim(),
         'year': _yearController.text.trim(),
         'license_plate': _licensePlateController.text.trim(),
+        'seats': _seats,
+        'doors': _doors,
+        'bags': _bags,
+        'fuel_policy': _fuelPolicy,
+        'min_driver_age': _minDriverAge,
+        'mileage_allowance_km': mileage,
+        'extra_per_km': extraKm,
+        'insurance_provider': _insuranceProviderController.text.trim().isEmpty ? null : _insuranceProviderController.text.trim(),
+        'insurance_expiry': _insuranceExpiry?.toIso8601String(),
+        'pet_friendly': _petFriendly,
+        'smoking_allowed': _smokingAllowed,
+        'interstate_allowed': _interstateAllowed,
       };
 
-      final newListing = svc.Listing(
+      final baseListing = svc.Listing(
         id: id,
         title: _titleController.text.trim().isEmpty ? 'Untitled Vehicle' : _titleController.text.trim(),
         description: _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : 'No description provided',
@@ -897,9 +1181,9 @@ class _ModularAddVehicleListingScreenState
         zipCode: '00000',
         images: images,
         ownerId: user.id,
-        createdAt: now,
+        createdAt: _editMode && _editing != null ? _editing!.createdAt : now,
         updatedAt: now,
-        isActive: true,
+        isActive: _editMode && _editing != null ? _editing!.isActive : true,
         amenities: amenities,
         rentalUnit: 'day',
         requireSeekerId: _requireSeekerId,
@@ -909,16 +1193,33 @@ class _ModularAddVehicleListingScreenState
           final clamped = d.clamp(0, 90).toDouble();
           return clamped;
         }(),
+        securityDeposit: deposit,
       );
 
       final listingNotifier = ref.read(svc.listingProvider.notifier);
-      await listingNotifier.addListing(newListing);
+      if (_editMode && _editing != null) {
+        final updated = _editing!.copyWith(
+          title: baseListing.title,
+          description: baseListing.description,
+          price: baseListing.price,
+          address: baseListing.address,
+          images: baseListing.images,
+          amenities: baseListing.amenities,
+          requireSeekerId: baseListing.requireSeekerId,
+          discountPercent: baseListing.discountPercent,
+          rentalUnit: baseListing.rentalUnit,
+          securityDeposit: baseListing.securityDeposit,
+        );
+        await listingNotifier.updateListing(_editing!.id, updated);
+      } else {
+        await listingNotifier.addListing(baseListing);
+      }
 
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vehicle listing created successfully!'),
+          SnackBar(
+            content: Text(_editMode ? 'Vehicle listing updated successfully!' : 'Vehicle listing created successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -934,6 +1235,7 @@ class _ModularAddVehicleListingScreenState
   @override
   void dispose() {
     _fadeController.dispose();
+    _pageController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
@@ -943,6 +1245,66 @@ class _ModularAddVehicleListingScreenState
     _yearController.dispose();
     _licensePlateController.dispose();
     _locationController.dispose();
+    _securityDepositController.dispose();
+    _mileageAllowanceController.dispose();
+    _extraPerKmController.dispose();
+    _insuranceProviderController.dispose();
     super.dispose();
+  }
+
+  void _maybeLoadEditFromRoute() {
+    try {
+      final state = GoRouterState.of(context);
+      final id = state.uri.queryParameters['id'];
+      if (id == null || id.isEmpty) return;
+      final st = ref.read(svc.listingProvider);
+      final all = [...st.userListings, ...st.listings];
+      svc.Listing? found;
+      try {
+        found = all.firstWhere((l) => l.id == id);
+      } catch (_) {
+        found = null;
+      }
+      if (found == null) return;
+      _editing = found;
+      _editMode = true;
+      _titleController.text = found.title;
+      _descriptionController.text = found.description;
+      _priceController.text = found.price.toStringAsFixed(0);
+      _discountPercentController.text = (found.discountPercent ?? 0).toStringAsFixed(0);
+      _locationController.text = found.address;
+      _uploadedImages
+        ..clear()
+        ..addAll(found.images);
+      final am = found.amenities;
+      _selectedVehicleType = (am['vehicle_type'] as String?) ?? _selectedVehicleType;
+      _selectedTransmission = (am['transmission'] as String?) ?? _selectedTransmission;
+      _selectedFuelType = (am['fuel_type'] as String?) ?? _selectedFuelType;
+      final feats = (am['features'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      _selectedFeatures
+        ..clear()
+        ..addAll(feats);
+      final avail = (am['availability'] as Map?)?.map((k, v) => MapEntry(k.toString(), v == true)) ?? {};
+      _availabilitySettings.addAll(avail);
+      _makeController.text = (am['make'] as String?) ?? '';
+      _modelController.text = (am['model'] as String?) ?? '';
+      _yearController.text = (am['year'] as String?) ?? '';
+      _licensePlateController.text = (am['license_plate'] as String?) ?? '';
+      _seats = (am['seats'] as int?) ?? _seats;
+      _doors = (am['doors'] as int?) ?? _doors;
+      _bags = (am['bags'] as int?) ?? _bags;
+      _fuelPolicy = (am['fuel_policy'] as String?) ?? _fuelPolicy;
+      _minDriverAge = (am['min_driver_age'] as int?) ?? _minDriverAge;
+      _mileageAllowanceController.text = ((am['mileage_allowance_km'] as num?)?.toInt()).toString();
+      _extraPerKmController.text = ((am['extra_per_km'] as num?)?.toDouble()).toString();
+      _insuranceProviderController.text = (am['insurance_provider'] as String?) ?? '';
+      final exp = am['insurance_expiry'] as String?;
+      if (exp != null && exp.isNotEmpty) _insuranceExpiry = DateTime.tryParse(exp);
+      _petFriendly = (am['pet_friendly'] as bool?) ?? _petFriendly;
+      _smokingAllowed = (am['smoking_allowed'] as bool?) ?? _smokingAllowed;
+      _interstateAllowed = (am['interstate_allowed'] as bool?) ?? _interstateAllowed;
+      _securityDepositController.text = (found.securityDeposit ?? 0).toStringAsFixed(0);
+      setState(() {});
+    } catch (_) {}
   }
 }

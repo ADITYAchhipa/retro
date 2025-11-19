@@ -103,12 +103,13 @@ class ResidentialDetailsForm extends StatelessWidget {
       TextInputType? type,
       String? Function(String?)? validator,
     }) {
+      final isRequired = validator != null;
       return TextFormField(
         controller: c,
         keyboardType: type,
         validator: validator,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: isRequired ? '$label *' : label,
           hintText: hint,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           isDense: true,
@@ -122,7 +123,7 @@ class ResidentialDetailsForm extends StatelessWidget {
       children: [
         // Furnishing (residential)
         DropdownButtonFormField<String>(
-          value: furnishing,
+          initialValue: furnishing,
           decoration: InputDecoration(
             labelText: 'Furnishing',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -141,7 +142,7 @@ class ResidentialDetailsForm extends StatelessWidget {
         // Apartment configuration or Bedrooms
         if (_isApartment)
           DropdownButtonFormField<String>(
-            value: apartmentBhk,
+            initialValue: apartmentBhk,
             decoration: InputDecoration(
               labelText: 'Configuration',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -155,7 +156,7 @@ class ResidentialDetailsForm extends StatelessWidget {
           )
         else if (!_isStudio && !_isPG && !_isRoom)
           DropdownButtonFormField<int>(
-            value: bedrooms,
+            initialValue: bedrooms,
             decoration: InputDecoration(
               labelText: 'Bedrooms',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -174,7 +175,7 @@ class ResidentialDetailsForm extends StatelessWidget {
         // Room: Bathroom type
         if (_isRoom)
           DropdownButtonFormField<String>(
-            value: roomBathroomType,
+            initialValue: roomBathroomType,
             decoration: InputDecoration(
               labelText: 'Bathroom Type',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -192,7 +193,7 @@ class ResidentialDetailsForm extends StatelessWidget {
         if (!_isRoom) ...[
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
-            value: bathrooms,
+            initialValue: bathrooms,
             decoration: InputDecoration(
               labelText: 'Bathrooms',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -233,7 +234,7 @@ class ResidentialDetailsForm extends StatelessWidget {
           Row(children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: pgGender,
+                initialValue: pgGender,
                 decoration: InputDecoration(
                   labelText: 'Gender Preference',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -251,7 +252,7 @@ class ResidentialDetailsForm extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: pgMeals,
+                initialValue: pgMeals,
                 decoration: InputDecoration(
                   labelText: 'Meal Preference',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),

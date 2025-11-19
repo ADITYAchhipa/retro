@@ -175,17 +175,17 @@ class _HomeCategoryNavigationState extends State<HomeCategoryNavigation> {
               width: 52,
               height: 42,
               decoration: BoxDecoration(
-                color: isDark ? theme.colorScheme.surface.withOpacity(0.08) : Colors.white,
+                color: isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark
-                      ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
-                      : theme.colorScheme.outline.withOpacity(0.1),
+                      ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
+                      : theme.colorScheme.outline.withValues(alpha: 0.1),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+                    color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                     blurRadius: 10,
                     offset: const Offset(-5, -5),
                     spreadRadius: 0,
@@ -194,7 +194,7 @@ class _HomeCategoryNavigationState extends State<HomeCategoryNavigation> {
                     color: (isDark
                             ? EnterpriseDarkTheme.primaryAccent
                             : theme.primaryColor)
-                        .withOpacity(isDark ? 0.18 : 0.12),
+                        .withValues(alpha: isDark ? 0.18 : 0.12),
                     blurRadius: 10,
                     offset: const Offset(5, 5),
                     spreadRadius: 0,
@@ -263,17 +263,17 @@ class _GradientArrow extends StatelessWidget {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: theme.brightness == Brightness.dark ? Colors.black.withOpacity(0.08) : Colors.white,
+                  color: theme.brightness == Brightness.dark ? Colors.black.withValues(alpha: 0.08) : Colors.white,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: theme.brightness == Brightness.dark
-                        ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.35)
-                        : theme.colorScheme.outline.withOpacity(0.12),
+                        ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
+                        : theme.colorScheme.outline.withValues(alpha: 0.12),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.06) : Colors.white,
+                      color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
                       blurRadius: 10,
                       offset: const Offset(-5, -5),
                       spreadRadius: 0,
@@ -282,7 +282,7 @@ class _GradientArrow extends StatelessWidget {
                       color: (theme.brightness == Brightness.dark
                               ? EnterpriseDarkTheme.primaryAccent
                               : theme.primaryColor)
-                          .withOpacity(theme.brightness == Brightness.dark ? 0.18 : 0.12),
+                          .withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.12),
                       blurRadius: 10,
                       offset: const Offset(5, 5),
                       spreadRadius: 0,
@@ -292,7 +292,7 @@ class _GradientArrow extends StatelessWidget {
                 child: Icon(
                   isLeft ? Icons.chevron_left : Icons.chevron_right,
                   size: 18,
-                  color: theme.colorScheme.onSurface.withOpacity(0.75),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                 ),
               ),
             ),

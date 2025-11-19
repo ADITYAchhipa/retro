@@ -254,7 +254,7 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     final isDark = theme.brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.grey[50],
       appBar: _buildAppBar(theme, isDark),
       body: _isLoading ? _buildLoadingState() : _buildContent(theme, isDark),
     );
@@ -372,8 +372,8 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     return NeoGlass(
       padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.all(16),
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       blur: isDark ? 10 : 0,
       child: Column(
@@ -386,8 +386,8 @@ We will respond to your inquiry within 30 days or as required by applicable law.
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.2),
-                      theme.colorScheme.primary.withOpacity(0.1),
+                      theme.colorScheme.primary.withValues(alpha: 0.2),
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -448,10 +448,10 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.3),
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -477,8 +477,8 @@ We will respond to your inquiry within 30 days or as required by applicable law.
     return NeoGlass(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,8 +536,8 @@ We will respond to your inquiry within 30 days or as required by applicable law.
 
     return NeoGlass(
       padding: EdgeInsets.zero,
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       blur: isDark ? 8 : 0,
       child: Column(
@@ -556,8 +556,8 @@ We will respond to your inquiry within 30 days or as required by applicable law.
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            theme.colorScheme.primary.withOpacity(0.2),
-                            theme.colorScheme.primary.withOpacity(0.1),
+                            theme.colorScheme.primary.withValues(alpha: 0.2),
+                            theme.colorScheme.primary.withValues(alpha: 0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
@@ -594,7 +594,7 @@ We will respond to your inquiry within 30 days or as required by applicable law.
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Divider(
-                    color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 12),
                   Text(

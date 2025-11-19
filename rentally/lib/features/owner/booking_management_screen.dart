@@ -267,7 +267,7 @@ class _BookingManagementScreenState extends ConsumerState<BookingManagementScree
   Widget _buildStatsOverview(BookingManagementService service, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Row(
         children: [
           Expanded(
@@ -309,7 +309,7 @@ class _BookingManagementScreenState extends ConsumerState<BookingManagementScree
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 3,
             offset: const Offset(0, 2),
           ),
@@ -469,7 +469,7 @@ class _BookingManagementScreenState extends ConsumerState<BookingManagementScree
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -560,32 +560,32 @@ class _BookingManagementScreenState extends ConsumerState<BookingManagementScree
 
     switch (status) {
       case BookingStatus.pending:
-        backgroundColor = Colors.orange.withOpacity(0.2);
+        backgroundColor = Colors.orange.withValues(alpha: 0.2);
         textColor = Colors.orange[700]!;
         text = 'Pending';
         break;
       case BookingStatus.confirmed:
-        backgroundColor = Colors.blue.withOpacity(0.2);
+        backgroundColor = Colors.blue.withValues(alpha: 0.2);
         textColor = Colors.blue[700]!;
         text = 'Confirmed';
         break;
       case BookingStatus.checkedIn:
-        backgroundColor = Colors.green.withOpacity(0.2);
+        backgroundColor = Colors.green.withValues(alpha: 0.2);
         textColor = Colors.green[700]!;
         text = 'Checked In';
         break;
       case BookingStatus.checkedOut:
-        backgroundColor = Colors.purple.withOpacity(0.2);
+        backgroundColor = Colors.purple.withValues(alpha: 0.2);
         textColor = Colors.purple[700]!;
         text = 'Checked Out';
         break;
       case BookingStatus.cancelled:
-        backgroundColor = Colors.red.withOpacity(0.2);
+        backgroundColor = Colors.red.withValues(alpha: 0.2);
         textColor = Colors.red[700]!;
         text = 'Cancelled';
         break;
       case BookingStatus.completed:
-        backgroundColor = Colors.green.withOpacity(0.2);
+        backgroundColor = Colors.green.withValues(alpha: 0.2);
         textColor = Colors.green[700]!;
         text = 'Completed';
         break;
@@ -680,7 +680,7 @@ class BookingDetailsBottomSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -756,7 +756,7 @@ class BookingDetailsBottomSheet extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -798,7 +798,7 @@ class BookingDetailsBottomSheet extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(

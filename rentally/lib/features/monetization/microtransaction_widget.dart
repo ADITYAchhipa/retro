@@ -52,7 +52,7 @@ class _MicrotransactionWidgetState extends ConsumerState<MicrotransactionWidget>
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
             colors: [
-              _getItemColor(item.type).withOpacity(0.1),
+              _getItemColor(item.type).withValues(alpha: 0.1),
               Colors.white,
             ],
             begin: Alignment.topLeft,
@@ -68,7 +68,7 @@ class _MicrotransactionWidgetState extends ConsumerState<MicrotransactionWidget>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _getItemColor(item.type).withOpacity(0.2),
+                    color: _getItemColor(item.type).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -322,7 +322,7 @@ class MicrotransactionMarketplaceScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  theme.primaryColor.withOpacity(0.1),
+                  theme.primaryColor.withValues(alpha: 0.1),
                   Colors.white,
                 ],
                 begin: Alignment.topCenter,

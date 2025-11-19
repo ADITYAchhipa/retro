@@ -49,7 +49,7 @@ class SocialLoginSection extends StatelessWidget {
       children: [
         Expanded(
           child: Divider(
-            color: theme.colorScheme.outline.withOpacity(0.3),
+            color: theme.colorScheme.outline.withValues(alpha: 0.3),
             thickness: 1,
           ),
         ),
@@ -58,14 +58,14 @@ class SocialLoginSection extends StatelessWidget {
           child: Text(
             'or continue with',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
         Expanded(
           child: Divider(
-            color: theme.colorScheme.outline.withOpacity(0.3),
+            color: theme.colorScheme.outline.withValues(alpha: 0.3),
             thickness: 1,
           ),
         ),

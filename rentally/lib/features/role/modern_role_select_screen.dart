@@ -65,9 +65,9 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              theme.colorScheme.background,
-              theme.colorScheme.surface.withOpacity(0.8),
-              theme.colorScheme.background,
+              theme.colorScheme.surface,
+              theme.colorScheme.surface.withValues(alpha: 0.8),
+              theme.colorScheme.surface,
             ],
           ),
         ),
@@ -92,13 +92,13 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                             gradient: LinearGradient(
                               colors: [
                                 theme.colorScheme.primary,
-                                theme.colorScheme.primary.withOpacity(0.8),
+                                theme.colorScheme.primary.withValues(alpha: 0.8),
                               ],
                             ),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.18),
+                                color: theme.colorScheme.primary.withValues(alpha: 0.18),
                                 blurRadius: 12,
                                 offset: const Offset(0, 6),
                               ),
@@ -138,7 +138,7 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                           Text(
                             'Select how you want to use Rentally',
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -160,7 +160,7 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                             gradient: LinearGradient(
                               colors: [
                                 theme.colorScheme.primary,
-                                theme.colorScheme.primary.withOpacity(0.8),
+                                theme.colorScheme.primary.withValues(alpha: 0.8),
                               ],
                             ),
                             onTap: () => _selectRole(UserRole.seeker),
@@ -178,7 +178,7 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                             gradient: LinearGradient(
                               colors: [
                                 theme.colorScheme.secondary,
-                                theme.colorScheme.secondary.withOpacity(0.8),
+                                theme.colorScheme.secondary.withValues(alpha: 0.8),
                               ],
                             ),
                             onTap: () => _selectRole(UserRole.owner),
@@ -192,10 +192,10 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.2),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -253,12 +253,12 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
             BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.08),
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -276,7 +276,7 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.16),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.16),
                         blurRadius: 7,
                         offset: const Offset(0, 3),
                       ),
@@ -314,7 +314,7 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -331,7 +331,7 @@ class _ModernRoleSelectScreenState extends ConsumerState<ModernRoleSelectScreen>
             Text(
               description,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 height: 1.4,
               ),
             ),

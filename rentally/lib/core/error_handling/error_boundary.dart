@@ -90,7 +90,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     // final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -106,7 +106,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
               Text(
                 widget.fallbackTitle ?? 'Something went wrong',
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -116,7 +116,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
                 widget.fallbackMessage ?? 
                 'We encountered an unexpected error. Please try again.',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -247,7 +247,7 @@ class NetworkErrorBoundary extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -263,7 +263,7 @@ class NetworkErrorBoundary extends StatelessWidget {
               Text(
                 'No Internet Connection',
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -272,7 +272,7 @@ class NetworkErrorBoundary extends StatelessWidget {
               Text(
                 'Please check your internet connection and try again.',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),

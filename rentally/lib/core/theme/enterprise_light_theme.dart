@@ -124,7 +124,7 @@ class EnterpriseLightTheme {
     borderRadius: BorderRadius.circular(16),
     boxShadow: [
       BoxShadow(
-        color: primaryAccent.withOpacity(0.25),
+        color: primaryAccent.withValues(alpha: 0.25),
         blurRadius: 8,
         offset: const Offset(0, 4),
       ),
@@ -137,7 +137,7 @@ class EnterpriseLightTheme {
     border: Border.all(color: secondaryBorder, width: 1),
     boxShadow: [
       BoxShadow(
-        color: primaryShadow.withOpacity(0.06),
+        color: primaryShadow.withValues(alpha: 0.06),
         blurRadius: 3,
         offset: const Offset(0, 2),
       ),
@@ -150,7 +150,7 @@ class EnterpriseLightTheme {
     borderRadius: BorderRadius.circular(16),
     boxShadow: [
       BoxShadow(
-        color: lightBlue.withOpacity(0.25),
+        color: lightBlue.withValues(alpha: 0.25),
         blurRadius: 8,
         offset: const Offset(0, 4),
       ),
@@ -164,7 +164,7 @@ class EnterpriseLightTheme {
     border: Border.all(color: secondaryBorder, width: 1),
     boxShadow: [
       BoxShadow(
-        color: cardShadow.withOpacity(0.05),
+        color: cardShadow.withValues(alpha: 0.05),
         blurRadius: 6,
         offset: const Offset(0, 2),
       ),
@@ -177,7 +177,7 @@ class EnterpriseLightTheme {
     border: Border.all(color: subtleBorder, width: 1),
     boxShadow: [
       BoxShadow(
-        color: cardShadow.withOpacity(0.08),
+        color: cardShadow.withValues(alpha: 0.08),
         blurRadius: 12,
         offset: const Offset(0, 3),
       ),
@@ -190,7 +190,7 @@ class EnterpriseLightTheme {
     borderRadius: BorderRadius.circular(12),
     boxShadow: [
       BoxShadow(
-        color: navyBlue.withOpacity(0.3),
+        color: navyBlue.withValues(alpha: 0.3),
         blurRadius: 6,
         offset: const Offset(0, 2),
       ),

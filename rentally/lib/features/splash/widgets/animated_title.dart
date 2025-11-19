@@ -167,7 +167,7 @@ class _TitlePainter extends CustomPainter {
     // Draw cursor if needed
     if (showCursor && cursorOpacity > 0) {
       final cursorPaint = Paint()
-        ..color = const Color(0xFF1E40AF).withOpacity(cursorOpacity)
+        ..color = const Color(0xFF1E40AF).withValues(alpha: cursorOpacity)
         ..strokeWidth = 3;
       
       final cursorX = xOffset + textWidth + 2;

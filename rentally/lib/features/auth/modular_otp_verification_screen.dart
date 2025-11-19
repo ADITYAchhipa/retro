@@ -206,8 +206,8 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                theme.colorScheme.background,
-                theme.colorScheme.surface.withOpacity(0.8),
+                theme.colorScheme.surface,
+                theme.colorScheme.surface.withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -304,11 +304,11 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
                 decoration: InputDecoration(
                   counterText: '',
                   filled: true,
-                  fillColor: theme.colorScheme.surface.withOpacity(0.5),
+                  fillColor: theme.colorScheme.surface.withValues(alpha: 0.5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: theme.colorScheme.outline.withOpacity(0.3),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -321,7 +321,7 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: theme.colorScheme.outline.withOpacity(0.3),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     ),
                   ),
                 ),
@@ -337,7 +337,7 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
         Text(
           'Enter the 6-digit code • Auto-verifies when complete',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           textAlign: TextAlign.center,
         ),
@@ -352,14 +352,14 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
         Text(
           'Didn\'t receive the code? ',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         if (_resendCountdown > 0) ...[
           Text(
             'Resend in ${_resendCountdown}s',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ] else ...[
@@ -393,10 +393,10 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.5),
+        color: theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -425,7 +425,7 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
             '• Code expires in 10 minutes\n'
             '• Contact support if issues persist',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],

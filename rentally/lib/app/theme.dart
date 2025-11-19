@@ -15,17 +15,16 @@ class AppTheme {
       brightness: Brightness.light,
       primary: primaryBlue,
       secondary: secondaryYellow,
-      background: bgLight,
     );
     return base.copyWith(
       colorScheme: colorScheme,
       scaffoldBackgroundColor: bgLight,
       textTheme: base.textTheme,
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 8,
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
@@ -69,12 +68,10 @@ class AppTheme {
       onTertiary: Color(0xFF000000),        // Black on gold
       surface: Color(0xFF1C2128),           // Premium card surface
       onSurface: Color(0xFFF6F8FA),         // Refined white
-      background: Color(0xFF0A0D12),        // Deep obsidian
-      onBackground: Color(0xFFF6F8FA),      // Refined white
       error: Color(0xFFDC2626),             // Sophisticated red
       outline: Color(0xFF30363D),           // Refined border
       outlineVariant: Color(0xFF21262D),    // Subtle border
-      surfaceVariant: Color(0xFF161B22),    // Elevated surface
+      surfaceContainerHighest: Color(0xFF161B22),    // Elevated surface
       onSurfaceVariant: Color(0xFFD0D7DE),  // Sophisticated gray
     );
     
@@ -98,7 +95,7 @@ class AppTheme {
           backgroundColor: const Color(0xFF2563EB),
           foregroundColor: Colors.white,
           elevation: 6,
-          shadowColor: const Color(0xFF2563EB).withOpacity(0.25),
+          shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
         ),
@@ -119,11 +116,11 @@ class AppTheme {
           borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: const Color(0xFF1C2128),
         elevation: 10,
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shadowColor: Colors.black.withOpacity(0.6),
+        shadowColor: Colors.black.withValues(alpha: 0.6),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),

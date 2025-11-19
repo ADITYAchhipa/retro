@@ -41,7 +41,7 @@ class UnifiedCard extends StatelessWidget {
             borderRadius: (baseShape is RoundedRectangleBorder)
                 ? baseShape.borderRadius
                 : BorderRadius.circular(16),
-            side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.4)),
+            side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.4)),
           )
         : baseShape;
 

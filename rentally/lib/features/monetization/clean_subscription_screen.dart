@@ -210,7 +210,7 @@ class _CleanSubscriptionScreenState extends State<CleanSubscriptionScreen> {
         Text(
           'Select the perfect plan for your rental business',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.textTheme.bodyLarge?.color?.withOpacity(0.7),
+            color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -290,7 +290,7 @@ class _CleanSubscriptionScreenState extends State<CleanSubscriptionScreen> {
                             Text(
                               '/${plan['period']}',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                               ),
                             ),
                         ],
@@ -397,7 +397,7 @@ class _CleanSubscriptionScreenState extends State<CleanSubscriptionScreen> {
                 ? 'Free forever'
                 : 'Next billing: \$${currentPlan['price'].toStringAsFixed(2)} on ${DateTime.now().add(const Duration(days: 30)).toString().split(' ')[0]}',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 16),

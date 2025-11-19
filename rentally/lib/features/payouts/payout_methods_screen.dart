@@ -24,15 +24,15 @@ class PayoutMethodsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  theme.colorScheme.primary.withOpacity(0.1),
-                  theme.colorScheme.secondary.withOpacity(0.05),
+                  theme.colorScheme.primary.withValues(alpha: 0.1),
+                  theme.colorScheme.secondary.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.2),
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -53,7 +53,7 @@ class PayoutMethodsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -81,7 +81,7 @@ class PayoutMethodsScreen extends StatelessWidget {
                           Text(
                             'Link your preferred accounts to receive payouts',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -169,10 +169,10 @@ class PayoutMethodsScreen extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(isPhone ? 14 : 16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.2),
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -187,7 +187,7 @@ class PayoutMethodsScreen extends StatelessWidget {
                   child: Text(
                     'Link at least one payout method to receive your earnings. Processing time varies by method.',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -226,14 +226,16 @@ class PayoutMethodsScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: primaryColor.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: primaryColor.withValues(alpha: 0.08),
+              blurRadius: 8,
+              spreadRadius: 0,
+              offset: const Offset(0, 3),
             ),
             BoxShadow(
-              color: secondaryColor.withOpacity(0.1),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: secondaryColor.withValues(alpha: 0.06),
+              blurRadius: 12,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -270,9 +272,10 @@ class PayoutMethodsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        color: primaryColor.withValues(alpha: 0.2),
+                        blurRadius: 6,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -300,7 +303,7 @@ class PayoutMethodsScreen extends StatelessWidget {
                       Text(
                         description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -309,10 +312,10 @@ class PayoutMethodsScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isLinked ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                          color: isLinked ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: isLinked ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3),
+                            color: isLinked ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3),
                             width: 1,
                           ),
                         ),
@@ -344,7 +347,7 @@ class PayoutMethodsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(

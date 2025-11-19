@@ -205,7 +205,7 @@ class LoadingOverlay extends ConsumerWidget {
         child,
         if (isLoading && showOverlay)
           Container(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             child: const Center(
               child: Card(
                 child: Padding(
@@ -406,7 +406,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
 
     final theme = Theme.of(context);
     final baseColor = widget.baseColor ?? theme.colorScheme.surface;
-    final highlightColor = widget.highlightColor ?? theme.colorScheme.onSurface.withOpacity(0.1);
+    final highlightColor = widget.highlightColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.1);
 
     return AnimatedBuilder(
       animation: _animation,

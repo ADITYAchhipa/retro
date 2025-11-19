@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as pv;
 import 'app_state.dart' hide UserRole;
+import 'auth_router.dart';
 import '../core/providers/user_provider.dart';
 import '../core/database/models/user_model.dart';
 import '../core/providers/ui_visibility_provider.dart';
@@ -99,7 +100,10 @@ class _MainShellState extends ConsumerState<MainShell> {
           print('[MainShell] path=$location, role=${currentRole.name}, onPrimaryTab=$onPrimaryTab, hideBottomBar=$hideBottomBar, child=${widget.child.runtimeType}');
           return true;
         }());
-        final bool showChatFab = !hideBottomBar && currentRole == UserRole.seeker && location.startsWith('/home');
+        final bool showChatFab = !hideBottomBar && (
+          (currentRole == UserRole.seeker && location.startsWith('/home')) ||
+          (currentRole == UserRole.owner && location.startsWith('/owner-dashboard'))
+        );
 
         final isPhone = MediaQuery.sizeOf(context).width < 600;
         return Scaffold(
@@ -110,7 +114,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               ? FloatingActionButton(
                   heroTag: null,
                   tooltip: 'Chat',
-                  onPressed: () => context.go('/chat'),
+                  onPressed: () => context.push('/chat'),
                   child: const Icon(Icons.chat_bubble_outline, size: 28),
                 )
               : null,
@@ -184,72 +188,100 @@ class _MainShellState extends ConsumerState<MainShell> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Icon(
-                      Icons.add_circle_outline,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Add New Listing',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ) ??
-                            const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 28,
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'What would you like to list?',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Add New Listing',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ) ??
+                              const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 32),
-                // Property Option
-                _buildListingOption(
-                  context,
-                  'Property/Room',
-                  'List apartments, houses, rooms, and other properties',
-                  Icons.home,
-                  Colors.blue,
-                  () {
-                    Navigator.pop(context);
-                    context.push('/add-listing');
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Vehicle Option
-                _buildListingOption(
-                  context,
-                  'Vehicle',
-                  'List cars, bikes, scooters, and other vehicles',
-                  Icons.directions_car,
-                  Colors.green,
-                  () {
-                    Navigator.pop(context);
-                    context.push('/add-vehicle-listing');
-                  },
-                ),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 20),
+                  Text(
+                    'What would you like to list?',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Residential Property Option
+                  _buildListingOption(
+                    context,
+                    'Residential Property',
+                    'List homes, apartments, rooms, PGs and hostels',
+                    Icons.home,
+                    Colors.blue,
+                    () {
+                      Navigator.pop(context);
+                      context.push(Routes.addResidentialListing);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Commercial Property Option
+                  _buildListingOption(
+                    context,
+                    'Commercial Property',
+                    'List offices, shops, warehouses and more',
+                    Icons.business,
+                    Colors.deepPurple,
+                    () {
+                      Navigator.pop(context);
+                      context.push(Routes.addCommercialListing);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Venue Option
+                  _buildListingOption(
+                    context,
+                    'Venue',
+                    'List resorts, event halls, and event gardens',
+                    Icons.event_available,
+                    Colors.orange,
+                    () {
+                      Navigator.pop(context);
+                      context.push(Routes.addVenueListing);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Vehicle Option
+                  _buildListingOption(
+                    context,
+                    'Vehicle',
+                    'List cars, bikes, scooters, and other vehicles',
+                    Icons.directions_car,
+                    Colors.green,
+                    () {
+                      Navigator.pop(context);
+                      context.push('/add-vehicle-listing');
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
           ),
         );
@@ -272,7 +304,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -281,7 +313,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -362,7 +394,7 @@ class _NavBarItemState extends State<_NavBarItem> {
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           decoration: BoxDecoration(
             color: _isHovered 
-                ? theme.colorScheme.primary.withOpacity(0.1)
+                ? theme.colorScheme.primary.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
@@ -378,7 +410,7 @@ class _NavBarItemState extends State<_NavBarItem> {
                   color: widget.isSelected
                       ? theme.colorScheme.primary
                       : _isHovered
-                          ? theme.colorScheme.primary.withOpacity(0.8)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
                           : theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(height: 2),

@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart' as provider;
-import '../services/rent_reminder_service.dart';
+import 'services/rent_reminder_service.dart';
 
 // App configuration and routing
 import 'app/auth_router.dart';
@@ -56,16 +56,8 @@ void main() async {
   final bookingProvider = BookingProvider();
   final viewHistoryService = ViewHistoryService();
   final listingFeedProvider = ListingFeedProvider(viewHistoryService: viewHistoryService);
-
-  // Load initial data
-  await Future.wait([
-    propertyProvider.loadProperties(),
-    vehicleProvider.loadVehicles(),
-    userProvider.initialize(),
-    bookingProvider.initialize(),
-    listingFeedProvider.initialize(),
-    viewHistoryService.initialize(),
-  ]);
+  // Defer heavy data loading until after first frame to avoid blank screen
+  // on web if network calls are slow or blocked.
 
   // ========================================
   // 🚀 APP LAUNCH
@@ -109,6 +101,8 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     _loadInitialLocale();
     _startRentReminderPolling();
+    // Kick off provider initializations after first frame so UI renders immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializeProvidersPostFrame());
   }
 
   Future<void> _loadInitialLocale() async {
@@ -130,6 +124,18 @@ class _MyAppState extends ConsumerState<MyApp> {
         // Default to light theme
         ref.read(AppNotifiers.themeModeProvider.notifier).state = ThemeMode.light;
       }
+
+      // Load onboarding completion flag so onboarding runs only once
+      final onboardingDone = prefs.getBool('onboardingComplete');
+      if (onboardingDone != null) {
+        ref.read(onboardingCompleteProvider.notifier).state = onboardingDone;
+      }
+
+      // Load previously selected country (if any)
+      final storedCountry = prefs.getString('selectedCountry');
+      if (storedCountry != null && storedCountry.isNotEmpty) {
+        ref.read(countryProvider.notifier).state = storedCountry;
+      }
     } catch (_) {
       // ignore errors, default locale will be used
     } finally {}
@@ -141,6 +147,32 @@ class _MyAppState extends ConsumerState<MyApp> {
     _rentReminderTimer?.cancel();
     _rentReminderTimer = Timer.periodic(const Duration(hours: 1), (_) {
       RentReminderService.checkAndFireDue(ref);
+    });
+  }
+
+  void _initializeProvidersPostFrame() {
+    final ctx = context;
+    // Initialize ChangeNotifier providers without blocking first paint
+    final prop = provider.Provider.of<PropertyProvider>(ctx, listen: false);
+    final veh = provider.Provider.of<VehicleProvider>(ctx, listen: false);
+    final user = provider.Provider.of<UserProvider>(ctx, listen: false);
+    final booking = provider.Provider.of<BookingProvider>(ctx, listen: false);
+    final feed = provider.Provider.of<ListingFeedProvider>(ctx, listen: false);
+    final history = provider.Provider.of<ViewHistoryService>(ctx, listen: false);
+
+    Future.microtask(() async {
+      try {
+        await Future.wait([
+          prop.loadProperties(),
+          veh.loadVehicles(),
+          user.initialize(),
+          booking.initialize(),
+          feed.initialize(),
+          history.initialize(),
+        ]);
+      } catch (_) {
+        // Ignore init errors; UI can recover and retry within respective screens
+      }
     });
   }
 
@@ -166,11 +198,9 @@ class _MyAppState extends ConsumerState<MyApp> {
           primary: EnterpriseLightTheme.primaryAccent,
           secondary: EnterpriseLightTheme.secondaryAccent,
           surface: EnterpriseLightTheme.cardBackground,
-          background: EnterpriseLightTheme.primaryBackground,
           onPrimary: EnterpriseLightTheme.onPrimaryAccent,
           onSecondary: EnterpriseLightTheme.primaryText,
           onSurface: EnterpriseLightTheme.primaryText,
-          onBackground: EnterpriseLightTheme.primaryText,
           outline: EnterpriseLightTheme.primaryBorder,
         ),
         scaffoldBackgroundColor: EnterpriseLightTheme.primaryBackground,
@@ -185,7 +215,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         cardTheme: CardThemeData(
           elevation: 2,
           color: EnterpriseLightTheme.cardBackground,
-          shadowColor: EnterpriseLightTheme.cardShadow.withOpacity(0.1),
+          shadowColor: EnterpriseLightTheme.cardShadow.withValues(alpha: 0.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: const BorderSide(color: EnterpriseLightTheme.primaryBorder, width: 1),
@@ -199,7 +229,7 @@ class _MyAppState extends ConsumerState<MyApp> {
               borderRadius: BorderRadius.circular(16),
             ),
             elevation: 4,
-            shadowColor: EnterpriseLightTheme.primaryAccent.withOpacity(0.3),
+            shadowColor: EnterpriseLightTheme.primaryAccent.withValues(alpha: 0.3),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -231,11 +261,9 @@ class _MyAppState extends ConsumerState<MyApp> {
           primary: EnterpriseDarkTheme.primaryAccent,
           secondary: EnterpriseDarkTheme.secondaryAccent,
           surface: EnterpriseDarkTheme.secondaryBackground,
-          background: EnterpriseDarkTheme.primaryBackground,
           onPrimary: EnterpriseDarkTheme.onPrimaryAccent,
           onSecondary: EnterpriseDarkTheme.primaryText,
           onSurface: EnterpriseDarkTheme.primaryText,
-          onBackground: EnterpriseDarkTheme.primaryText,
           outline: EnterpriseDarkTheme.primaryBorder,
         ),
         scaffoldBackgroundColor: EnterpriseDarkTheme.primaryBackground,
@@ -250,7 +278,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         cardTheme: CardThemeData(
           elevation: 2,
           color: EnterpriseDarkTheme.surfaceBackground,
-          shadowColor: EnterpriseDarkTheme.primaryShadow.withOpacity(0.18),
+          shadowColor: EnterpriseDarkTheme.primaryShadow.withValues(alpha: 0.18),
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -265,7 +293,7 @@ class _MyAppState extends ConsumerState<MyApp> {
               borderRadius: BorderRadius.circular(16),
             ),
             elevation: 1,
-            shadowColor: EnterpriseDarkTheme.primaryAccent.withOpacity(0.18),
+            shadowColor: EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.18),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(

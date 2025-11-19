@@ -169,7 +169,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
           Icon(
             Icons.notifications_none,
             size: 64,
-            color: theme.colorScheme.onSurface.withOpacity(0.5),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -180,7 +180,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
           Text(
             'You\'ll see notifications about bookings, messages, and updates here',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -224,10 +224,10 @@ class ModularNotificationsScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: notification.isRead 
               ? theme.colorScheme.surface 
-              : theme.colorScheme.primaryContainer.withOpacity(0.1),
+              : theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
           border: Border(
             bottom: BorderSide(
-              color: theme.colorScheme.outline.withOpacity(0.2),
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
               width: 0.5,
             ),
           ),
@@ -279,7 +279,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.1),
+        color: iconColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Icon(
@@ -301,7 +301,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
         Text(
           _formatTimestamp(notification.timestamp),
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -475,7 +475,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.delete_sweep_rounded, color: Colors.red, size: 28),
@@ -495,7 +495,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
             Icon(
               Icons.notifications_off_rounded,
               size: 60,
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -512,7 +512,7 @@ class ModularNotificationsScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.red.withOpacity(0.8),
+                color: Colors.red.withValues(alpha: 0.8),
                 fontStyle: FontStyle.italic,
               ),
             ),

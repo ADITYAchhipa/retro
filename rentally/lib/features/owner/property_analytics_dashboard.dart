@@ -309,7 +309,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                     width: isPhone ? 22 : 24,
                     height: isPhone ? 22 : 24,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.28),
+                      color: Colors.black.withValues(alpha: 0.28),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white54, width: 1),
                     ),
@@ -329,7 +329,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                     width: isPhone ? 22 : 24,
                     height: isPhone ? 22 : 24,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.28),
+                      color: Colors.black.withValues(alpha: 0.28),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white54, width: 1),
                     ),
@@ -349,7 +349,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                     width: isPhone ? 22 : 24,
                     height: isPhone ? 22 : 24,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.28),
+                      color: Colors.black.withValues(alpha: 0.28),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white54, width: 1),
                     ),
@@ -459,7 +459,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
           const SizedBox(width: 6),
           Text(title, style: (_compact ? theme.textTheme.titleSmall : theme.textTheme.titleMedium)?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(width: 8),
-          Expanded(child: Divider(height: 1, color: theme.dividerColor.withOpacity(0.4))),
+          Expanded(child: Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.4))),
         ],
       ),
     );
@@ -532,7 +532,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.colorScheme.onPrimaryContainer.withOpacity(0.15)),
+        border: Border.all(color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,7 +604,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               child: Text(
                 label,
                 style: TextStyle(
-                  color: color.withOpacity(0.9),
+                  color: color.withValues(alpha: 0.9),
                   fontSize: isPhone ? 11 : 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -632,7 +632,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withOpacity(0.35), width: 1.2),
+        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.35), width: 1.2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -654,7 +654,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getOccupancyColor(analytics.occupancyRate).withOpacity(0.12),
+                    color: _getOccupancyColor(analytics.occupancyRate).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -739,10 +739,10 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.04),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -756,7 +756,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(Icons.trending_up, color: Colors.green, size: 14),
@@ -808,7 +808,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                     color: Colors.green,
                     barWidth: 3,
                     dotData: const FlDotData(show: true),
-                    belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1)),
+                    belowBarData: BarAreaData(show: true, color: Colors.green.withValues(alpha: 0.1)),
                   ),
                 ],
               ),
@@ -825,10 +825,10 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.04),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -842,7 +842,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(Icons.calendar_month, color: Colors.blue, size: 14),
@@ -942,7 +942,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.dashboard, color: theme.colorScheme.primary, size: 16),
@@ -1026,15 +1026,15 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color.withOpacity(0.08),
-              color.withOpacity(0.03),
+              color.withValues(alpha: 0.08),
+              color.withValues(alpha: 0.03),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -1048,7 +1048,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
+                    color: color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(icon, color: color, size: 14),
@@ -1059,7 +1059,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: (deltaColor ?? Colors.grey).withOpacity(0.15),
+                        color: (deltaColor ?? Colors.grey).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1126,7 +1126,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -1181,7 +1181,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1191,7 +1191,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.1),
+                  color: Colors.purple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(Icons.home, color: Colors.purple, size: 14),
@@ -1234,7 +1234,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
                   ),
                   PieChartSectionData(
                     value: (1 - analytics.occupancyRate) * 100,
-                    color: Colors.grey.withOpacity(0.3),
+                    color: Colors.grey.withValues(alpha: 0.3),
                     title: 'Available',
                     titleStyle: const TextStyle(
                       fontSize: 12,
@@ -1257,7 +1257,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1267,7 +1267,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(Icons.trending_up, color: Colors.orange, size: 14),
@@ -1349,7 +1349,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1359,7 +1359,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.teal.withOpacity(0.1),
+                  color: Colors.teal.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(Icons.calendar_view_month, color: Colors.teal, size: 14),
@@ -1390,7 +1390,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               final performance = (analytics.occupancyRate * 100 + (intensity - 0.5) * 20).clamp(0, 100).toInt();
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.teal.withOpacity(0.2 + intensity * 0.6),
+                  color: Colors.teal.withValues(alpha: 0.2 + intensity * 0.6),
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: Center(
@@ -1412,11 +1412,11 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               Text('Low Performance', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
               Row(
                 children: [
-                  Container(width: 12, height: 12, decoration: BoxDecoration(color: Colors.teal.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
+                  Container(width: 12, height: 12, decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
                   const SizedBox(width: 4),
-                  Container(width: 12, height: 12, decoration: BoxDecoration(color: Colors.teal.withOpacity(0.6), borderRadius: BorderRadius.circular(2))),
+                  Container(width: 12, height: 12, decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(2))),
                   const SizedBox(width: 4),
-                  Container(width: 12, height: 12, decoration: BoxDecoration(color: Colors.teal.withOpacity(0.9), borderRadius: BorderRadius.circular(2))),
+                  Container(width: 12, height: 12, decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(2))),
                 ],
               ),
               Text('High Performance', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
@@ -1508,7 +1508,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -1553,7 +1553,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -1581,7 +1581,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -1619,7 +1619,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -1689,10 +1689,10 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.05),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1747,7 +1747,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1781,9 +1781,9 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -1807,10 +1807,10 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? theme.colorScheme.primary.withOpacity(0.1) : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          color: selected ? theme.colorScheme.primary.withValues(alpha: 0.1) : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.2),
+            color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -1837,9 +1837,9 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1864,7 +1864,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
     for (int i = 1; i < primary.length; i++) { final v = primary[i]; if (v < minVal) { minVal = v; minIdx = i; } if (v > maxVal) { maxVal = v; maxIdx = i; } }
     final chart = LineChart(
       LineChartData(
-        gridData: FlGridData(show: true, drawVerticalLine: true, verticalInterval: 1, horizontalInterval: 0.5, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1, dashArray: const [4, 4]), getDrawingVerticalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.12), strokeWidth: 1)),
+        gridData: FlGridData(show: true, drawVerticalLine: true, verticalInterval: 1, horizontalInterval: 0.5, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.15), strokeWidth: 1, dashArray: const [4, 4]), getDrawingVerticalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.12), strokeWidth: 1)),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: _compact ? (isPhone ? 24 : 30) : (isPhone ? 28 : 36), interval: 0.5, getTitlesWidget: (v, m) => Text('${v.toStringAsFixed(1)}k', style: TextStyle(fontSize: _compact ? (isPhone ? 9 : 10) : (isPhone ? 10 : 11), color: Colors.grey[600])))),
           bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: _compact ? (isPhone ? 14 : 18) : (isPhone ? 18 : 22), getTitlesWidget: (value, meta) { final idx = value.toInt(); if (idx < 0 || idx >= labels.length) return const SizedBox.shrink(); return Padding(padding: const EdgeInsets.only(top: 4), child: Text(labels[idx], style: TextStyle(fontSize: _compact ? (isPhone ? 9 : 10) : (isPhone ? 10 : 11), color: Colors.grey[600]))); })),
@@ -1891,7 +1891,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
             isCurved: true,
             barWidth: 3,
             color: lineColor,
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [lineColor.withOpacity(0.25), lineColor.withOpacity(0.05)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [lineColor.withValues(alpha: 0.25), lineColor.withValues(alpha: 0.05)], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
             dotData: FlDotData(show: true, getDotPainter: (s, p, b, i) { final isExtreme = i == minIdx || i == maxIdx; return FlDotCirclePainter(radius: isExtreme ? (_compact ? (isPhone ? 3.0 : 3.5) : (isPhone ? 3.5 : 4)) : (_compact ? (isPhone ? 2.0 : 2.5) : (isPhone ? 2.5 : 3)), color: isExtreme ? Colors.white : lineColor, strokeColor: isExtreme ? lineColor : Colors.transparent, strokeWidth: isExtreme ? 2 : 0); }),
           ),
           LineChartBarData(spots: compSpots, isCurved: true, barWidth: 2, color: secondaryColor, dashArray: const [8, 4], dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: false)),
@@ -1899,11 +1899,11 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
         minY: 0,
         extraLinesData: ExtraLinesData(
           horizontalLines: [
-            if (avg > 0) HorizontalLine(y: avg / 1000.0, color: Colors.grey.withOpacity(0.35), strokeWidth: 1, dashArray: const [6, 4], label: HorizontalLineLabel(show: true, alignment: Alignment.topLeft, padding: const EdgeInsets.only(left: 4, bottom: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[700], fontWeight: FontWeight.w600), labelResolver: (line) => 'Avg ${CurrencyFormatter.formatPrice(avg)}')),
+            if (avg > 0) HorizontalLine(y: avg / 1000.0, color: Colors.grey.withValues(alpha: 0.35), strokeWidth: 1, dashArray: const [6, 4], label: HorizontalLineLabel(show: true, alignment: Alignment.topLeft, padding: const EdgeInsets.only(left: 4, bottom: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[700], fontWeight: FontWeight.w600), labelResolver: (line) => 'Avg ${CurrencyFormatter.formatPrice(avg)}')),
           ],
           verticalLines: [
-            if (primary.isNotEmpty) VerticalLine(x: minIdx.toDouble(), color: Colors.redAccent.withOpacity(0.45), strokeWidth: 1, dashArray: const [6, 6], label: VerticalLineLabel(show: true, alignment: Alignment.bottomLeft, padding: const EdgeInsets.only(left: 4, top: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.redAccent, fontWeight: FontWeight.w600), labelResolver: (line) => 'Min ${CurrencyFormatter.formatPrice(minVal)}')),
-            if (primary.isNotEmpty) VerticalLine(x: maxIdx.toDouble(), color: Colors.green.withOpacity(0.45), strokeWidth: 1, dashArray: const [6, 6], label: VerticalLineLabel(show: true, alignment: Alignment.topRight, padding: const EdgeInsets.only(right: 4, bottom: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.green, fontWeight: FontWeight.w600), labelResolver: (line) => 'Max ${CurrencyFormatter.formatPrice(maxVal)}')),
+            if (primary.isNotEmpty) VerticalLine(x: minIdx.toDouble(), color: Colors.redAccent.withValues(alpha: 0.45), strokeWidth: 1, dashArray: const [6, 6], label: VerticalLineLabel(show: true, alignment: Alignment.bottomLeft, padding: const EdgeInsets.only(left: 4, top: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.redAccent, fontWeight: FontWeight.w600), labelResolver: (line) => 'Min ${CurrencyFormatter.formatPrice(minVal)}')),
+            if (primary.isNotEmpty) VerticalLine(x: maxIdx.toDouble(), color: Colors.green.withValues(alpha: 0.45), strokeWidth: 1, dashArray: const [6, 6], label: VerticalLineLabel(show: true, alignment: Alignment.topRight, padding: const EdgeInsets.only(right: 4, bottom: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.green, fontWeight: FontWeight.w600), labelResolver: (line) => 'Max ${CurrencyFormatter.formatPrice(maxVal)}')),
           ],
         ),
       ),
@@ -1934,7 +1934,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: EdgeInsets.all(_compact ? (isPhone ? 10 : 12) : (isPhone ? 12 : 16)),
@@ -1943,11 +1943,11 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
             Expanded(child: Text('Earnings Trend', style: (isPhone ? theme.textTheme.titleMedium : theme.textTheme.titleLarge)?.copyWith(fontWeight: FontWeight.bold))),
             Wrap(spacing: 8, children: [
               _chipLegend(color: theme.colorScheme.primary, label: 'This period'),
-              _chipLegend(color: theme.colorScheme.onSurface.withOpacity(0.4), label: secondaryLabel),
+              _chipLegend(color: theme.colorScheme.onSurface.withValues(alpha: 0.4), label: secondaryLabel),
             ])
           ]),
           const SizedBox(height: 8),
-          SizedBox(height: _compact ? (isPhone ? 170 : 200) : (isPhone ? 220 : 260), child: _earningsLineChartAnnotated(theme, values, secondary, labels, theme.colorScheme.primary, theme.colorScheme.onSurface.withOpacity(0.4))),
+          SizedBox(height: _compact ? (isPhone ? 170 : 200) : (isPhone ? 220 : 260), child: _earningsLineChartAnnotated(theme, values, secondary, labels, theme.colorScheme.primary, theme.colorScheme.onSurface.withValues(alpha: 0.4))),
         ]),
       ),
     );
@@ -1963,7 +1963,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.12)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: EdgeInsets.all(_compact ? (isPhone ? 10 : 12) : (isPhone ? 12 : 16)),
@@ -1977,7 +1977,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
               child: _chartWrapper(child: BarChart(
                 BarChartData(
                   barTouchData: BarTouchData(enabled: _interactiveCharts),
-                  gridData: FlGridData(show: true, horizontalInterval: 2, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
+                  gridData: FlGridData(show: true, horizontalInterval: 2, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.15), strokeWidth: 1)),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: isPhone ? 34 : 40, getTitlesWidget: (v, m) => Text(v.toInt().toString(), style: TextStyle(fontSize: isPhone ? 9 : 10, color: Colors.grey[600])))),
                     bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: isPhone ? 18 : 22, getTitlesWidget: (v, m) { final i = v.toInt(); if (i < 0 || i >= labels.length) return const SizedBox.shrink(); return Padding(padding: const EdgeInsets.only(top: 4), child: Text(labels[i], style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[600]))); })),
@@ -2032,17 +2032,17 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
-      gridData: FlGridData(show: true, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.12), dashArray: const [4, 4])),
+      gridData: FlGridData(show: true, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.12), dashArray: const [4, 4])),
       borderData: FlBorderData(show: false),
-      extraLinesData: ExtraLinesData(horizontalLines: [if (avg > 0) HorizontalLine(y: avg, color: Colors.grey.withOpacity(0.35), dashArray: const [6, 4], label: HorizontalLineLabel(show: true, alignment: Alignment.topLeft, padding: const EdgeInsets.only(left: 4, bottom: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[700], fontWeight: FontWeight.w600), labelResolver: (_) => 'Avg ${CurrencyFormatter.formatPrice(avg)}'))]),
-      lineBarsData: [LineChartBarData(spots: spots, isCurved: true, barWidth: 3, color: Colors.teal, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.teal.withOpacity(0.22), Colors.teal.withOpacity(0.05)], begin: Alignment.topCenter, end: Alignment.bottomCenter)))],
+      extraLinesData: ExtraLinesData(horizontalLines: [if (avg > 0) HorizontalLine(y: avg, color: Colors.grey.withValues(alpha: 0.35), dashArray: const [6, 4], label: HorizontalLineLabel(show: true, alignment: Alignment.topLeft, padding: const EdgeInsets.only(left: 4, bottom: 2), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[700], fontWeight: FontWeight.w600), labelResolver: (_) => 'Avg ${CurrencyFormatter.formatPrice(avg)}'))]),
+      lineBarsData: [LineChartBarData(spots: spots, isCurved: true, barWidth: 3, color: Colors.teal, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.teal.withValues(alpha: 0.22), Colors.teal.withValues(alpha: 0.05)], begin: Alignment.topCenter, end: Alignment.bottomCenter)))],
     );
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: EdgeInsets.all(_compact ? (isPhone ? 10 : 12) : (isPhone ? 12 : 16)),
@@ -2068,7 +2068,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
     final values = b.values.map((e) => e.toDouble()).toList();
     final cancellations = [for (final v in values) (v * 0.12)];
     final data = BarChartData(
-      gridData: FlGridData(show: true, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withOpacity(0.15), strokeWidth: 1)),
+      gridData: FlGridData(show: true, getDrawingHorizontalLine: (v) => FlLine(color: Colors.grey.withValues(alpha: 0.15), strokeWidth: 1)),
       titlesData: FlTitlesData(
         leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: isPhone ? 28 : 36, getTitlesWidget: (v, m) => Text(v.toInt().toString(), style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[600])))),
         bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: isPhone ? 18 : 22, getTitlesWidget: (v, m) { final i = v.toInt(); if (i < 0 || i >= labels.length) return const SizedBox.shrink(); return Padding(padding: const EdgeInsets.only(top: 4), child: Text(labels[i], style: TextStyle(fontSize: isPhone ? 10 : 11, color: Colors.grey[600]))); })),
@@ -2094,7 +2094,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.12)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: EdgeInsets.all(_compact ? (isPhone ? 10 : 12) : (isPhone ? 12 : 16)),
@@ -2127,14 +2127,14 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
     final maxVal = values.isEmpty ? 1.0 : values.reduce((a, c) => a > c ? a : c);
     Color colorFor(double t) {
       t = t.clamp(0.0, 1.0);
-      return Colors.green.withOpacity(0.15 + 0.7 * t);
+      return Colors.green.withValues(alpha: 0.15 + 0.7 * t);
     }
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
@@ -2206,7 +2206,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.18)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.18)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -2250,7 +2250,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.12)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
@@ -2281,7 +2281,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.12)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),
@@ -2307,7 +2307,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       const SizedBox(height: 6),
       ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: LinearProgressIndicator(value: ratio, minHeight: 10, backgroundColor: color.withOpacity(0.15), valueColor: AlwaysStoppedAnimation(color)),
+        child: LinearProgressIndicator(value: ratio, minHeight: 10, backgroundColor: color.withValues(alpha: 0.15), valueColor: AlwaysStoppedAnimation(color)),
       ),
     ]);
   }
@@ -2319,7 +2319,7 @@ class _PropertyAnalyticsDashboardState extends ConsumerState<PropertyAnalyticsDa
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.12)),
+        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
       ),
       child: Padding(
         padding: EdgeInsets.all(isPhone ? 12 : 16),

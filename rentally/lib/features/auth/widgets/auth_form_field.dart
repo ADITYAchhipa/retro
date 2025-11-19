@@ -39,17 +39,17 @@ class AuthFormField extends StatelessWidget {
       color: theme.colorScheme.onSurface,
     );
     final hintTextStyle = (compact ? theme.textTheme.bodyMedium : theme.textTheme.bodyLarge)?.copyWith(
-      color: theme.colorScheme.onSurface.withOpacity(0.5),
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
     );
     final double prefixSize = compact ? 18 : 20;
     final double verticalPad = compact ? 12 : 16;
     // Border styling
     final Color baseBorderColor = isDark
         ? EnterpriseDarkTheme.primaryBorder
-        : theme.colorScheme.outline.withOpacity(0.75);
+        : theme.colorScheme.outline.withValues(alpha: 0.75);
     final Color emphasizedBorderColor = isDark
         ? EnterpriseDarkTheme.primaryBorder
-        : theme.colorScheme.outline.withOpacity(1.0);
+        : theme.colorScheme.outline.withValues(alpha: 1.0);
     final Color borderColor = emphasizeBorder ? emphasizedBorderColor : baseBorderColor;
     final double borderWidth = emphasizeBorder ? 1.6 : 1.1;
     
@@ -81,7 +81,7 @@ class AuthFormField extends StatelessWidget {
             hintStyle: hintTextStyle,
             prefixIcon: Icon(
               prefixIcon,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               size: prefixSize,
             ),
             suffixIcon: suffixIcon,

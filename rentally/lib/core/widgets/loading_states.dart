@@ -193,7 +193,7 @@ class LoadingStates {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -208,7 +208,7 @@ class LoadingStates {
               Text(
                 message,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -241,7 +241,7 @@ class LoadingStates {
           Text(
             text,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -382,7 +382,7 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: overlayColor ?? Colors.black.withOpacity(0.3),
+            color: overlayColor ?? Colors.black.withValues(alpha: 0.3),
             child: Center(
               child: Card(
                 child: Padding(

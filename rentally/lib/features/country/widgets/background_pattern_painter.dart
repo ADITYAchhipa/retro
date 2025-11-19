@@ -6,7 +6,7 @@ class BackgroundPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
+      ..color = Colors.white.withValues(alpha: 0.03)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
@@ -33,7 +33,7 @@ class BackgroundPatternPainter extends CustomPainter {
     
     // Add subtle dots at intersections
     final dotPaint = Paint()
-      ..color = AppColors.primaryLight.withOpacity(0.05)
+      ..color = AppColors.primaryLight.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
     
     for (double x = 0; x < size.width; x += spacing) {

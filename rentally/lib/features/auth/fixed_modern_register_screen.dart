@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../app/auth_router.dart';
 import '../../app/app_state.dart';
 import '../../services/error_handling_service.dart';
 import '../../services/loading_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
-import '../../core/constants/api_constants.dart';
 
 class FixedModernRegisterScreen extends ConsumerStatefulWidget {
   const FixedModernRegisterScreen({super.key, this.referralCode});
@@ -33,10 +31,20 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
+  late final TapGestureRecognizer _termsTapRecognizer;
+  late final TapGestureRecognizer _privacyTapRecognizer;
 
   @override
   void initState() {
     super.initState();
+    _termsTapRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        context.push(Routes.terms);
+      };
+    _privacyTapRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        context.push(Routes.privacy);
+      };
     final code = widget.referralCode;
     if (code != null && code.isNotEmpty) {
       _referralController.text = code;
@@ -60,6 +68,8 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
     _confirmPasswordController.dispose();
     _referralController.dispose();
     _referralFocusNode.dispose();
+    _termsTapRecognizer.dispose();
+    _privacyTapRecognizer.dispose();
     super.dispose();
   }
 
@@ -121,7 +131,9 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
               ? 'Account created successfully with referral code!'
               : 'Account created successfully!';
           context.showSuccess(msg);
-          context.go(Routes.role);
+          // New accounts: route through country selection, then role selection
+          final nextPath = Uri.encodeComponent(Routes.role);
+          context.go('${Routes.country}?next=$nextPath');
         }
       } else if (authState.error != null) {
         throw Exception(authState.error);
@@ -259,15 +271,15 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                             EnterpriseDarkTheme.secondaryAccent,
                           ] : [
                             theme.colorScheme.primary,
-                            theme.colorScheme.primary.withOpacity(0.8),
+                            theme.colorScheme.primary.withValues(alpha: 0.8),
                           ],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: isDark 
-                                ? EnterpriseDarkTheme.primaryAccent.withOpacity(0.22)
-                                : theme.colorScheme.primary.withOpacity(0.18),
+                                ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.22)
+                                : theme.colorScheme.primary.withValues(alpha: 0.18),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -310,7 +322,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                       Text(
                         'Join Rentally and start your journey',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
                           fontSize: 13,
                         ),
@@ -325,7 +337,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                     decoration: BoxDecoration(
                       gradient: isDark ? LinearGradient(
                         colors: [
-                          const Color(0xFF21262D).withOpacity(0.9),
+                          const Color(0xFF21262D).withValues(alpha: 0.9),
                           const Color(0xFF30363D),
                         ],
                       ) : null,
@@ -333,14 +345,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: isDark 
-                            ? const Color(0xFF58A6FF).withOpacity(0.4)
-                            : theme.colorScheme.outline.withOpacity(0.2),
+                            ? const Color(0xFF58A6FF).withValues(alpha: 0.4)
+                            : theme.colorScheme.outline.withValues(alpha: 0.2),
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: isDark 
-                              ? const Color(0xFF58A6FF).withOpacity(0.12)
-                              : Colors.black.withOpacity(0.06),
+                              ? const Color(0xFF58A6FF).withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.06),
                           blurRadius: 10,
                           offset: const Offset(0, 6),
                         ),
@@ -365,18 +377,18 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 labelText: 'Full Name',
                                 hintText: 'Enter your full name',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
                                   margin: const EdgeInsets.all(12),
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -390,14 +402,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
@@ -444,18 +456,18 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 labelText: 'Email Address',
                                 hintText: 'Enter your email',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
                                   margin: const EdgeInsets.all(12),
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -469,14 +481,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
@@ -523,18 +535,18 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 labelText: 'Phone Number',
                                 hintText: 'Enter your phone number',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
                                   margin: const EdgeInsets.all(12),
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -548,14 +560,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
@@ -602,18 +614,18 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 labelText: 'Password',
                                 hintText: 'Enter your password',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
                                   margin: const EdgeInsets.all(12),
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -639,14 +651,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
@@ -693,18 +705,18 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 labelText: 'Confirm Password',
                                 hintText: 'Confirm your password',
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
                                   margin: const EdgeInsets.all(12),
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -730,14 +742,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
@@ -789,7 +801,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                     TextSpan(
                                       text: 'I agree to the ',
                                       style: TextStyle(
-                                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                       ),
                                       children: [
                                         TextSpan(
@@ -798,6 +810,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                             color: theme.colorScheme.primary,
                                             fontWeight: FontWeight.w600,
                                           ),
+                                          recognizer: _termsTapRecognizer,
                                         ),
                                         const TextSpan(text: ' and '),
                                         TextSpan(
@@ -806,6 +819,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                             color: theme.colorScheme.primary,
                                             fontWeight: FontWeight.w600,
                                           ),
+                                          recognizer: _privacyTapRecognizer,
                                         ),
                                       ],
                                     ),
@@ -827,18 +841,18 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 hintText: 'Enter referral code',
                                 errorText: _referralErrorText,
                                 labelStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                   fontSize: 12,
                                 ),
                                 hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                                 prefixIcon: Container(
                                   margin: const EdgeInsets.all(12),
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
@@ -867,14 +881,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   borderSide: BorderSide(
-                                    color: theme.colorScheme.outline.withOpacity(0.8),
+                                    color: theme.colorScheme.outline.withValues(alpha: 0.8),
                                     width: 1,
                                   ),
                                 ),
@@ -916,7 +930,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                     const Color(0xFF0969DA),
                                   ] : [
                                     theme.colorScheme.primary,
-                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primary.withValues(alpha: 0.8),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
@@ -958,7 +972,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                         Text(
                           "Already have an account?     ",
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                             fontSize: 13,
                           ),
                         ),

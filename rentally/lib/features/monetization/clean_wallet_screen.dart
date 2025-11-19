@@ -4,8 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/coupon_service.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/utils/currency_formatter.dart' as core_currency;
+import '../../services/user_preferences_service.dart';
 
-import '../../widgets/responsive_layout.dart';
 import '../../widgets/error_boundary.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
@@ -37,6 +40,9 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
   bool _isLoading = false;
   final GlobalKey<RefreshIndicatorState> _refreshKey = GlobalKey<RefreshIndicatorState>();
   String _txFilter = 'all';
+  double? _baseAvailableBalance;
+  double _balanceOffset = 0.0;
+  List<Map<String, dynamic>> _mergedTransactions = [];
   
   // Mock wallet data
   final Map<String, dynamic> _walletData = {
@@ -80,7 +86,9 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
   }
 
   Widget _buildEarningsSummary(ThemeData theme, bool isDark) {
-    final txs = List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
+    final txs = _mergedTransactions.isNotEmpty
+        ? _mergedTransactions
+        : List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
     final now = DateTime.now();
     final isPhone = MediaQuery.of(context).size.width < 600;
 
@@ -102,8 +110,8 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     }
 
     Widget pill(String label, String value, IconData icon, Color base) {
-      final bg = isDark ? base.withOpacity(0.18) : base.withOpacity(0.12);
-      final border = base.withOpacity(0.35);
+      final bg = isDark ? base.withValues(alpha: 0.18) : base.withValues(alpha: 0.12);
+      final border = base.withValues(alpha: 0.35);
       return Container(
         padding: EdgeInsets.symmetric(vertical: isPhone ? 8 : 10, horizontal: isPhone ? 10 : 12),
         decoration: BoxDecoration(
@@ -114,7 +122,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: isPhone ? 14 : 16, color: base.withOpacity(0.9)),
+            Icon(icon, size: isPhone ? 14 : 16, color: base.withValues(alpha: 0.9)),
             const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +185,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 decoration: BoxDecoration(
                   color: isDark ? theme.colorScheme.surface : Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
                   boxShadow: _homeStyleShadows(theme, isDark),
                 ),
                 child: Center(
@@ -186,7 +194,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                       Icon(
                         Icons.card_giftcard_rounded,
                         size: 48,
-                        color: theme.colorScheme.primary.withOpacity(0.5),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -242,7 +250,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       decoration: BoxDecoration(
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
         boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Column(
@@ -253,7 +261,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.12),
+                  color: Colors.amber.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.local_offer_rounded, color: Colors.amber.shade700, size: 24),
@@ -290,9 +298,9 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                    border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -316,11 +324,10 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               OutlinedButton.icon(
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: code));
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Copied "$code"')),
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Copied "$code"')),
+                  );
                 },
                 icon: const Icon(Icons.content_copy_rounded, size: 18),
                 label: const Text('Copy'),
@@ -377,6 +384,27 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     try {
       // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
+      // Load persisted local adjustments
+      final prefs = await SharedPreferences.getInstance();
+      final offset = prefs.getDouble('wallet.balanceOffset') ?? 0.0;
+      final extraJson = prefs.getString('wallet.extraTx');
+      List<Map<String, dynamic>> extraTx = [];
+      if (extraJson != null && extraJson.isNotEmpty) {
+        try {
+          final list = jsonDecode(extraJson) as List<dynamic>;
+          extraTx = list.map((e) {
+            final m = Map<String, dynamic>.from(e as Map);
+            if (m['amount'] is num) m['amount'] = (m['amount'] as num).toDouble();
+            return m;
+          }).toList();
+        } catch (_) {}
+      }
+      // Capture base available once
+      _baseAvailableBalance ??= (_walletData['balance'] as num).toDouble();
+      _balanceOffset = offset;
+      // Merge transactions (persisted first, then base/mock)
+      final baseTx = List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
+      _mergedTransactions = [...extraTx, ...baseTx];
       
       // Mock data is already loaded
       setState(() => _isLoading = false);
@@ -394,11 +422,27 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     await _loadWalletData();
   }
 
+  void _openWalletMethods(BuildContext context, String tab) {
+    try {
+      context.pushNamed('wallet-methods', queryParameters: {'tab': tab});
+      return;
+    } catch (_) {}
+    try {
+      context.push('${Routes.walletMethods}?tab=$tab');
+      return;
+    } catch (_) {}
+    if (tab == 'add') {
+      context.push(Routes.paymentMethods);
+    } else {
+      context.push(Routes.payoutMethods);
+    }
+  }
+
   // Home screen style neumorphic shadows
   List<BoxShadow> _homeStyleShadows(ThemeData theme, bool isDark) {
     return [
       BoxShadow(
-        color: isDark ? Colors.white.withOpacity(0.06) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
         blurRadius: 10,
         offset: const Offset(-5, -5),
         spreadRadius: 0,
@@ -407,7 +451,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         color: (isDark
             ? EnterpriseDarkTheme.primaryAccent
             : EnterpriseLightTheme.primaryAccent)
-            .withOpacity(isDark ? 0.18 : 0.12),
+            .withValues(alpha: isDark ? 0.18 : 0.12),
         blurRadius: 10,
         offset: const Offset(5, 5),
         spreadRadius: 0,
@@ -426,16 +470,15 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final useResponsive = constraints.maxWidth < 1000;
           final page = TabBackHandler(
             tabController: _tabController,
             child: Scaffold(
-              backgroundColor: isDark ? theme.colorScheme.background : Colors.white,
+              backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
               appBar: _buildAppBar(theme, isDark),
               body: _buildBody(theme, isDark),
             ),
           );
-          return useResponsive ? page : ResponsiveLayout(child: page);
+          return page;
         },
       ),
     );
@@ -502,15 +545,21 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
 
   Widget _buildBalanceCard(ThemeData theme, bool isDark) {
     final isPhone = MediaQuery.of(context).size.width < 600;
-    final totalBalance = _walletData['balance'] + _walletData['pendingRewards'];
+    final available = (_baseAvailableBalance ?? (_walletData['balance'] as num).toDouble()) + _balanceOffset;
+    final totalBalance = available + (_walletData['pendingRewards'] as num).toDouble();
     
-    return Container(
+    return Consumer(builder: (context, ref, _) {
+      final currency = ref.watch(currentCurrencyProvider);
+      final totalStr = core_currency.CurrencyFormatter.formatPrice(totalBalance, currency: currency);
+      final availableStr = core_currency.CurrencyFormatter.formatPrice(available, currency: currency);
+      final pendingStr = core_currency.CurrencyFormatter.formatPrice((_walletData['pendingRewards'] as num).toDouble(), currency: currency);
+      return Container(
       padding: EdgeInsets.all(isPhone ? 28 : 36),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.primary,
-            theme.colorScheme.primary.withOpacity(0.9),
+            theme.colorScheme.primary.withValues(alpha: 0.9),
             theme.colorScheme.secondary,
           ],
           begin: Alignment.topLeft,
@@ -519,13 +568,13 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.5),
+            color: theme.colorScheme.primary.withValues(alpha: 0.5),
             blurRadius: 32,
             offset: const Offset(0, 16),
             spreadRadius: -8,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -543,18 +592,18 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.white.withOpacity(0.3),
-                      Colors.white.withOpacity(0.15),
+                      Colors.white.withValues(alpha: 0.3),
+                      Colors.white.withValues(alpha: 0.15),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.4),
+                    color: Colors.white.withValues(alpha: 0.4),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -569,10 +618,10 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -603,7 +652,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
           Text(
             'Total Balance',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: isPhone ? 14 : 16,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.8,
@@ -613,7 +662,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
           
           // Total Balance Amount
           Text(
-            '\$${totalBalance.toStringAsFixed(2)}',
+            totalStr,
             style: TextStyle(
               color: Colors.white,
               fontSize: isPhone ? 44 : 56,
@@ -622,7 +671,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               letterSpacing: -1.5,
               shadows: [
                 Shadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   offset: const Offset(0, 2),
                   blurRadius: 4,
                 ),
@@ -635,10 +684,10 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 width: 1,
               ),
             ),
@@ -647,7 +696,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 Expanded(
                   child: _buildBalanceBreakdownItem(
                     title: 'Available',
-                    value: '\$${_walletData['balance'].toStringAsFixed(2)}',
+                    value: availableStr,
                     icon: Icons.check_circle_rounded,
                     isPhone: isPhone,
                   ),
@@ -658,9 +707,9 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withOpacity(0.1),
-                        Colors.white.withOpacity(0.3),
-                        Colors.white.withOpacity(0.1),
+                        Colors.white.withValues(alpha: 0.1),
+                        Colors.white.withValues(alpha: 0.3),
+                        Colors.white.withValues(alpha: 0.1),
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -670,7 +719,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 Expanded(
                   child: _buildBalanceBreakdownItem(
                     title: 'Pending',
-                    value: '\$${_walletData['pendingRewards'].toStringAsFixed(2)}',
+                    value: pendingStr,
                     icon: Icons.schedule_rounded,
                     isPhone: isPhone,
                   ),
@@ -681,6 +730,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         ],
       ),
     );
+    });
   }
   
   Widget _buildBalanceBreakdownItem({
@@ -693,7 +743,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       children: [
         Icon(
           icon,
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
           size: 20,
         ),
         const SizedBox(height: 8),
@@ -710,7 +760,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         Text(
           title,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -738,7 +788,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 title: 'Add Money',
                 icon: Icons.add_circle_rounded,
                 color: Colors.green,
-                onTap: () => _showAddMoneyDialog(context),
+                onTap: () => _openWalletMethods(context, 'add'),
                 theme: theme,
               ),
             ),
@@ -748,7 +798,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 title: 'Withdraw',
                 icon: Icons.arrow_circle_down_rounded,
                 color: Colors.blue,
-                onTap: () => _showWithdrawDialog(context),
+                onTap: () => _openWalletMethods(context, 'withdraw'),
                 theme: theme,
               ),
             ),
@@ -775,20 +825,20 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              color.withOpacity(isDark ? 0.15 : 0.1),
-              color.withOpacity(isDark ? 0.08 : 0.05),
+              color.withValues(alpha: isDark ? 0.15 : 0.1),
+              color.withValues(alpha: isDark ? 0.08 : 0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: color.withOpacity(0.4),
+            color: color.withValues(alpha: 0.4),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -800,14 +850,14 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.7)],
+                  colors: [color, color.withValues(alpha: 0.7)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.3),
+                    color: color.withValues(alpha: 0.3),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -819,7 +869,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
             Text(
               title,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? Colors.white : color.withOpacity(0.9),
+                color: isDark ? Colors.white : color.withValues(alpha: 0.9),
                 fontWeight: FontWeight.bold,
                 fontSize: isPhone ? 13 : 14,
               ),
@@ -832,7 +882,9 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
   }
 
   List<Map<String, dynamic>> _getFilteredTransactions() {
-    final txs = List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
+    final txs = _mergedTransactions.isNotEmpty
+        ? _mergedTransactions
+        : List<Map<String, dynamic>>.from(_walletData['transactions'] as List);
     switch (_txFilter) {
       case 'earning':
         return txs.where((t) => t['type'] == 'earning').toList();
@@ -867,11 +919,11 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
           labelStyle: theme.textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
-          selectedColor: theme.colorScheme.primary.withOpacity(0.15),
-          backgroundColor: isDark ? theme.colorScheme.surface : theme.colorScheme.surfaceVariant.withOpacity(0.5),
+          selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+          backgroundColor: isDark ? theme.colorScheme.surface : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           shape: StadiumBorder(
             side: BorderSide(
-              color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.4),
+              color: selected ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.4),
               width: 1.2,
             ),
           ),
@@ -923,7 +975,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               decoration: BoxDecoration(
                 color: isDark ? theme.colorScheme.surface : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200),
+                border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200),
               ),
               child: Text(
                 'No transactions found',
@@ -942,6 +994,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
   Widget _buildTransactionItem(Map<String, dynamic> transaction, ThemeData theme, bool isDark) {
     final isPositive = transaction['amount'] > 0;
     final isCompleted = transaction['status'] == 'completed';
+    final isWithdrawal = (transaction['type'] == 'withdrawal');
     
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -949,7 +1002,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       decoration: BoxDecoration(
         color: isDark ? theme.colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200, width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200, width: 1),
         boxShadow: _homeStyleShadows(theme, isDark),
       ),
       child: Row(
@@ -967,7 +1020,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: (isPositive ? Colors.green : Colors.red).withOpacity(0.3),
+                  color: (isPositive ? Colors.green : Colors.red).withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1009,25 +1062,29 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${isPositive ? '+' : ''}\$${transaction['amount'].abs().toStringAsFixed(2)}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isPositive ? Colors.green.shade700 : Colors.red.shade700,
-                ),
-              ),
+              Consumer(builder: (context, ref, _) {
+                final currency = ref.watch(currentCurrencyProvider);
+                final amountStr = core_currency.CurrencyFormatter.formatPrice((transaction['amount'] as num).abs().toDouble(), currency: currency);
+                return Text(
+                  '${isPositive ? '+' : ''}$amountStr',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isPositive ? Colors.green.shade700 : Colors.red.shade700,
+                  ),
+                );
+              }),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isCompleted 
-                      ? Colors.green.withOpacity(0.12) 
-                      : Colors.orange.withOpacity(0.12),
+                      ? Colors.green.withValues(alpha: 0.12) 
+                      : Colors.orange.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isCompleted 
-                        ? Colors.green.withOpacity(0.3) 
-                        : Colors.orange.withOpacity(0.3),
+                        ? Colors.green.withValues(alpha: 0.3) 
+                        : Colors.orange.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -1039,11 +1096,101 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                   ),
                 ),
               ),
+              if (isWithdrawal && !isCompleted) ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () => _completePendingWithdrawal(transaction),
+                      child: const Text('Mark Completed'),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => _cancelPendingWithdrawal(transaction),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _completePendingWithdrawal(Map<String, dynamic> tx) async {
+    if ((tx['status'] ?? '') != 'pending' || (tx['type'] ?? '') != 'withdrawal') return;
+    try {
+      await _updateExtraTxStatus(tx['id'] as String, 'completed');
+      await _loadWalletData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Withdrawal marked as completed.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update withdrawal: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelPendingWithdrawal(Map<String, dynamic> tx) async {
+    if ((tx['status'] ?? '') != 'pending' || (tx['type'] ?? '') != 'withdrawal') return;
+    try {
+      final amount = ((tx['amount'] as num?) ?? 0).toDouble().abs();
+      await _removeExtraTx(tx['id'] as String);
+      await _changeBalanceOffset(amount); // return funds to available
+      await _loadWalletData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Withdrawal cancelled and funds returned.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to cancel withdrawal: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateExtraTxStatus(String id, String newStatus) async {
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'wallet.extraTx';
+    final listJson = prefs.getString(key);
+    if (listJson == null || listJson.isEmpty) return;
+    final list = List<Map<String, dynamic>>.from((jsonDecode(listJson) as List).map((e) => Map<String, dynamic>.from(e as Map)));
+    for (final m in list) {
+      if (m['id'] == id) {
+        m['status'] = newStatus;
+        break;
+      }
+    }
+    await prefs.setString(key, jsonEncode(list));
+  }
+
+  Future<void> _removeExtraTx(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'wallet.extraTx';
+    final listJson = prefs.getString(key);
+    if (listJson == null || listJson.isEmpty) return;
+    final list = List<Map<String, dynamic>>.from((jsonDecode(listJson) as List).map((e) => Map<String, dynamic>.from(e as Map)));
+    list.removeWhere((m) => m['id'] == id);
+    await prefs.setString(key, jsonEncode(list));
+  }
+
+  Future<void> _changeBalanceOffset(double delta) async {
+    final prefs = await SharedPreferences.getInstance();
+    const key = 'wallet.balanceOffset';
+    final current = prefs.getDouble(key) ?? 0.0;
+    await prefs.setDouble(key, current + delta);
   }
 
   Widget _buildRewardsTab(ThemeData theme, bool isDark) {
@@ -1071,7 +1218,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -1090,7 +1237,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
@@ -1129,7 +1276,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     );
   }
 
-  void _showAddMoneyDialog(BuildContext context) {
+  void showAddMoneyDialog(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final amountController = TextEditingController();
@@ -1191,7 +1338,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                   filled: true,
                   fillColor: isDark 
                       ? theme.colorScheme.surface 
-                      : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                      : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1265,7 +1412,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
     );
   }
 
-  void _showWithdrawDialog(BuildContext context) {
+  void showWithdrawDialog(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final amountController = TextEditingController();
@@ -1338,7 +1485,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                   filled: true,
                   fillColor: isDark 
                       ? theme.colorScheme.surface 
-                      : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                      : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   helperText: 'Minimum withdrawal: \$10',
                 ),
               ),
@@ -1349,7 +1496,7 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
                 decoration: BoxDecoration(
                   color: isDark 
                       ? theme.colorScheme.surface 
-                      : theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                      : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: theme.colorScheme.outlineVariant,

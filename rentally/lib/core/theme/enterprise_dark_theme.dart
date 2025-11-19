@@ -87,20 +87,20 @@ class EnterpriseDarkTheme {
   static BoxDecoration get primaryCardDecoration => BoxDecoration(
     gradient: cardGradient,
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: primaryBorder.withOpacity(0.3), width: 0.5),
+    border: Border.all(color: primaryBorder.withValues(alpha: 0.3), width: 0.5),
     boxShadow: [
       BoxShadow(
-        color: luxuryShadow.withOpacity(0.8),
+        color: luxuryShadow.withValues(alpha: 0.8),
         blurRadius: 40,
         offset: const Offset(0, 12),
       ),
       BoxShadow(
-        color: primaryAccent.withOpacity(0.05),
+        color: primaryAccent.withValues(alpha: 0.05),
         blurRadius: 60,
         offset: const Offset(0, 24),
       ),
       BoxShadow(
-        color: primaryShadow.withOpacity(0.9),
+        color: primaryShadow.withValues(alpha: 0.9),
         blurRadius: 4,
         offset: const Offset(0, 1),
       ),
@@ -111,20 +111,20 @@ class EnterpriseDarkTheme {
   static BoxDecoration get premiumCardDecoration => BoxDecoration(
     gradient: premiumGradient,
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: goldBorder.withOpacity(0.2), width: 0.5),
+    border: Border.all(color: goldBorder.withValues(alpha: 0.2), width: 0.5),
     boxShadow: [
       BoxShadow(
-        color: premiumShadow.withOpacity(0.6),
+        color: premiumShadow.withValues(alpha: 0.6),
         blurRadius: 48,
         offset: const Offset(0, 16),
       ),
       BoxShadow(
-        color: premiumAccent.withOpacity(0.08),
+        color: premiumAccent.withValues(alpha: 0.08),
         blurRadius: 72,
         offset: const Offset(0, 32),
       ),
       BoxShadow(
-        color: luxuryShadow.withOpacity(0.95),
+        color: luxuryShadow.withValues(alpha: 0.95),
         blurRadius: 6,
         offset: const Offset(0, 2),
       ),
@@ -135,12 +135,12 @@ class EnterpriseDarkTheme {
     color: surfaceBackground,
     borderRadius: BorderRadius.circular(12),
     border: Border.all(
-      color: mutedBorder.withOpacity(0.5),
+      color: mutedBorder.withValues(alpha: 0.5),
       width: 1,
     ),
     boxShadow: [
       BoxShadow(
-        color: primaryShadow.withOpacity(0.1),
+        color: primaryShadow.withValues(alpha: 0.1),
         blurRadius: 12,
         offset: const Offset(0, 2),
       ),
@@ -182,12 +182,12 @@ class EnterpriseDarkTheme {
     borderRadius: BorderRadius.circular(12),
     boxShadow: [
       BoxShadow(
-        color: primaryAccent.withOpacity(0.25),
+        color: primaryAccent.withValues(alpha: 0.25),
         blurRadius: 32,
         offset: const Offset(0, 12),
       ),
       BoxShadow(
-        color: luxuryShadow.withOpacity(0.8),
+        color: luxuryShadow.withValues(alpha: 0.8),
         blurRadius: 8,
         offset: const Offset(0, 3),
       ),
@@ -199,12 +199,12 @@ class EnterpriseDarkTheme {
     borderRadius: BorderRadius.circular(12),
     boxShadow: [
       BoxShadow(
-        color: premiumShadow.withOpacity(0.3),
+        color: premiumShadow.withValues(alpha: 0.3),
         blurRadius: 36,
         offset: const Offset(0, 14),
       ),
       BoxShadow(
-        color: premiumAccent.withOpacity(0.15),
+        color: premiumAccent.withValues(alpha: 0.15),
         blurRadius: 20,
         offset: const Offset(0, 8),
       ),
@@ -216,12 +216,12 @@ class EnterpriseDarkTheme {
     borderRadius: BorderRadius.circular(12),
     boxShadow: [
       BoxShadow(
-        color: platinumBorder.withOpacity(0.4),
+        color: platinumBorder.withValues(alpha: 0.4),
         blurRadius: 28,
         offset: const Offset(0, 10),
       ),
       BoxShadow(
-        color: luxuryShadow.withOpacity(0.6),
+        color: luxuryShadow.withValues(alpha: 0.6),
         blurRadius: 6,
         offset: const Offset(0, 2),
       ),
@@ -232,7 +232,7 @@ class EnterpriseDarkTheme {
     color: Colors.transparent,
     borderRadius: BorderRadius.circular(12),
     border: Border.all(
-      color: primaryBorder.withOpacity(0.4),
+      color: primaryBorder.withValues(alpha: 0.4),
       width: 0.5,
     ),
   );
@@ -241,7 +241,7 @@ class EnterpriseDarkTheme {
     color: Colors.transparent,
     borderRadius: BorderRadius.circular(12),
     border: Border.all(
-      color: goldBorder.withOpacity(0.3),
+      color: goldBorder.withValues(alpha: 0.3),
       width: 0.5,
     ),
   );

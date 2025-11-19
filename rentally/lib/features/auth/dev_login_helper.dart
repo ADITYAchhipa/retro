@@ -20,7 +20,7 @@ class DevLoginHelper extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.1),
+        color: Colors.amber.withValues(alpha: 0.1),
         border: Border.all(color: Colors.amber),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -41,7 +41,7 @@ class DevLoginHelper extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Wrap(
+          const Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [

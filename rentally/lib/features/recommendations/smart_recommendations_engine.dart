@@ -278,7 +278,7 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
             const SizedBox(height: 6),
             Text(
               'Try adjusting your preferences or exploring a few listings to help our AI learn your taste.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7)),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -327,13 +327,13 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
           Text(
             'Our AI is finding the perfect properties for you...',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
           LinearProgressIndicator(
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.3),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.3),
             valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
           ),
         ],
@@ -350,7 +350,7 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
             controller: _tabController!,
             isScrollable: true,
             labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+            unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             indicatorColor: theme.colorScheme.primary,
             tabs: categories.map((category) {
               return Tab(
@@ -406,7 +406,7 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
                           Text(
                             category.description,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -527,12 +527,12 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      Icon(Icons.location_on, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                       const SizedBox(width: 4),
                       Text(
                         property.location,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       const Spacer(),
@@ -543,7 +543,7 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -579,9 +579,9 @@ class _SmartRecommendationsScreenState extends ConsumerState<SmartRecommendation
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           reason,

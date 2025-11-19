@@ -395,7 +395,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
           ),
           borderRadius: BorderRadius.circular(12),
           color: isSelected 
-              ? theme.primaryColor.withOpacity(0.05)
+              ? theme.primaryColor.withValues(alpha: 0.05)
               : null,
         ),
         child: Column(
@@ -654,7 +654,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(
@@ -776,7 +776,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(

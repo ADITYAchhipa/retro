@@ -461,7 +461,7 @@ class _DynamicPricingScreenState extends ConsumerState<DynamicPricingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getConfidenceColor(_currentRecommendation.confidence).withOpacity(0.1),
+                    color: _getConfidenceColor(_currentRecommendation.confidence).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -526,7 +526,7 @@ class _DynamicPricingScreenState extends ConsumerState<DynamicPricingScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: changeColor.withOpacity(0.1),
+                color: changeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 
@@ -69,9 +69,10 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
 
   Future<void> _attachFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.first;
+      final XFile? file = await openFile(
+        acceptedTypeGroups: const [XTypeGroup(label: 'any')],
+      );
+      if (file == null) return;
       final newMessage = MessageModel(
         id: 'msg${DateTime.now().millisecondsSinceEpoch}',
         text: '[Attachment] ${file.name}',
@@ -219,18 +220,18 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
         boxShadow: isDark
             ? [
                 BoxShadow(
-                  color: EnterpriseDarkTheme.primaryAccent.withOpacity(0.12),
+                  color: EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.12),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -246,7 +247,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 20,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
             child: Icon(
               Icons.person,
               color: theme.colorScheme.primary,
@@ -304,14 +305,14 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 22),
@@ -327,7 +328,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
         trailing: Icon(
           Icons.arrow_forward_ios_rounded,
           size: 16,
-          color: isDark ? Colors.white.withOpacity(0.4) : Colors.grey[400],
+          color: isDark ? Colors.white.withValues(alpha: 0.4) : Colors.grey[400],
         ),
         onTap: onTap,
         shape: RoundedRectangleBorder(
@@ -351,7 +352,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.1),
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -365,7 +366,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
               width: 48,
               height: 5,
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.3) : Colors.grey[300],
+                color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
@@ -386,7 +387,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Divider(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200]),
+            Divider(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
             const SizedBox(height: 8),
             _buildChatOptionTile(
               icon: Icons.person_outline_rounded,
@@ -464,7 +465,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.delete_sweep_rounded, color: Colors.orange, size: 28),
@@ -484,7 +485,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
             Icon(
               Icons.chat_bubble_outline_rounded,
               size: 60,
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -500,7 +501,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
               'This action cannot be undone.',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.red.withOpacity(0.8),
+                color: Colors.red.withValues(alpha: 0.8),
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -564,7 +565,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.block_rounded, color: Colors.red, size: 28),
@@ -584,9 +585,9 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.08),
+                color: Colors.red.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -780,7 +781,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
           if (!message.isFromCurrentUser) ...[
             CircleAvatar(
               radius: 18,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               child: Icon(
                 Icons.person,
                 size: 18,
@@ -810,17 +811,17 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
                   ),
                   backgroundColor: message.isFromCurrentUser 
                       ? theme.colorScheme.primary
-                      : (isDark ? Colors.white.withOpacity(0.08) : Colors.grey[100]!),
+                      : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[100]!),
                   borderColor: message.isFromCurrentUser
                       ? theme.colorScheme.primary
-                      : (isDark ? Colors.white.withOpacity(0.12) : Colors.grey[300]!),
+                      : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey[300]!),
                   borderWidth: message.isFromCurrentUser ? 0 : 1,
                   blur: 0,
                   boxShadow: [
                     BoxShadow(
                       color: message.isFromCurrentUser
-                          ? theme.colorScheme.primary.withOpacity(0.3)
-                          : (isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.08)),
+                          ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                          : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.08)),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -841,7 +842,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
                     Text(
                       _formatMessageTime(message.timestamp),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                     if (message.isFromCurrentUser) ...[
@@ -903,10 +904,10 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.08),
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -918,18 +919,18 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
             child: NeoGlass(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               borderRadius: BorderRadius.circular(26),
-              backgroundColor: isDark ? Colors.white.withOpacity(0.08) : Colors.grey[100]!,
-              borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[300]!,
+              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[100]!,
+              borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
               borderWidth: 1,
               blur: 0,
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.white.withOpacity(0.03) : Colors.white,
+                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white,
                   blurRadius: 8,
                   offset: const Offset(-4, -4),
                 ),
                 BoxShadow(
-                  color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.08),
+                  color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.08),
                   blurRadius: 8,
                   offset: const Offset(4, 4),
                 ),
@@ -953,7 +954,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
                         hintText: 'Type a message...',
                         hintStyle: TextStyle(
                           fontSize: 14,
-                          color: isDark ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                          color: isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey[500],
                         ),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -984,7 +985,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary,
-                  theme.colorScheme.primary.withOpacity(0.8),
+                  theme.colorScheme.primary.withValues(alpha: 0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -992,7 +993,7 @@ class _ModularChatScreenState extends ConsumerState<ModularChatScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.4),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

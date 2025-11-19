@@ -130,7 +130,7 @@ class SplashShadows {
   
   static List<BoxShadow> trustBadgeShadows = [
     BoxShadow(
-      color: SplashColors.primary.withOpacity(SplashColors.trustBadgeShadowOpacity),
+      color: SplashColors.primary.withValues(alpha: SplashColors.trustBadgeShadowOpacity),
       blurRadius: 15,
       offset: const Offset(0, 5),
     ),
@@ -138,7 +138,7 @@ class SplashShadows {
   
   static List<BoxShadow> trustBadgeIconShadow(Color color) => [
     BoxShadow(
-      color: color.withOpacity(0.2),
+      color: color.withValues(alpha: 0.2),
       blurRadius: 8,
       offset: const Offset(0, 2),
     ),

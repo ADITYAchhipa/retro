@@ -31,7 +31,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
     final isPhone = MediaQuery.sizeOf(context).width < 600;
 
     return Scaffold(
-      backgroundColor: isDark ? theme.colorScheme.background : Colors.grey[50],
+      backgroundColor: isDark ? theme.colorScheme.surface : Colors.grey[50],
       appBar: AppBar(
         title: const Text('Contact Support'),
         elevation: 0,
@@ -52,8 +52,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
             // Contact Form
             NeoGlass(
               padding: EdgeInsets.all(isPhone ? 16 : 20),
-              backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-              borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+              borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
               borderWidth: 1,
               blur: isDark ? 10 : 0,
               child: Form(
@@ -68,8 +68,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                theme.colorScheme.primary.withOpacity(0.2),
-                                theme.colorScheme.primary.withOpacity(0.1),
+                                theme.colorScheme.primary.withValues(alpha: 0.2),
+                                theme.colorScheme.primary.withValues(alpha: 0.1),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(10),
@@ -110,13 +110,13 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                       decoration: InputDecoration(
                         labelText: 'Email',
                         hintText: 'you@example.com',
-                        prefixIcon: Icon(Icons.email_outlined, size: 20),
+                        prefixIcon: const Icon(Icons.email_outlined, size: 20),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
@@ -132,13 +132,13 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                       decoration: InputDecoration(
                         labelText: 'Subject',
                         hintText: 'How can we help?',
-                        prefixIcon: Icon(Icons.subject_outlined, size: 20),
+                        prefixIcon: const Icon(Icons.subject_outlined, size: 20),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
@@ -153,13 +153,13 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                         labelText: 'Message',
                         hintText: 'Describe your issue or question in detail...',
                         alignLabelWithHint: true,
-                        prefixIcon: Icon(Icons.message_outlined, size: 20),
+                        prefixIcon: const Icon(Icons.message_outlined, size: 20),
                         filled: true,
-                        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
@@ -193,8 +193,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
   Widget _buildQuickContactOptions(ThemeData theme, bool isDark) {
     return NeoGlass(
       padding: const EdgeInsets.all(16),
-      backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-      borderColor: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+      borderColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
       borderWidth: 1,
       blur: isDark ? 10 : 0,
       child: Column(
@@ -255,10 +255,10 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey[50],
+        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -294,9 +294,9 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
     return NeoGlass(
       padding: const EdgeInsets.all(20),
       backgroundColor: isDark 
-          ? theme.colorScheme.primary.withOpacity(0.1) 
-          : theme.colorScheme.primary.withOpacity(0.05),
-      borderColor: theme.colorScheme.primary.withOpacity(0.3),
+          ? theme.colorScheme.primary.withValues(alpha: 0.1) 
+          : theme.colorScheme.primary.withValues(alpha: 0.05),
+      borderColor: theme.colorScheme.primary.withValues(alpha: 0.3),
       borderWidth: 1,
       blur: isDark ? 10 : 0,
       child: Column(
@@ -308,8 +308,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.3),
-                      theme.colorScheme.primary.withOpacity(0.15),
+                      theme.colorScheme.primary.withValues(alpha: 0.3),
+                      theme.colorScheme.primary.withValues(alpha: 0.15),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -368,18 +368,18 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () async {
-                // Pop current screen first, then navigate to chat
+              onPressed: () {
+                // Pop current screen first, then schedule navigation to chat on next frame
                 Navigator.of(context).pop();
-                await Future.delayed(const Duration(milliseconds: 150));
-                if (context.mounted) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) return;
                   context.push('/chat/support', extra: {
                     'isSupport': true,
                     'title': 'Support',
                     'recipientName': 'Rentaly Support',
                     'recipientAvatar': '',
                   });
-                }
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,

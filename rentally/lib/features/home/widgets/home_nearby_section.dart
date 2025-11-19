@@ -54,13 +54,13 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: widget.isDark 
-            ? EnterpriseDarkTheme.cardBackground.withOpacity(0.3)
+            ? EnterpriseDarkTheme.cardBackground.withValues(alpha: 0.3)
             : EnterpriseLightTheme.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: widget.isDark 
-              ? EnterpriseDarkTheme.primaryBorder.withOpacity(0.2)
-              : EnterpriseLightTheme.primaryBorder.withOpacity(0.1),
+              ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.2)
+              : EnterpriseLightTheme.primaryBorder.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -69,7 +69,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
           Icon(
             iconData,
             size: 48,
-            color: widget.theme.primaryColor.withOpacity(0.6),
+            color: widget.theme.primaryColor.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 12),
           Text(
@@ -170,11 +170,11 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ).copyWith(
-                    overlayColor: MaterialStateProperty.resolveWith((states) {
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
                       final c = widget.isDark
                           ? EnterpriseDarkTheme.primaryAccent
                           : widget.theme.primaryColor;
-                      return c.withOpacity(0.12);
+                      return c.withValues(alpha: 0.12);
                     }),
                   ),
                   child: Text(
@@ -287,15 +287,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
     );
   }
   
-  Widget _buildNearbyList({required int itemCount, required Widget Function(BuildContext, int) itemBuilder}) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: itemCount,
-      itemBuilder: itemBuilder,
-    );
-  }
+  
 
   Widget _buildLoadingState() {
     return Padding(

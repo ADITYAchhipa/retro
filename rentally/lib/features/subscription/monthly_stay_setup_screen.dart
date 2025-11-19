@@ -205,7 +205,7 @@ class _MonthlyStaySetupScreenState extends ConsumerState<MonthlyStaySetupScreen>
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+                side: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
