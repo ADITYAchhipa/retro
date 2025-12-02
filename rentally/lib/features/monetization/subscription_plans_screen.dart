@@ -396,12 +396,12 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     const minOffsetToToggle = 24.0;
 
     if (delta.abs() > threshold) {
-      if (delta < 0 && offset > minOffsetToToggle) {
+      if (delta > 0 && offset > minOffsetToToggle) {
         // Scrolling UP - hide toggle
         if (_showDurationToggle) {
           setState(() => _showDurationToggle = false);
         }
-      } else if (delta > 0 || offset <= minOffsetToToggle) {
+      } else if (delta < 0 || offset <= minOffsetToToggle) {
         // Scrolling DOWN or near top - show toggle
         if (!_showDurationToggle) {
           setState(() => _showDurationToggle = true);
