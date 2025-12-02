@@ -105,23 +105,45 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> signUp(String name, String email, String password, String role) async {
+  Future<void> signUp(String name, String email, String password, String role, {String? phone}) async {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-      
-      final user = User(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        email: email,
-        role: role,
+      // Make API call to backend registration endpoint
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/register');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'phone': phone,
+        }),
       );
+
+      final data = jsonDecode(response.body);
       
-      state = state.copyWith(user: user, isLoading: false);
+      if (data['success'] == true && data['user'] != null) {
+        // Create user from backend response
+        final user = User(
+          id: data['user']['email'], // Use email as ID if no ID returned
+          name: data['user']['name'] ?? name,
+          email: data['user']['email'] ?? email,
+          role: role,
+          profileImageUrl: null,
+        );
+        
+        state = state.copyWith(user: user, isLoading: false);
+      } else {
+        // Registration failed
+        throw Exception(data['message'] ?? 'Registration failed');
+      }
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);
+      rethrow;
     }
   }
 

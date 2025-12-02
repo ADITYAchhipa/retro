@@ -21,6 +21,82 @@ class MockApiService {
       }
     };
   }
+
+  // Nearby: Properties from real backend
+  Future<List<Map<String, dynamic>>> getNearbyProperties({
+    double? latitude,
+    double? longitude,
+    String? city,
+    double maxDistanceKm = 10,
+    bool debug = false,
+  }) async {
+    try {
+      final params = <String, String>{
+        'maxDistance': maxDistanceKm.toString(),
+      };
+      if (latitude != null && longitude != null) {
+        params['latitude'] = latitude.toString();
+        params['longitude'] = longitude.toString();
+      }
+      if (city != null && city.isNotEmpty) params['city'] = city;
+      if (debug) params['debug'] = '1';
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/nearby/properties').replace(queryParameters: params);
+      debugPrint('📍 Fetching nearby properties: $uri');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true) {
+          final data = body['data'] as Map<String, dynamic>?;
+          final list = (data?['properties'] as List?)?.cast<Map<String, dynamic>>() ?? const <Map<String, dynamic>>[];
+          debugPrint('✅ Nearby properties fetched: ${list.length}');
+          return list;
+        }
+      }
+      debugPrint('❌ Nearby properties request failed: ${response.statusCode}\n${response.body}');
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      debugPrint('💥 Error fetching nearby properties: $e');
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  // Nearby: Vehicles from real backend
+  Future<List<Map<String, dynamic>>> getNearbyVehicles({
+    double? latitude,
+    double? longitude,
+    String? city,
+    double maxDistanceKm = 10,
+    bool debug = false,
+  }) async {
+    try {
+      final params = <String, String>{
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'maxDistance': maxDistanceKm.toString(),
+      };
+      if (city != null && city.isNotEmpty) params['city'] = city;
+      if (debug) params['debug'] = '1';
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/nearby/vehicles').replace(queryParameters: params);
+      debugPrint('🚗 Fetching nearby vehicles: $uri');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true) {
+          final data = body['data'] as Map<String, dynamic>?;
+          final list = (data?['vehicles'] as List?)?.cast<Map<String, dynamic>>() ?? const <Map<String, dynamic>>[];
+          debugPrint('✅ Nearby vehicles fetched: ${list.length}');
+          return list;
+        }
+      }
+      debugPrint('❌ Nearby vehicles request failed: ${response.statusCode}\n${response.body}');
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      debugPrint('💥 Error fetching nearby vehicles: $e');
+      return <Map<String, dynamic>>[];
+    }
+  }
   
   Future<Map<String, dynamic>> register(Map<String, dynamic> data) async {
     await Future.delayed(const Duration(seconds: 1));

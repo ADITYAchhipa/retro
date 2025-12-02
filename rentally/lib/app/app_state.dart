@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/api_constants.dart';
 import '../core/config/dev_config.dart';
+import '../services/token_storage_service.dart';
 
 enum UserRole { seeker, owner }
 
@@ -93,6 +94,62 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
 
     try {
+      // Check if JWT token exists in secure storage
+      final token = await TokenStorageService.getToken();
+      
+      if (token != null && token.isNotEmpty) {
+        // Validate token with backend
+        try {
+          final url = Uri.parse('${ApiConstants.authBaseUrl}/is-auth');
+          final response = await http.get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            
+            if (data['success'] == true && data['user'] != null) {
+              // Token is valid, restore user from backend response
+              final userData = data['user'];
+              final roleString = userData['role'] as String? ?? 'seeker';
+              final role = roleString == 'owner' ? UserRole.owner : UserRole.seeker;
+
+              final user = User(
+                id: userData['_id'] ?? userData['email'] ?? '',
+                email: userData['email'] as String? ?? '',
+                name: userData['name'] as String? ?? 'User',
+                phone: userData['phone'] as String?,
+                role: role,
+                profileImageUrl: userData['profileImageUrl'] as String?,
+                isKycVerified: userData['isKycVerified'] as bool? ?? false,
+              );
+
+              state = state.copyWith(
+                status: AuthStatus.authenticated,
+                user: user,
+                error: null,
+              );
+              
+              // Persist session to SharedPreferences as well
+              await _persistSession();
+              
+              debugPrint('✅ Token validated successfully, user authenticated');
+              return;
+            }
+          }
+        } catch (e) {
+          debugPrint('❌ Token validation failed: $e');
+        }
+        
+        // Invalid token, clear storage
+        await TokenStorageService.deleteToken();
+      }
+      
+      // No valid token, check SharedPreferences as fallback
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString(_authUserKey);
       final statusIndex = prefs.getInt(_authStatusKey);
@@ -121,7 +178,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } else {
         state = const AuthState(status: AuthStatus.unauthenticated);
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Error restoring session: $e');
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
@@ -171,6 +229,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = jsonDecode(response.body);
       
       if (data['success'] == true && data['user'] != null) {
+        // Store JWT token from response
+        if (data['token'] != null) {
+          await TokenStorageService.saveToken(data['token']);
+          debugPrint('✅ JWT token saved on login');
+        }
+        
         // Create user from backend response
         final user = User(
           id: data['user']['email'],
@@ -190,49 +254,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         throw Exception(data['message'] ?? 'Invalid email or password');
       }
     } catch (e) {
-      // Development fallback: allow test credentials when backend is unavailable
-      if (DevConfig.isDevelopmentMode) {
-        final emailL = email.trim().toLowerCase();
-        final testMap = {
-          'user@test.com': {
-            'name': 'Test User',
-            'role': UserRole.seeker,
-            'pass': 'user123',
-          },
-          'owner@test.com': {
-            'name': 'Owner',
-            'role': UserRole.owner,
-            'pass': 'owner123',
-          },
-          'demo@rentally.com': {
-            'name': 'Demo',
-            'role': UserRole.seeker,
-            'pass': 'demo123',
-          },
-          DevConfig.defaultTestEmail.toLowerCase(): {
-            'name': 'Test User',
-            'role': UserRole.seeker,
-            'pass': DevConfig.defaultTestPassword,
-          },
-        };
-        final entry = testMap[emailL];
-        if (entry != null && password == entry['pass']) {
-          final user = User(
-            id: emailL,
-            email: emailL,
-            name: entry['name'] as String,
-            phone: null,
-            role: entry['role'] as UserRole,
-          );
-          state = state.copyWith(
-            status: AuthStatus.authenticated,
-            user: user,
-            error: null,
-          );
-          await _persistSession();
-          return;
-        }
-      }
+      // No fallback - always use backend authentication
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
         error: 'Login failed: ${e.toString()}',
@@ -261,6 +283,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = jsonDecode(response.body);
       
       if (data['success'] == true && data['user'] != null) {
+        // Store JWT token from response
+        if (data['token'] != null) {
+          await TokenStorageService.saveToken(data['token']);
+          debugPrint('✅ JWT token saved on registration');
+        }
+        
         // Create user from backend response
         final user = User(
           id: data['user']['email'],
@@ -288,34 +316,48 @@ class AuthNotifier extends StateNotifier<AuthState> {
         errorMessage = errorMessage.substring(11);
       }
       
+      // Keep status as initial (not unauthenticated) to prevent redirect to login page
       state = state.copyWith(
-        status: AuthStatus.unauthenticated,
+        status: AuthStatus.initial,
         error: errorMessage,
       );
-      await _persistSession();
+      // Don't persist session on registration failure
+      // Rethrow error so registration screen can display toast notification
+      rethrow;
     }
   }
 
   Future<void> signOut() async {
     state = state.copyWith(status: AuthStatus.loading);
     
+    // Always clear tokens and set unauthenticated state, even if there are errors
     try {
-      // Call backend API
-      final url = Uri.parse('${ApiConstants.authBaseUrl}/logout');
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-      );
+      // Try to clear JWT tokens from secure storage
+      try {
+        await TokenStorageService.clearAllTokens();
+        debugPrint('✅ JWT tokens cleared on logout');
+      } catch (tokenError) {
+        debugPrint('⚠️ Error clearing tokens (non-critical): $tokenError');
+        // Continue with logout even if token deletion fails
+      }
       
+      // Try to call backend API
+      try {
+        final url = Uri.parse('${ApiConstants.authBaseUrl}/logout');
+        await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+        ).timeout(const Duration(seconds: 5));
+        debugPrint('✅ Backend logout successful');
+      } catch (backendError) {
+        debugPrint('⚠️ Backend logout error (non-critical): $backendError');
+        // Continue with logout even if backend call fails
+      }
+    } finally {
+      // ALWAYS set unauthenticated status, no matter what
       state = const AuthState(status: AuthStatus.unauthenticated);
       await _persistSession();
-    } catch (e) {
-      state = AuthState(
-        status: AuthStatus.unauthenticated,
-        user: null,
-        error: 'Logout failed: ${e.toString()}',
-      );
-      await _persistSession();
+      debugPrint('✅ Logout complete - redirecting to login');
     }
   }
 

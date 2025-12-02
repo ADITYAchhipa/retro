@@ -12,6 +12,8 @@ import '../../../core/widgets/hover_scale.dart';
 // import '../../../core/utils/price_unit_helper.dart';
 import '../../../services/location_service.dart';
 import '../../../core/database/models/property_model.dart';
+import '../../../core/database/models/vehicle_model.dart';
+import '../../../core/services/mock_api_service.dart';
 
 /// Nearby section widget showing nearby properties/vehicles based on location
 class HomeNearbySection extends StatefulWidget {
@@ -36,6 +38,10 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
   final LocationService _locationService = LocationService();
   double? _userLatitude;
   double? _userLongitude;
+  final RealApiService _api = RealApiService();
+  List<PropertyModel> _nearbyProperties = [];
+  List<VehicleModel> _nearbyVehicles = [];
+  bool _nearbyLoading = false;
 
   @override
   void initState() {
@@ -58,8 +64,41 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
         _userLatitude = pos.latitude;
         _userLongitude = pos.longitude;
       });
+      // DEBUG: trigger backend nearby fetch once we have coordinates
+      await _fetchNearby(lat: pos.latitude, lng: pos.longitude);
     } catch (_) {
       // Silent fail - nearby section will fall back to unfiltered data
+    }
+  }
+
+  Future<void> _fetchNearby({required double lat, required double lng}) async {
+    try {
+      setState(() => _nearbyLoading = true);
+      // DEBUG: request nearby from backend with strict 10km cap and debug=1
+      final propsJson = await _api.getNearbyProperties(
+        latitude: lat,
+        longitude: lng,
+        maxDistanceKm: 10,
+        debug: true,
+      );
+      final vehsJson = await _api.getNearbyVehicles(
+        latitude: lat,
+        longitude: lng,
+        maxDistanceKm: 10,
+        debug: true,
+      );
+      final props = propsJson.map((e) => PropertyModel.fromJson(e)).toList();
+      final vehs = vehsJson.map((e) => VehicleModel.fromJson(e)).toList();
+      // DEBUG: log counts
+      debugPrint('Nearby properties from backend: ${props.length}, vehicles: ${vehs.length}');
+      setState(() {
+        _nearbyProperties = props;
+        _nearbyVehicles = vehs;
+      });
+    } catch (e) {
+      debugPrint('Failed to fetch nearby: $e');
+    } finally {
+      if (mounted) setState(() => _nearbyLoading = false);
     }
   }
 
@@ -256,11 +295,16 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                         if (propertyProvider.isLoading) {
                           return _buildLoadingState();
                         }
-                        final allProperties = propertyProvider.featuredProperties;
-                        if (allProperties.isEmpty) {
+                        final source = _nearbyProperties.isNotEmpty
+                            ? _nearbyProperties
+                            : propertyProvider.featuredProperties;
+                        if (source.isEmpty) {
                           return _buildEmptyState(widget.selectedCategory);
                         }
-                        final properties = _filterNearbyProperties(allProperties);
+                        // If backend nearby available, use it; else client-side filter as fallback
+                        final properties = _nearbyProperties.isNotEmpty
+                            ? _nearbyProperties
+                            : _filterNearbyProperties(source);
                         final screenWidth = MediaQuery.of(context).size.width;
                         final cardWidth = screenWidth < 600 ? 240.0 : 280.0;
                         final sectionHeight = screenWidth < 600 ? 210.0 : 220.0;
@@ -298,7 +342,9 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                         if (vehicleProvider.isLoading) {
                           return _buildLoadingState();
                         }
-                        final vehicles = vehicleProvider.featuredVehicles;
+                        final vehicles = _nearbyVehicles.isNotEmpty
+                            ? _nearbyVehicles
+                            : vehicleProvider.featuredVehicles;
                         if (vehicles.isEmpty) {
                           return _buildEmptyState(widget.selectedCategory);
                         }

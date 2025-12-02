@@ -98,8 +98,22 @@ class PropertyModel {
     // Backend may send 'city', 'location', or 'Location' (MongoDB)
     final String location = (json['location'] ?? json['Location'] ?? json['city'] ?? '').toString();
     final String address = (json['address'] ?? json['Address'] ?? '').toString();
-    final double latitude = toDouble(json['latitude'] ?? json['lat']);
-    final double longitude = toDouble(json['longitude'] ?? json['lng'] ?? json['long']);
+    double latitude = toDouble(json['latitude'] ?? json['lat']);
+    double longitude = toDouble(json['longitude'] ?? json['lng'] ?? json['long']);
+    // DEBUG: derive lat/lng from GeoJSON if direct fields are missing
+    if ((latitude == 0.0 && longitude == 0.0) && json['locationGeo'] is Map) {
+      final geo = json['locationGeo'] as Map;
+      final coords = geo['coordinates'];
+      if (coords is List && coords.length >= 2) {
+        // GeoJSON order is [lng, lat]
+        final lng = toDouble(coords[0]);
+        final lat = toDouble(coords[1]);
+        if (lat != 0.0 || lng != 0.0) {
+          latitude = lat;
+          longitude = lng;
+        }
+      }
+    }
     
     // Backend sends price as either:
     // - A number: "Price": 1200 (MongoDB direct field)

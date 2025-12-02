@@ -26,8 +26,7 @@ dependencies:
   
   # Storage
   shared_preferences: ^2.2.2
-  
-  # Connectivity (removed)
+  flutter_secure_storage: ^4.2.1
   
   # Utilities
   intl: ^0.20.2
@@ -61,21 +60,12 @@ dependencies:
   
   # Additional Dependencies
   path_provider: ^2.1.1
-  crypto: ^3.0.3
+  crypto:  ^3.0.3
   http: ^1.6.0
   pdf: ^3.10.7
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
   flutter_timezone: ^1.0.7
-  
-  
-  
-  # Device info and permissions (removed)
-  
-  # WebSocket for Real-time
-  # WebSocket for Real-time (removed)
-  
-  # Biometric Authentication removed
   
 dev_dependencies:
   flutter_test:

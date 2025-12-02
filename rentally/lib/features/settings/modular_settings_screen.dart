@@ -547,35 +547,18 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           ),
           ElevatedButton.icon(
             onPressed: () async {
-              Navigator.of(context).pop();
-              final rootContext = context;
+              Navigator.of(context).pop(); // Close dialog
+              
               try {
+                // Call signOut - router will automatically redirect when auth status changes
                 await ref.read(app.authProvider.notifier).signOut();
-                if (!rootContext.mounted) return;
-                ScaffoldMessenger.of(rootContext).showSnackBar(
-                  SnackBar(
-                    content: const Row(
-                      children: [
-                        Icon(Icons.waving_hand_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text('Goodbye! See you soon'),
-                      ],
-                    ),
-                    backgroundColor: theme.colorScheme.primary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-
-                // Navigate back to auth/login so user can sign in or create account again
-                try {
-                  if (!rootContext.mounted) return;
-                  final router = GoRouter.of(rootContext);
-                  router.go(Routes.auth);
-                } catch (_) {}
-              } catch (_) {
-                if (!rootContext.mounted) return;
-                SnackBarUtils.showError(rootContext, 'Failed to logout. Please try again.');
+                
+                // The router will automatically redirect to login based on AuthStatus.unauthenticated
+                // No manual navigation needed
+              } catch (e) {
+                if (context.mounted) {
+                  SnackBarUtils.showError(context, 'Failed to logout. Please try again.');
+                }
               }
             },
             style: ElevatedButton.styleFrom(

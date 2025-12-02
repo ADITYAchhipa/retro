@@ -169,7 +169,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         Routes.passwordChanged,
       ];
       
-      final isPublicRoute = publicRoutes.contains(currentPath);
+      // Treat '/register' and '/ref/*' as public, including trailing slashes
+      final isRegister = currentPath == Routes.register || currentPath.startsWith('${Routes.register}/');
+      final isReferral = currentPath.startsWith('/ref/');
+      final isPublicRoute = publicRoutes.contains(currentPath) || isRegister || isReferral;
       
       // Handle authenticated users - immediate redirect without splash
       if (authState.status == AuthStatus.authenticated) {
@@ -197,6 +200,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Handle unauthenticated users
       if (authState.status == AuthStatus.unauthenticated || authState.status == AuthStatus.initial) {
         if (isPublicRoute) {
+          // CRITICAL: If user is on register or referral routes, NEVER redirect them away
+          // This allows registration errors to be displayed without redirecting to login
+          if (isRegister || isReferral) {
+            return null;
+          }
+          
           // Onboarding flow
           if (!onboardingComplete && currentPath != Routes.splash && currentPath != Routes.onboarding) {
             final query = state.uri.query;

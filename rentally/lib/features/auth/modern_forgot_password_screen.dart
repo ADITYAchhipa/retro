@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../utils/snackbar_utils.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../core/constants/api_constants.dart';
 
 class ModernForgotPasswordScreen extends ConsumerStatefulWidget {
   const ModernForgotPasswordScreen({super.key});
@@ -50,19 +53,27 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
     setState(() => _isLoading = true);
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/ForgotPassword');
+      final response = await http.post(
+        url,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text.trim(),
+        }),
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       
       if (!mounted) return;
       
-      setState(() {
-        _emailSent = true;
-        _isLoading = false;
-      });
-      
-      // Show success message
-      if (mounted) {
-        SnackBarUtils.showSuccess(context, 'Password reset email sent successfully!');
+      if (data['success'] == true) {
+        setState(() {
+          _emailSent = true;
+          _isLoading = false;
+        });
+        SnackBarUtils.showSuccess(context, data['message']?.toString() ?? 'Reset link sent to email');
+      } else {
+        setState(() => _isLoading = false);
+        SnackBarUtils.showError(context, data['message']?.toString() ?? 'Failed to send reset email');
       }
       
     } catch (e) {
@@ -77,15 +88,23 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
     setState(() => _isLoading = true);
     
     try {
-      // Simulate resend API call
-      await Future.delayed(const Duration(seconds: 1));
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/ForgotPassword');
+      final response = await http.post(
+        url,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text.trim(),
+        }),
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
       
       if (!mounted) return;
       
       setState(() => _isLoading = false);
-      
-      if (mounted) {
-        SnackBarUtils.showSuccess(context, 'Reset email sent again!');
+      if (data['success'] == true) {
+        SnackBarUtils.showSuccess(context, data['message']?.toString() ?? 'Reset email sent again');
+      } else {
+        SnackBarUtils.showError(context, data['message']?.toString() ?? 'Failed to resend email');
       }
       
     } catch (e) {

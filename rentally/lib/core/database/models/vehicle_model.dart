@@ -87,8 +87,22 @@ class VehicleModel {
     final String transmission = (json['transmission'] ?? 'Auto').toString();
     final String fuel = (json['fuel'] ?? 'Petrol').toString();
     final bool isFeatured = (json['isFeatured'] is bool) ? (json['isFeatured'] as bool) : false;
-    final double? latitude = (json['latitude'] != null) ? toDouble(json['latitude']) : null;
-    final double? longitude = (json['longitude'] != null) ? toDouble(json['longitude']) : null;
+    double? latitude = (json['latitude'] != null) ? toDouble(json['latitude']) : null;
+    double? longitude = (json['longitude'] != null) ? toDouble(json['longitude']) : null;
+    // DEBUG: derive lat/lng from GeoJSON if direct fields are missing
+    if ((latitude == null || longitude == null || (latitude == 0.0 && longitude == 0.0)) && json['location'] is Map) {
+      final loc = json['location'] as Map;
+      final coords = loc['coordinates'];
+      if (coords is List && coords.length >= 2) {
+        // GeoJSON order is [lng, lat]
+        final lng = toDouble(coords[0]);
+        final lat = toDouble(coords[1]);
+        if (lat != 0.0 || lng != 0.0) {
+          latitude = lat;
+          longitude = lng;
+        }
+      }
+    }
 
     return VehicleModel(
       id: id,

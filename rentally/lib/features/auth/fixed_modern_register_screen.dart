@@ -122,8 +122,11 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
         phone: _phoneController.text.trim(),
       );
 
+      debugPrint('🟢 signUp completed, checking auth state...');
       // Check if registration was successful
       final authState = ref.read(authProvider);
+      debugPrint('🟢 Auth status: ${authState.status}, hasUser: ${authState.user != null}, hasError: ${authState.error != null}');
+      
       if (authState.status == AuthStatus.authenticated && authState.user != null) {
         if (mounted) {
           final code = _referralController.text.trim();
@@ -131,62 +134,61 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
               ? 'Account created successfully with referral code!'
               : 'Account created successfully!';
           context.showSuccess(msg);
-          // New accounts: route through country selection, then role selection
-          final nextPath = Uri.encodeComponent(Routes.role);
-          context.go('${Routes.country}?next=$nextPath');
+          debugPrint('🟢 Redirecting to home page');
+          // Redirect to home page after successful registration
+          context.go(Routes.home);
         }
       } else if (authState.error != null) {
+        debugPrint('🔴 Auth state has error: ${authState.error}');
         throw Exception(authState.error);
       } else {
+        debugPrint('🔴 Registration failed with unknown reason');
         throw Exception('Registration failed. Please try again.');
       }
     } catch (e) {
+      debugPrint('🔴 Registration error caught: $e');
       if (mounted) {
         final errorMessage = e.toString().toLowerCase();
         
-        // Check if user already exists
-        if (errorMessage.contains('user exists') || 
-            errorMessage.contains('already exists') ||
-            errorMessage.contains('email already')) {
-          context.showError(
-            '⚠️ Account Already Exists!\n\nThis email is already registered. Please login instead or use a different email.',
-            type: ErrorType.validation,
-          );
+        // Check if user already exists (email or phone)
+        if (errorMessage.contains('user') && 
+            (errorMessage.contains('exists') || errorMessage.contains('already'))) {
+          debugPrint('🔴 Showing user exists error');
           
-          // Optional: Show a dialog with login option
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Account Exists'),
-                  content: Text(
-                    'An account with ${_emailController.text.trim()} already exists.\n\nWould you like to login instead?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        context.go(Routes.auth);
-                      },
-                      child: const Text('Go to Login'),
-                    ),
-                  ],
-                ),
-              );
-            }
-          });
+          // Determine if it's email or phone duplicate
+          String message = '⚠️ Account Already Exists!\n\n';
+          if (errorMessage.contains('email')) {
+            message += 'This email is already registered. Please login or use a different email.';
+          } else if (errorMessage.contains('phone')) {
+            message += 'This phone number is already registered. Please use a different phone number.';
+          } else {
+            message += 'This account information is already registered. Please login or use different details.';
+          }
+          
+          context.showError(message, type: ErrorType.validation);
+        } else if (errorMessage.contains('e11000') || errorMessage.contains('duplicate')) {
+          // MongoDB duplicate key error
+          debugPrint('🔴 Showing duplicate key error');
+          String message = '⚠️ Registration Failed!\n\n';
+          if (errorMessage.contains('phone')) {
+            message += 'This phone number is already registered. Please use a different phone number.';
+          } else if (errorMessage.contains('email')) {
+            message += 'This email is already registered. Please use a different email.';
+          } else {
+            message += 'Some information you provided is already registered. Please check your details.';
+          }
+          context.showError(message, type: ErrorType.validation);
         } else {
           // Generic error message for other errors
+          debugPrint('🔴 Showing generic error: $e');
           context.showError('Registration failed: ${e.toString()}');
         }
       }
     } finally {
-      ref.stopLoading('auth');
+      // Check if mounted before using ref to avoid "Cannot use ref after widget disposed" error
+      if (mounted) {
+        ref.stopLoading('auth');
+      }
     }
   }
 
