@@ -310,7 +310,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = const AuthState(status: AuthStatus.unauthenticated);
       await _persistSession();
     } catch (e) {
-      state = state.copyWith(
+      state = AuthState(
+        status: AuthStatus.unauthenticated,
+        user: null,
         error: 'Logout failed: ${e.toString()}',
       );
       await _persistSession();

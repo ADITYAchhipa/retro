@@ -546,22 +546,37 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Row(
-                    children: [
-                      Icon(Icons.waving_hand_rounded, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text('Goodbye! See you soon'),
-                    ],
+              final rootContext = context;
+              try {
+                await ref.read(app.authProvider.notifier).signOut();
+                if (!rootContext.mounted) return;
+                ScaffoldMessenger.of(rootContext).showSnackBar(
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.waving_hand_rounded, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
+                        Text('Goodbye! See you soon'),
+                      ],
+                    ),
+                    backgroundColor: theme.colorScheme.primary,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  backgroundColor: theme.colorScheme.primary,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              );
+                );
+
+                // Navigate back to auth/login so user can sign in or create account again
+                try {
+                  if (!rootContext.mounted) return;
+                  final router = GoRouter.of(rootContext);
+                  router.go(Routes.auth);
+                } catch (_) {}
+              } catch (_) {
+                if (!rootContext.mounted) return;
+                SnackBarUtils.showError(rootContext, 'Failed to logout. Please try again.');
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orange,
@@ -630,7 +645,7 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
 
   Widget _buildModernHeader(ThemeData theme, bool isDark) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
         boxShadow: isDark

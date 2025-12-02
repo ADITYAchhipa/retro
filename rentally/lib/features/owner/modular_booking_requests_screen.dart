@@ -111,7 +111,7 @@ class _ModularBookingRequestsScreenState
       snap: false,
       elevation: 0,
       backgroundColor: theme.colorScheme.surface,
-      toolbarHeight: 60,
+      toolbarHeight: 54,
       titleSpacing: 16,
       title: AnimatedSize(
         duration: const Duration(milliseconds: 300),
@@ -151,7 +151,7 @@ class _ModularBookingRequestsScreenState
       bottom: _isSearching
           ? null
           : PreferredSize(
-              preferredSize: const Size.fromHeight(56),
+              preferredSize: const Size.fromHeight(40),
               child: Container(
                 width: double.infinity,
                 color: theme.colorScheme.surface,
@@ -277,7 +277,7 @@ class _ModularBookingRequestsScreenState
       {'key': 'rejected', 'label': 'Rejected', 'count': rejectedCount},
     ];
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           for (int i = 0; i < items.length; i++) ...[

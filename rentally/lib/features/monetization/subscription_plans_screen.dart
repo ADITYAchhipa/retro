@@ -128,6 +128,8 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _headerKey = GlobalKey();
   double _headerMaxHeight = 0.0;
+  bool _showDurationToggle = true;
+  double _lastScrollOffset = 0.0;
 
   @override
   void initState() {
@@ -354,6 +356,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
               }
             }
 
+            // Regular row; per-card min height is enforced inside _buildPlanCard
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -385,8 +388,28 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
 
   void _onScroll() {
     if (!mounted) return;
-    // Rebuild so header height instantly reflects current scroll offset
-    setState(() {});
+    final offset = _scrollController.offset;
+    final delta = offset - _lastScrollOffset;
+
+    // Avoid tiny jitter updates and only react when user scrolls meaningfully
+    const threshold = 6.0;
+    const minOffsetToToggle = 24.0;
+
+    if (delta.abs() > threshold) {
+      if (delta < 0 && offset > minOffsetToToggle) {
+        // Scrolling UP - hide toggle
+        if (_showDurationToggle) {
+          setState(() => _showDurationToggle = false);
+        }
+      } else if (delta > 0 || offset <= minOffsetToToggle) {
+        // Scrolling DOWN or near top - show toggle
+        if (!_showDurationToggle) {
+          setState(() => _showDurationToggle = true);
+        }
+      }
+    }
+
+    _lastScrollOffset = offset;
   }
 
   @override
@@ -408,26 +431,42 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           ? _buildLoadingSkeleton()
           : Column(
               children: [
-                // Duration Toggle - Fixed at top
-                Padding(
-                  padding: EdgeInsets.all(isPhone ? 12 : 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildDurationButton('Monthly', SubscriptionDuration.monthly),
-                        ),
-                        Expanded(
-                          child: _buildDurationButton('Yearly (Save 17%)', SubscriptionDuration.yearly),
-                        ),
-                      ],
-                    ),
-                  ),
+                // Duration Toggle - fixed at top with hide/show on scroll
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 170),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    final fade = CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic);
+                    return SizeTransition(
+                      sizeFactor: fade,
+                      axis: Axis.vertical,
+                      child: FadeTransition(opacity: fade, child: child),
+                    );
+                  },
+                  child: _showDurationToggle
+                      ? Padding(
+                          key: const ValueKey('duration_toggle_visible'),
+                          padding: EdgeInsets.all(isPhone ? 8 : 12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildDurationButton('Monthly', SubscriptionDuration.monthly),
+                                ),
+                                Expanded(
+                                  child: _buildDurationButton('Yearly (Save 17%)', SubscriptionDuration.yearly),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(key: ValueKey('duration_toggle_hidden')),
                 ),
                 // Scrollable content
                 Expanded(
@@ -642,7 +681,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     return GestureDetector(
       onTap: () => setState(() => _selectedDuration = duration),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: isPhone ? 10 : 12, horizontal: isPhone ? 6 : 8),
+        padding: EdgeInsets.symmetric(vertical: isPhone ? 6 : 8, horizontal: isPhone ? 6 : 8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
@@ -659,7 +698,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: isPhone ? 12 : null,
+            fontSize: isPhone ? 11 : null,
             color: isSelected ? Theme.of(context).primaryColor : Colors.grey[600],
           ),
         ),
@@ -903,10 +942,15 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                   ),
                 ),
               Padding(
-                padding: EdgeInsets.all(plan.isPopular ? (isPhone ? 16 : 20) : (isPhone ? 12 : 16)),
+                padding: EdgeInsets.fromLTRB(
+                  isPhone ? 12 : 16,
+                  plan.isPopular ? (isPhone ? 16 : 20) : (isPhone ? 12 : 16),
+                  isPhone ? 12 : 16,
+                  isPhone ? 16 : 20,
+                ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final content = Column(
+                    final topSection = Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (plan.isPopular) SizedBox(height: isPhone ? 8 : 12),
@@ -929,6 +973,12 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                         SizedBox(height: isPhone ? 10 : 14),
                         _buildGuaranteeChips(),
                         SizedBox(height: isPhone ? 16 : 24),
+                      ],
+                    );
+
+                    final bottomSection = Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         Container(
                           width: double.infinity,
                           height: isPhone ? 48 : 54,
@@ -975,7 +1025,22 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                           ),
                       ],
                     );
-                    return content;
+
+                    final content = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        topSection,
+                        bottomSection,
+                      ],
+                    );
+
+                    // Ensure a shared minimum height so Basic/Pro/Elite cards appear equal
+                    final minHeight = isPhone ? 520.0 : 580.0;
+                    return ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: minHeight),
+                      child: content,
+                    );
                   },
                 ),
               ),

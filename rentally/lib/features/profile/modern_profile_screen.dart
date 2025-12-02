@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
 import '../../app/app_state.dart';
 import '../../services/country_service.dart';
+import '../../services/user_preferences_service.dart';
+import '../../core/utils/currency_formatter.dart';
 
 class ModernProfileScreen extends ConsumerStatefulWidget {
   const ModernProfileScreen({super.key});
@@ -33,6 +36,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   void initState() {
     super.initState();
     _loadFromUser();
+    _initCountryAndCurrency();
   }
 
   void _loadFromUser() {
@@ -43,6 +47,36 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     if (_bioCtrl.text.isEmpty) {
       _bioCtrl.text = 'Passionate host and traveler. Love meeting people around the world!';
     }
+  }
+
+  Future<void> _initCountryAndCurrency() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      var country = prefs.getString('selectedCountry');
+      final followCountry = prefs.getBool('currencyFollowCountry') ?? true;
+
+      if (country == null) {
+        final detectedCountry = await CountryService.detectCountryFromLocation();
+        if (detectedCountry != null) {
+          country = detectedCountry;
+          await prefs.setString('selectedCountry', detectedCountry);
+        }
+      }
+
+      if (country != null) {
+        ref.read(countryProvider.notifier).state = country;
+
+        if (followCountry) {
+          var currencyCode = prefs.getString('currencyCode');
+          currencyCode ??= CountryService.getCurrencyForCountry(country);
+          await prefs.setString('currencyCode', currencyCode);
+          CurrencyFormatter.setDefaultCurrency(currencyCode);
+          try {
+            await ref.read(userPreferencesProvider.notifier).updateCurrency(currencyCode);
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
   }
 
   @override
@@ -562,6 +596,10 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     final cover = _coverImage;
     final avatar = _avatarImage;
     final isPhone = MediaQuery.of(context).size.width < 600;
+    final selectedCountry = ref.watch(countryProvider);
+    final countryFlag = selectedCountry != null
+        ? CountryService.getFlagEmojiForCountry(selectedCountry)
+        : null;
 
     return SliverAppBar(
       expandedHeight: isPhone ? 200 : 240,
@@ -782,6 +820,37 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                             ],
                           ),
                         ),
+                        if (selectedCountry != null && selectedCountry.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              if (countryFlag != null)
+                                Text(
+                                  countryFlag,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: isPhone ? 12 : 14,
+                                  ),
+                                ),
+                              if (countryFlag != null) const SizedBox(width: 6),
+                              Text(
+                                selectedCountry,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  fontSize: isPhone ? 12 : 13,
+                                  fontWeight: FontWeight.w500,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

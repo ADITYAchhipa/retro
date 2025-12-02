@@ -10,6 +10,8 @@ import '../../../core/providers/property_provider.dart';
 import '../../../core/providers/vehicle_provider.dart';
 import '../../../core/widgets/hover_scale.dart';
 // import '../../../core/utils/price_unit_helper.dart';
+import '../../../services/location_service.dart';
+import '../../../core/database/models/property_model.dart';
 
 /// Nearby section widget showing nearby properties/vehicles based on location
 class HomeNearbySection extends StatefulWidget {
@@ -31,6 +33,9 @@ class HomeNearbySection extends StatefulWidget {
 }
 
 class _HomeNearbySectionState extends State<HomeNearbySection> {
+  final LocationService _locationService = LocationService();
+  double? _userLatitude;
+  double? _userLongitude;
 
   @override
   void initState() {
@@ -41,7 +46,21 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
       // Load nearby properties and vehicles
       pv.Provider.of<PropertyProvider>(context, listen: false).loadFeaturedProperties();
       pv.Provider.of<VehicleProvider>(context, listen: false).loadFeaturedVehicles();
+      _loadUserLocation();
     });
+  }
+
+  Future<void> _loadUserLocation() async {
+    try {
+      final pos = await _locationService.getCurrentLocation();
+      if (!mounted || pos == null) return;
+      setState(() {
+        _userLatitude = pos.latitude;
+        _userLongitude = pos.longitude;
+      });
+    } catch (_) {
+      // Silent fail - nearby section will fall back to unfiltered data
+    }
   }
 
   Widget _buildEmptyState(String category) {
@@ -99,6 +118,38 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  List<PropertyModel> _filterNearbyProperties(List<PropertyModel> items) {
+    if (_userLatitude == null || _userLongitude == null) return items;
+    final lat = _userLatitude!;
+    final lon = _userLongitude!;
+
+    final List<MapEntry<PropertyModel, double>> withDistance = [];
+    for (final p in items) {
+      // Skip items without valid coordinates
+      if (p.latitude == 0.0 && p.longitude == 0.0) continue;
+      final d = _locationService.calculateDistance(
+        lat,
+        lon,
+        p.latitude,
+        p.longitude,
+      );
+      withDistance.add(MapEntry(p, d));
+    }
+
+    if (withDistance.isEmpty) return items;
+
+    withDistance.sort((a, b) => a.value.compareTo(b.value));
+
+    const maxDistanceMeters = 50000.0; // ~50 km radius
+    final nearby = withDistance
+        .where((e) => e.value <= maxDistanceMeters)
+        .map((e) => e.key)
+        .toList();
+
+    // If filtering removes everything, fall back to the original list
+    return nearby.isNotEmpty ? nearby : items;
   }
 
   @override
@@ -205,10 +256,11 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                         if (propertyProvider.isLoading) {
                           return _buildLoadingState();
                         }
-                        final properties = propertyProvider.featuredProperties;
-                        if (properties.isEmpty) {
+                        final allProperties = propertyProvider.featuredProperties;
+                        if (allProperties.isEmpty) {
                           return _buildEmptyState(widget.selectedCategory);
                         }
+                        final properties = _filterNearbyProperties(allProperties);
                         final screenWidth = MediaQuery.of(context).size.width;
                         final cardWidth = screenWidth < 600 ? 240.0 : 280.0;
                         final sectionHeight = screenWidth < 600 ? 210.0 : 220.0;
