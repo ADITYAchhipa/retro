@@ -76,17 +76,16 @@ export const login = async (req, res) => {
         const { email, password } = req.body
         if (!email || !password)
             return res.json({ success: false, message: "Missing Details" })
-        // console.log("Login function called");
+        console.log("Login function called");
         const user = await User.findOne({ email }).select('+password');
-
         if (!user)
             return res.json({ success: false, message: "Invalid email or password" })
-        // console.log(password+" "+user.password+" "+(await bcrypt.compare(password, user.password)));
+        console.log(password+" "+user.password+" "+(await bcrypt.compare(password, user.password)));
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch && false)
             return res.json({ success: false, message: "Invalid email or password" })
-        // console.log("Login function called");
+        console.log("Login function called");
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
         res.cookie('token', token, {
