@@ -9,6 +9,8 @@ class User {
   final String id;
   final String name;
   final String email;
+  final String? phone;
+  final String? country;
   final String? profileImageUrl;
   final String role; // 'seeker' or 'owner'
 
@@ -16,6 +18,8 @@ class User {
     required this.id,
     required this.name,
     required this.email,
+    this.phone,
+    this.country,
     this.profileImageUrl,
     required this.role,
   });
@@ -24,6 +28,8 @@ class User {
     String? id,
     String? name,
     String? email,
+    String? phone,
+    String? country,
     String? profileImageUrl,
     String? role,
   }) {
@@ -31,6 +37,8 @@ class User {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
+      country: country ?? this.country,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       role: role ?? this.role,
     );
@@ -96,6 +104,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           id: data['user']['email'], // Use email as ID if no ID returned
           name: data['user']['name'] ?? 'User',
           email: data['user']['email'],
+          phone: data['user']['phone'],
+          country: data['user']['country'],
           role: 'seeker',
           profileImageUrl: null,
         );
@@ -143,6 +153,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           id: data['user']['email'], // Use email as ID if no ID returned
           name: data['user']['name'] ?? name,
           email: data['user']['email'] ?? email,
+          phone: data['user']['phone'],
+          country: data['user']['country'],
           role: role,
           profileImageUrl: null,
         );
@@ -193,6 +205,47 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(role: newRole.name);
       state = state.copyWith(user: updatedUser);
+    }
+  }
+
+  Future<void> updateCountry(String country) async {
+    state = state.copyWith(isLoading: true, error: null);
+    
+    try {
+      // Get the token
+      final token = await TokenStorageService.getToken();
+      
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      // Make API call to backend
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/updatecountry');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'country': country,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      
+      if (data['success'] == true) {
+        // Update user state with new country
+        if (state.user != null) {
+          final updatedUser = state.user!.copyWith(country: country);
+          state = state.copyWith(user: updatedUser, isLoading: false);
+        }
+      } else {
+        throw Exception(data['message'] ?? 'Failed to update country');
+      }
+    } catch (e) {
+      state = state.copyWith(error: e.toString(), isLoading: false);
+      rethrow;
     }
   }
 }

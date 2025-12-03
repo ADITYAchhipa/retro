@@ -186,33 +186,49 @@ class MockApiService {
     return getBookings();
   }
   
-  Future<List<Map<String, dynamic>>> getFeaturedProperties({String? category}) async {
+  Future<List<Map<String, dynamic>>> getFeaturedProperties({
+    String? category,
+    int page = 1,
+    int limit = 10,
+    List<String> excludeIds = const [],
+  }) async {
     try {
-      // Build URL with optional category parameter
-      String url = '${ApiConstants.baseUrl}/property/featured';
+      // Build URL with pagination and duplicate prevention
+      final params = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      
+      // Add category filter if provided and not 'all'
       if (category != null && category.isNotEmpty && category.toLowerCase() != 'all') {
-        url += '?category=$category';
+        params['category'] = category + 's'; // Backend expects plural
       }
       
-      debugPrint('🔍 Fetching featured properties from: $url');
+      // Add excludeIds for duplicate prevention
+      if (excludeIds.isNotEmpty) {
+        params['excludeIds'] = excludeIds.join(',');
+      }
       
-      final response = await http.get(Uri.parse(url));
+      final uri = Uri.parse('${ApiConstants.baseUrl}/featured/properties')
+          .replace(queryParameters: params);
+      
+      debugPrint('🔍 Fetching featured properties: $uri');
+      
+      final response = await http.get(uri);
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
           final results = (data['results'] as List).cast<Map<String, dynamic>>();
-          debugPrint('✅ Fetched ${results.length} featured properties');
+          debugPrint('✅ Fetched ${results.length} featured properties (page $page)');
           return results;
         }
       }
       debugPrint('❌ Failed to fetch featured properties: ${response.statusCode}');
-      // Fallback: return mock properties for offline/dev usage
-      return await getProperties();
+      return [];
     } catch (e) {
       debugPrint('❌ Error fetching featured properties: $e');
-      // Fallback: return mock properties for offline/dev usage
-      return await getProperties();
+      return [];
     }
   }
   

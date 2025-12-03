@@ -40,10 +40,22 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   }
 
   void _loadFromUser() {
-    // Load user profile data - currently using placeholder data
-    _nameCtrl.text = _nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'John Doe';
-    _emailCtrl.text = _emailCtrl.text.isNotEmpty ? _emailCtrl.text : 'john.doe@example.com';
-    _phoneCtrl.text = _phoneCtrl.text.isNotEmpty ? _phoneCtrl.text : '+1 (555) 123-4567';
+    // Load user profile data from authenticated user
+    final authState = ref.read(authProvider);
+    final user = authState.user;
+    
+    if (user != null) {
+      _nameCtrl.text = user.name;
+      _emailCtrl.text = user.email;
+      _phoneCtrl.text = user.phone ?? '';
+    } else {
+      // Fallback to empty values if no user is authenticated
+      _nameCtrl.text = '';
+      _emailCtrl.text = '';
+      _phoneCtrl.text = '';
+    }
+    
+    // Bio is not stored in backend yet, keep default
     if (_bioCtrl.text.isEmpty) {
       _bioCtrl.text = 'Passionate host and traveler. Love meeting people around the world!';
     }
@@ -157,6 +169,24 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // Watch auth state and reload user data when it changes
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+    
+    // Update text controllers when user data changes (but only if not currently editing)
+    if (user != null) {
+      // Only update if controllers have different values to avoid cursor jumping during editing
+      if (_nameCtrl.text != user.name) {
+        _nameCtrl.text = user.name;
+      }
+      if (_emailCtrl.text != user.email) {
+        _emailCtrl.text = user.email;
+      }
+      if (_phoneCtrl.text != (user.phone ?? '')) {
+        _phoneCtrl.text = user.phone ?? '';
+      }
+    }
 
     return Scaffold(
       backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
@@ -998,7 +1028,11 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   }
 
   Widget _buildCountryRow(ThemeData theme, bool isDark) {
-    final selectedCountry = ref.watch(countryProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+    
+    // Prioritize country from user object (database), fallback to provider state
+    final selectedCountry = user?.country ?? ref.watch(countryProvider);
     final displayName = selectedCountry ?? 'Select country';
     final flag = selectedCountry != null
         ? CountryService.getFlagEmojiForCountry(selectedCountry)

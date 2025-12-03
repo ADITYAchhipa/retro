@@ -245,6 +245,18 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                           padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
                           itemCount: items.length,
                           itemBuilder: (context, index) {
+                            // Trigger load more when approaching end (at index length - 3)
+                            if (index == items.length - 3 && 
+                                !propertyProvider.isFeaturedLoading && 
+                                propertyProvider.hasMoreProperties) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                propertyProvider.loadFeaturedProperties(
+                                  category: widget.selectedCategory,
+                                  loadMore: true,
+                                );
+                              });
+                            }
+                            
                             final property = items[index];
                             final vm = ListingViewModelFactory.fromProperty(property);
                             return Padding(

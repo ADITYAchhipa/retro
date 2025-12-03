@@ -156,12 +156,19 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
     });
     
     try {
-      // Simulate API call delay for better UX demonstration
-      await Future.delayed(AppConstants.animationSimulatedDelay);
-      
-      if (!mounted) return;
-      
+      // Update country in provider
       ref.read(countryProvider.notifier).state = selectedCountry;
+      
+      // Save to backend if user is authenticated
+      final authNotifier = ref.read(authProvider.notifier);
+      try {
+        await authNotifier.updateCountry(selectedCountry!);
+      } catch (e) {
+        // If API call fails (user not authenticated or network error), continue anyway
+        // Country is still saved locally
+        print('Failed to update country in backend: $e');
+      }
+      
       // Auto-select currency based on chosen country and persist globally (if enabled)
       try {
         final prefs = await SharedPreferences.getInstance();

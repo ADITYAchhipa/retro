@@ -79,33 +79,88 @@ class PropertyProvider with ChangeNotifier {
     }
   }
 
-  /// Load featured properties for home screen from real backend with caching
-  Future<void> loadFeaturedProperties({String category = 'all'}) async {
+  // Pagination state
+  int _currentPage = 1;
+  bool _hasMoreProperties = true;
+  final Set<String> _loadedPropertyIds = {};
+  
+  // Getters for pagination
+  bool get hasMoreProperties => _hasMoreProperties;
+  int get currentPage => _currentPage;
+  Set<String> get loadedPropertyIds => _loadedPropertyIds;
+
+  /// Load featured properties for home screen with infinite scroll support
+  Future<void> loadFeaturedProperties({
+    String category = 'all',
+    bool loadMore = false,
+  }) async {
     
-    // Check cache first
-    if (_cacheProvider != null) {
+    // If loading more, just append. Otherwise, reset everything
+    if (!loadMore) {
+      _currentPage = 1;
+      _loadedPropertyIds.clear();
+      _featuredProperties = [];
+      _hasMoreProperties = true;
+    }
+    
+    // Don't load if already loading or no more data
+    if (_isFeaturedLoading || (!loadMore && _hasMoreProperties == false)) {
+      return;
+    }
+    
+    // Check cache first (only on initial load, not on load more)
+    if (!loadMore && _cacheProvider != null) {
       final cached = _cacheProvider!.getPropertyCache(category);
-      if (cached != null) {
+      if (cached != null && cached.isNotEmpty) {
         debugPrint('📦 Loading properties from cache for category: $category');
         _featuredProperties = cached.map((p) => PropertyModel.fromJson(p)).toList();
+        _loadedPropertyIds.addAll(_featuredProperties.map((p) => p.id));
         notifyListeners();
         return;
       }
     }
     
-    // Cache miss - load from backend
+    // Fetch from backend
     _isFeaturedLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      debugPrint('🌐 Fetching properties from backend for category: $category');
-      final response = await _realApiService.getFeaturedProperties(category: category);
-      _featuredProperties = response.map((p) => PropertyModel.fromJson(p)).toList();
+      debugPrint('🌐 Fetching properties from backend (page: $_currentPage, category: $category)');
       
-      // Cache the result
-      if (_cacheProvider != null) {
-        _cacheProvider!.setPropertyCache(category, response);
+      final response = await _realApiService.getFeaturedProperties(
+        category: category,
+        page: _currentPage,
+        limit: 10,
+        excludeIds: _loadedPropertyIds.toList(),
+      );
+      
+      if (response.isEmpty) {
+        _hasMoreProperties = false;
+        debugPrint('📭 No more properties available');
+      } else {
+        final newProperties = response.map((p) => PropertyModel.fromJson(p)).toList();
+        
+        if (loadMore) {
+          // Append to existing list
+          _featuredProperties.addAll(newProperties);
+        } else {
+          // Replace list on initial load
+          _featuredProperties = newProperties;
+        }
+        
+        // Track loaded IDs
+        _loadedPropertyIds.addAll(newProperties.map((p) => p.id));
+        
+        // Increment page for next load
+        _currentPage++;
+        
+        debugPrint('✅ Loaded ${newProperties.length} properties (total: ${_featuredProperties.length})');
+        
+        // Cache the initial result (only on first page)
+        if (_currentPage == 2 && _cacheProvider != null) {
+          _cacheProvider!.setPropertyCache(category, response);
+        }
       }
     } catch (e) {
       _error = 'Failed to load featured properties: $e';
@@ -114,6 +169,15 @@ class PropertyProvider with ChangeNotifier {
       _isFeaturedLoading = false;
       notifyListeners();
     }
+  }
+  
+  /// Reset pagination state (call when changing category)
+  void resetPagination() {
+    _currentPage = 1;
+    _hasMoreProperties = true;
+    _loadedPropertyIds.clear();
+    _featuredProperties = [];
+    notifyListeners();
   }
 
   /// Search properties using real backend

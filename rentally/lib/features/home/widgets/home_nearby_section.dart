@@ -74,7 +74,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
   Future<void> _fetchNearby({required double lat, required double lng}) async {
     try {
       setState(() => _nearbyLoading = true);
-      // DEBUG: request nearby from backend with strict 10km cap and debug=1
+      // Fetch nearby from backend with strict 10km cap ONCE - cache the results
       final propsJson = await _api.getNearbyProperties(
         latitude: lat,
         longitude: lng,
@@ -89,8 +89,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
       );
       final props = propsJson.map((e) => PropertyModel.fromJson(e)).toList();
       final vehs = vehsJson.map((e) => VehicleModel.fromJson(e)).toList();
-      // DEBUG: log counts
-      debugPrint('Nearby properties from backend: ${props.length}, vehicles: ${vehs.length}');
+      debugPrint('✅ Nearby properties fetched: ${props.length}, vehicles: ${vehs.length}');
       setState(() {
         _nearbyProperties = props;
         _nearbyVehicles = vehs;
@@ -100,6 +99,30 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
     } finally {
       if (mounted) setState(() => _nearbyLoading = false);
     }
+  }
+
+  /// Filter properties by category on frontend (NO API call)
+  List<PropertyModel> _filterPropertiesByCategory(List<PropertyModel> properties) {
+    if (widget.selectedCategory.toLowerCase() == 'all') {
+      return properties;
+    }
+    
+    // Match category to PropertyType enum
+    return properties.where((property) {
+      return property.type.name.toLowerCase() == widget.selectedCategory.toLowerCase();
+    }).toList();
+  }
+
+  /// Filter vehicles by category on frontend (NO API call)
+  List<VehicleModel> _filterVehiclesByCategory(List<VehicleModel> vehicles) {
+    if (widget.selectedCategory.toLowerCase() == 'all') {
+      return vehicles;
+    }
+    
+    // Match category string (SUV, Sedan, Electric, etc.)
+    return vehicles.where((vehicle) {
+      return vehicle.category.toLowerCase() == widget.selectedCategory.toLowerCase();
+    }).toList();
   }
 
   Widget _buildEmptyState(String category) {
@@ -290,21 +313,29 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
             duration: const Duration(milliseconds: 300),
             child: isProperties
                   ? pv.Consumer<PropertyProvider>(
-                      key: ValueKey('nearby_properties_${widget.tabController.index}'),
+                      key: ValueKey('nearby_properties_${widget.tabController.index}_${widget.selectedCategory}'),
                       builder: (context, propertyProvider, child) {
-                        if (propertyProvider.isLoading) {
+                        if (propertyProvider.isLoading && _nearbyProperties.isEmpty) {
                           return _buildLoadingState();
                         }
+                        // Use cached nearby properties if available, else fallback to provider
                         final source = _nearbyProperties.isNotEmpty
                             ? _nearbyProperties
                             : propertyProvider.featuredProperties;
+                        
                         if (source.isEmpty) {
                           return _buildEmptyState(widget.selectedCategory);
                         }
-                        // If backend nearby available, use it; else client-side filter as fallback
+                        
+                        // Apply category filter on frontend (cached data - NO API call)
                         final properties = _nearbyProperties.isNotEmpty
-                            ? _nearbyProperties
+                            ? _filterPropertiesByCategory(_nearbyProperties)
                             : _filterNearbyProperties(source);
+                        
+                        if (properties.isEmpty) {
+                          return _buildEmptyState(widget.selectedCategory);
+                        }
+                        
                         final screenWidth = MediaQuery.of(context).size.width;
                         final cardWidth = screenWidth < 600 ? 240.0 : 280.0;
                         final sectionHeight = screenWidth < 600 ? 210.0 : 220.0;
@@ -339,15 +370,28 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                   : pv.Consumer<VehicleProvider>(
                       key: ValueKey('nearby_vehicles_${widget.tabController.index}_${widget.selectedCategory}'),
                       builder: (context, vehicleProvider, child) {
-                        if (vehicleProvider.isLoading) {
+                        if (vehicleProvider.isLoading && _nearbyVehicles.isEmpty) {
                           return _buildLoadingState();
                         }
-                        final vehicles = _nearbyVehicles.isNotEmpty
+                        
+                        // Use cached nearby vehicles if available, else fallback to provider
+                        final source = _nearbyVehicles.isNotEmpty
                             ? _nearbyVehicles
                             : vehicleProvider.featuredVehicles;
+                        
+                        if (source.isEmpty) {
+                          return _buildEmptyState(widget.selectedCategory);
+                        }
+                        
+                        // Apply category filter on frontend (cached data - NO API call)
+                        final vehicles = _nearbyVehicles.isNotEmpty
+                            ? _filterVehiclesByCategory(_nearbyVehicles)
+                            : source;
+                        
                         if (vehicles.isEmpty) {
                           return _buildEmptyState(widget.selectedCategory);
                         }
+                        
                         final screenWidth = MediaQuery.of(context).size.width;
                         final cardWidth = screenWidth < 600 ? 240.0 : 280.0;
                         final sectionHeight = screenWidth < 600 ? 210.0 : 220.0;

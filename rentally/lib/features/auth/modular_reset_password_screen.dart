@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 // Modular auth widgets
 import 'widgets/auth_header.dart';
@@ -11,6 +13,8 @@ import 'widgets/auth_button.dart';
 import '../../core/neo/neo.dart';
 
 // Services
+import '../../services/token_storage_service.dart';
+import '../../core/constants/api_constants.dart';
 
 class ModularResetPasswordScreen extends ConsumerStatefulWidget {
   final String email;
@@ -95,6 +99,10 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
                         prefixIcon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         validator: _validatePassword,
+                        onChanged: (value) {
+                          // Trigger rebuild to update password requirements display
+                          setState(() {});
+                        },
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -334,19 +342,67 @@ class _ModularResetPasswordScreenState extends ConsumerState<ModularResetPasswor
     setState(() => _isLoading = true);
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      // Get JWT token
+      final token = await TokenStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Not authenticated. Please login again.');
+      }
       
-      if (mounted) {
-        // Navigate to success screen (supports both auth and account flows)
-        context.pushReplacement(widget.successPath);
+      // Call backend API
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/ChangePasswordProfile');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'password': _passwordController.text.trim(),
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      
+      if (data['success'] == true) {
+        // Success - show success snackbar and navigate back
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Password changed successfully!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          
+          // Navigate back to profile after short delay
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            context.go(widget.successPath);
+          }
+        }
+      } else {
+        // Backend returned success: false
+        throw Exception(data['message'] ?? 'Failed to change password');
       }
     } catch (e) {
+      // Error - show error snackbar
       if (mounted) {
+        String errorMessage = 'Internal server error';
+        if (e.toString().contains('Exception:')) {
+          errorMessage = e.toString().substring(11); // Remove 'Exception: ' prefix
+        } else if (e.toString().isNotEmpty) {
+          errorMessage = e.toString();
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to reset password: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 4),
           ),
         );
       }

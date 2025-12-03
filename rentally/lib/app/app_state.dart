@@ -21,6 +21,7 @@ class User {
   final String email;
   final String name;
   final String? phone;
+  final String? country;
   final UserRole role;
   final String? profileImageUrl;
   final bool isKycVerified;
@@ -30,6 +31,7 @@ class User {
     required this.email,
     required this.name,
     this.phone,
+    this.country,
     required this.role,
     this.profileImageUrl,
     this.isKycVerified = false,
@@ -40,6 +42,7 @@ class User {
     String? email,
     String? name,
     String? phone,
+    String? country,
     UserRole? role,
     String? profileImageUrl,
     bool? isKycVerified,
@@ -49,6 +52,7 @@ class User {
       email: email ?? this.email,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      country: country ?? this.country,
       role: role ?? this.role,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isKycVerified: isKycVerified ?? this.isKycVerified,
@@ -123,6 +127,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
                 email: userData['email'] as String? ?? '',
                 name: userData['name'] as String? ?? 'User',
                 phone: userData['phone'] as String?,
+                country: userData['Country'] as String?,
                 role: role,
                 profileImageUrl: userData['profileImageUrl'] as String?,
                 isKycVerified: userData['isKycVerified'] as bool? ?? false,
@@ -165,6 +170,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           email: data['email'] as String? ?? '',
           name: data['name'] as String? ?? 'User',
           phone: data['phone'] as String?,
+          country: data['country'] as String?,
           role: role,
           profileImageUrl: data['profileImageUrl'] as String?,
           isKycVerified: data['isKycVerified'] as bool? ?? false,
@@ -195,6 +201,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'email': user.email,
           'name': user.name,
           'phone': user.phone,
+          'country': user.country,
           'role': user.role.name,
           'profileImageUrl': user.profileImageUrl,
           'isKycVerified': user.isKycVerified,
@@ -240,7 +247,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           id: data['user']['email'],
           email: data['user']['email'],
           name: data['user']['name'] ?? 'User',
-          phone: null,
+          phone: data['user']['phone'] as String?,
+          country: data['user']['country'] as String?,
           role: UserRole.seeker, // Default role, can be determined from backend
         );
         
@@ -303,6 +311,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           email: data['user']['email'],
           name: data['user']['name'] ?? name,
           phone: phone,
+          country: data['user']['country'] as String?,
           role: role,
         );
         
@@ -401,6 +410,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(role: newRole);
       state = state.copyWith(user: updatedUser);
+    }
+  }
+
+  Future<void> updateCountry(String country) async {
+    if (state.user == null) return;
+    
+    state = state.copyWith(status: AuthStatus.loading);
+    
+    try {
+      // Get the token
+      final token = await TokenStorageService.getToken();
+      
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      // Make API call to backend
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/updatecountry');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'country': country,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      
+      if (data['success'] == true) {
+        // Update user state with new country
+        final updatedUser = state.user!.copyWith(country: country);
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: updatedUser,
+          error: null,
+        );
+        await _persistSession();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to update country');
+      }
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        error: 'Country update failed: ${e.toString()}',
+      );
+      rethrow;
     }
   }
 }

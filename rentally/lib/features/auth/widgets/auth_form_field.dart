@@ -9,6 +9,7 @@ class AuthFormField extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
   final Widget? suffixIcon;
   final VoidCallback? onTap;
   final bool readOnly;
@@ -24,6 +25,7 @@ class AuthFormField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.onChanged,
     this.suffixIcon,
     this.onTap,
     this.readOnly = false,
@@ -73,6 +75,7 @@ class AuthFormField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           validator: validator,
+          onChanged: onChanged,
           onTap: onTap,
           readOnly: readOnly,
           style: textStyle,
