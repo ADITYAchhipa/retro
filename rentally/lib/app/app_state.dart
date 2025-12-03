@@ -255,29 +255,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
     } catch (e) {
       // No fallback - always use backend authentication
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        error: 'Login failed: ${e.toString()}',
+        error: errorMessage,
       );
       await _persistSession();
     }
   }
 
-  Future<void> signUp(String name, String email, String password, UserRole role, {String? phone}) async {
+  Future<void> signUp(String name, String email, String password, UserRole role, {String? phone, String? referralCode}) async {
     state = state.copyWith(status: AuthStatus.loading);
     
     try {
       // Call backend API
       final url = Uri.parse('${ApiConstants.authBaseUrl}/register');
+      final body = <String, dynamic>{
+        'name': name,
+        'email': email,
+        'password': password,
+        'phone': phone ?? '0000000000', // Use provided phone or default
+      };
+      if (referralCode != null && referralCode.isNotEmpty) {
+        body['referralCode'] = referralCode;
+      }
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-          'phone': phone ?? '0000000000', // Use provided phone or default
-        }),
+        body: jsonEncode(body),
       );
 
       final data = jsonDecode(response.body);

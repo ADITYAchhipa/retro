@@ -13,7 +13,8 @@ import sendOtp from '../config/otp.js'; // Import the sendOtp function
 export const register = async (req, res) => {
     try {
         console.log(req.body)
-        const { name, email, password, phone, ReferralCode } = req.body;
+        const { name, email, password, phone } = req.body;
+        const referralCode = req.body.ReferralCode || req.body.referralCode;
         if (!name || !email || !password || !phone) {
             console.log("Missing Details");
             return res.json({ success: false, message: "Missing Details" })
@@ -35,7 +36,7 @@ export const register = async (req, res) => {
 
         const hashedPasword = await bcrypt.hash(password, 10)
 
-        const user = await User.create({ name, email, password: hashedPasword, phone, ReferralCode })
+        const user = await User.create({ name, email, password: hashedPasword, phone, ReferralCode: referralCode })
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
@@ -64,12 +65,12 @@ export const login = async (req, res) => {
             return res.json({ success: false, message: "Missing Details" })
         const user = await User.findOne({ email }).select('+password');
 
-        if (!user&&false)
-            return res.json({ success: false, message: "Invalide email or password" })
+        if (!user)
+            return res.json({ success: false, message: "Invalid email or password" })
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if (!isMatch&&false)
-            return res.json({ success: false, message: "Invalide email or password" })
+        if (!isMatch)
+            return res.json({ success: false, message: "Invalid email or password" })
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
         res.cookie('token', token, {
@@ -219,29 +220,69 @@ export const logout = async (req, res) => {
     catch (error) {
         console.log(error.message);
         return res.json({ success: false, message: error.message })
-
     }
 }
-
 
 // forgot password send email
 
 export const forgot = async (req, res) => {
-    {
+    try {
+        const { email, phone } = req.body;
+        if (!email && !phone)
+            return res.json({ success: false, message: "Missing Details" })
+        const user = await User.findOne({ email });
+        if (!user)
+            return res.json({ success: false, message: "Invalid email" })
+        // Generate a random 6-digit OTP
+        const otpCode = Math.floor(100000 + Math.random() * 900000);
+        const hashedOtp = await bcrypt.hash(String(otpCode), 10);
+        // Create a short-lived reset token embedding user id and hashed OTP
+        const resetToken = jwt.sign(
+            { id: user._id, otp: hashedOtp },
+            process.env.JWT_SECRET,
+            { expiresIn: '10m' }
+        );
+        await sendOtp(otpCode, email)
+        // send email with reset link 
+        return res.json({ success: true, message: "Reset code sent to email", resetToken })
+    }
+    catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, otp, newPassword, resetToken } = req.body;
+        if (!email || !otp || !newPassword || !resetToken) {
+            return res.json({ success: false, message: "Missing Details" });
+        }
+
+        let decoded;
         try {
-            const { email, phone } = req.body;
-            if (!email && !phone)
-                return res.json({ success: false, message: "Missing Details" })
-            const user = await User.findOne({ email });
-            if (!user)
-                return res.json({ success: false, message: "Invalide email" })
-            await sendOtp("123456", email)
-            // send email with reset link 
-            return res.json({ success: true, message: "Reset link sent to email" })
+            decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+        } catch (error) {
+            return res.json({ success: false, message: "Reset token is invalid or expired" });
         }
-        catch (error) {
-            console.log(error.message);
-            res.json({ success: false, message: error.message })
+
+        const user = await User.findById(decoded.id).select('+password');
+        if (!user || user.email !== email) {
+            return res.json({ success: false, message: "Invalid email" });
         }
+
+        const isMatch = await bcrypt.compare(String(otp), decoded.otp);
+        if (!isMatch) {
+            return res.json({ success: false, message: "Invalid OTP" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        return res.json({ success: true, message: "Password reset successful" });
+    } catch (error) {
+        console.log(error.message);
+        return res.json({ success: false, message: error.message });
     }
 }

@@ -107,8 +107,10 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
       };
       
       // Add referral code to user model if provided (backend will handle it)
+      String? referralCode;
       if (_referralController.text.trim().isNotEmpty) {
-        registrationData['referralCode'] = _referralController.text.trim().toUpperCase();
+        referralCode = _referralController.text.trim().toUpperCase();
+        registrationData['referralCode'] = referralCode;
       }
       
       debugPrint('Registration payload: $registrationData');
@@ -120,6 +122,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
         _passwordController.text,
         UserRole.seeker, // Default role, can be changed later
         phone: _phoneController.text.trim(),
+        referralCode: referralCode,
       );
 
       debugPrint('🟢 signUp completed, checking auth state...');
@@ -150,34 +153,15 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
       if (mounted) {
         final errorMessage = e.toString().toLowerCase();
         
-        // Check if user already exists (email or phone)
+        // Check if user already exists (email or phone) and keep user on signup page
         if (errorMessage.contains('user') && 
-            (errorMessage.contains('exists') || errorMessage.contains('already'))) {
-          debugPrint('🔴 Showing user exists error');
-          
-          // Determine if it's email or phone duplicate
-          String message = '⚠️ Account Already Exists!\n\n';
-          if (errorMessage.contains('email')) {
-            message += 'This email is already registered. Please login or use a different email.';
-          } else if (errorMessage.contains('phone')) {
-            message += 'This phone number is already registered. Please use a different phone number.';
-          } else {
-            message += 'This account information is already registered. Please login or use different details.';
-          }
-          
-          context.showError(message, type: ErrorType.validation);
-        } else if (errorMessage.contains('e11000') || errorMessage.contains('duplicate')) {
-          // MongoDB duplicate key error
-          debugPrint('🔴 Showing duplicate key error');
-          String message = '⚠️ Registration Failed!\n\n';
-          if (errorMessage.contains('phone')) {
-            message += 'This phone number is already registered. Please use a different phone number.';
-          } else if (errorMessage.contains('email')) {
-            message += 'This email is already registered. Please use a different email.';
-          } else {
-            message += 'Some information you provided is already registered. Please check your details.';
-          }
-          context.showError(message, type: ErrorType.validation);
+            (errorMessage.contains('exists') || errorMessage.contains('already') ||
+             errorMessage.contains('e11000') || errorMessage.contains('duplicate'))) {
+          debugPrint('🔴 Showing existing-account message');
+          context.showError(
+            'You already have an account. Please login.',
+            type: ErrorType.validation,
+          );
         } else {
           // Generic error message for other errors
           debugPrint('🔴 Showing generic error: $e');

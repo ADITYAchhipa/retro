@@ -23,12 +23,16 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
   
   /// Email input controller
   final _emailController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   
   /// Loading state for form submission
   bool _isLoading = false;
   
   /// Email sent confirmation state
   bool _emailSent = false;
+  String? _resetToken;
 
   // ========================================
   // 🧹 CLEANUP AND DISPOSAL
@@ -38,6 +42,9 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
   void dispose() {
     // Clean up controllers to prevent memory leaks
     _emailController.dispose();
+    _otpController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -68,6 +75,7 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
       if (data['success'] == true) {
         setState(() {
           _emailSent = true;
+          _resetToken = data['resetToken']?.toString();
           _isLoading = false;
         });
         SnackBarUtils.showSuccess(context, data['message']?.toString() ?? 'Reset link sent to email');
@@ -80,6 +88,64 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
       if (mounted) {
         setState(() => _isLoading = false);
         SnackBarUtils.showError(context, 'Failed to send reset email: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _handleResetPassword() async {
+    if (_otpController.text.trim().isEmpty ||
+        _newPasswordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      SnackBarUtils.showError(context, 'Please fill in all fields');
+      return;
+    }
+
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      SnackBarUtils.showError(context, 'Passwords do not match');
+      return;
+    }
+
+    if (_resetToken == null || _resetToken!.isEmpty) {
+      SnackBarUtils.showError(context, 'Reset token missing. Please request a new code.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/reset-password');
+      final response = await http.post(
+        url,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text.trim(),
+          'otp': _otpController.text.trim(),
+          'newPassword': _newPasswordController.text,
+          'resetToken': _resetToken,
+        }),
+      );
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
+      if (data['success'] == true) {
+        SnackBarUtils.showSuccess(
+          context,
+          data['message']?.toString() ?? 'Password reset successful. You can now sign in.',
+        );
+        context.go('/auth');
+      } else {
+        SnackBarUtils.showError(
+          context,
+          data['message']?.toString() ?? 'Failed to reset password',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        SnackBarUtils.showError(context, 'Failed to reset password: ${e.toString()}');
       }
     }
   }
@@ -458,7 +524,7 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
         
         // Email sent message
         Text(
-          'Reset email sent to:',
+          'Reset code sent to:',
           style: TextStyle(
             fontSize: 14,
             color: isDark 
@@ -512,10 +578,9 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
               ),
               const SizedBox(height: 8),
               Text(
-                '1. Check your email inbox\n'
-                '2. Click the reset link in the email\n'
-                '3. Create a new password\n'
-                '4. Sign in with your new password',
+                '1. Check your email inbox for the 6-digit code\n'
+                '2. Enter the code and your new password below\n'
+                '3. Sign in with your new password',
                 style: TextStyle(
                   fontSize: 13,
                   color: isDark 
@@ -530,7 +595,61 @@ class _ModernForgotPasswordScreenState extends ConsumerState<ModernForgotPasswor
         
         const SizedBox(height: 20),
         
-        // Resend email button
+        // OTP and new password form
+        const SizedBox(height: 24),
+        TextFormField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: '6-digit code',
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _newPasswordController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'New password',
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _confirmPasswordController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'Confirm new password',
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _handleResetPassword,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Reset Password',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(

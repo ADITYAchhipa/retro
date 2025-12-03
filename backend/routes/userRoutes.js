@@ -1,5 +1,5 @@
 import express from 'express'
-import { register,login, isAuth, logout,otp,verify,forgot } from '../controller/userController.js';
+import { register,login, isAuth, logout,otp,verify,forgot,resetPassword } from '../controller/userController.js';
 import authUser from '../middleware/authUser.js';
 
 const userRouter = express.Router();
@@ -8,6 +8,7 @@ userRouter.post('/register', register);  //tested
 userRouter.post('/ForgotPassword',forgot); //tested
 userRouter.post('/forgot', forgot); // alias for lowercase route
 userRouter.post('/login', login); //tested
+userRouter.post('/reset-password', resetPassword);
 
 userRouter.post('/otp', otp );
 userRouter.post('/verify', verify );

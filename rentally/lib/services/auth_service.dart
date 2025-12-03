@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../app/app_state.dart';
 import '../core/constants/api_constants.dart';
+import 'token_storage_service.dart';
 
 class User {
   final String id;
@@ -84,6 +85,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       final data = jsonDecode(response.body);
       
+      final token = data['token'];
+      if (token is String && token.isNotEmpty) {
+        await TokenStorageService.saveToken(token);
+      }
+      
       if (data['success'] == true && data['user'] != null) {
         // Create user from backend response
         final user = User(
@@ -126,6 +132,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       final data = jsonDecode(response.body);
       
+      final token = data['token'];
+      if (token is String && token.isNotEmpty) {
+        await TokenStorageService.saveToken(token);
+      }
+      
       if (data['success'] == true && data['user'] != null) {
         // Create user from backend response
         final user = User(
@@ -152,7 +163,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     
     try {
       // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 500));
+      final url = Uri.parse('${ApiConstants.authBaseUrl}/logout');
+      await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+      await TokenStorageService.clearAllTokens();
       state = AuthState();
     } catch (e) {
       state = state.copyWith(error: e.toString(), isLoading: false);

@@ -174,6 +174,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isReferral = currentPath.startsWith('/ref/');
       final isPublicRoute = publicRoutes.contains(currentPath) || isRegister || isReferral;
       
+      // Never force-redirect away from register or referral routes; let those screens
+      // handle navigation (e.g., stay on signup when account already exists).
+      if (isRegister || isReferral) {
+        return null;
+      }
+      
       // Handle authenticated users - immediate redirect without splash
       if (authState.status == AuthStatus.authenticated) {
         if (isPublicRoute) {

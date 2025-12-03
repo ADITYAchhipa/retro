@@ -95,11 +95,13 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
         // Let the router handle navigation automatically via redirect logic
         // No manual navigation needed - router will redirect based on auth state
       } else {
-        context.showError('Login failed. Please check your credentials.');
+        final message = authState.error ?? 'Login failed. Please check your email or password and try again.';
+        context.showError(message);
       }
     } catch (e) {
       if (mounted) {
-        context.showError('Login failed: ${e.toString()}');
+        final fallback = e.toString();
+        context.showError(fallback.isNotEmpty ? fallback : 'Login failed. Please try again.');
       }
     } finally {
       // Use cached notifier; safe even if this widget was disposed during navigation
