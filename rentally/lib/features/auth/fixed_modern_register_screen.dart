@@ -8,6 +8,7 @@ import '../../services/error_handling_service.dart';
 import '../../services/loading_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
+import '../../utils/snackbar_utils.dart';
 
 class FixedModernRegisterScreen extends ConsumerStatefulWidget {
   const FixedModernRegisterScreen({super.key, this.referralCode});
@@ -75,15 +76,15 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
 
   void _register() async {
     if (!_formKey.currentState!.validate()) {
-      if (mounted) {
-        context.showError('Please fix the validation errors above', type: ErrorType.validation);
-      }
       return;
     }
 
     if (!_agreeToTerms) {
       if (mounted) {
-        context.showError('Please agree to the Terms of Service and Privacy Policy');
+        SnackBarUtils.showWarning(
+          context,
+          'Please agree to the Terms of Service and Privacy Policy',
+        );
       }
       return;
     }
@@ -91,7 +92,10 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
     final referralOk = await _validateReferralCode();
     if (!referralOk) {
       if (mounted) {
-        context.showError('Please enter a valid referral code');
+        SnackBarUtils.showWarning(
+          context,
+          'Please enter a valid referral code',
+        );
       }
       return;
     }
@@ -158,14 +162,17 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
             (errorMessage.contains('exists') || errorMessage.contains('already') ||
              errorMessage.contains('e11000') || errorMessage.contains('duplicate'))) {
           debugPrint('🔴 Showing existing-account message');
-          context.showError(
+          SnackBarUtils.showWarning(
+            context,
             'You already have an account. Please login.',
-            type: ErrorType.validation,
           );
         } else {
           // Generic error message for other errors
           debugPrint('🔴 Showing generic error: $e');
-          context.showError('Registration failed: ${e.toString()}');
+          SnackBarUtils.showError(
+            context,
+            'Registration failed: ${e.toString()}',
+          );
         }
       }
     } finally {
@@ -241,10 +248,9 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(height: size.height * 0.06),
-                  
+                  const SizedBox(height: 12),
                   // Modern App Logo
                   Hero(
                     tag: 'app_logo',
@@ -278,9 +284,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                       ),
                     ),
                   ),
-                  
-                  const SizedBox(height: 32),
-                  
+                  const SizedBox(height: 24),
                   // Modern Title Section
                   Column(
                     children: [
@@ -316,7 +320,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                     ],
                   ),
                   
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 24),
                   
                   // Modern Registration Form
                   Container(
@@ -428,7 +432,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                               },
                             ),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
                             
                             // Modern Email Field
                             TextFormField(
@@ -500,14 +504,14 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
                                 }
-                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                if (!value.contains('@') || !value.contains('.')) {
                                   return 'Please enter a valid email';
                                 }
                                 return null;
                               },
                             ),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
                             
                             // Modern Phone Field
                             TextFormField(
@@ -580,13 +584,13 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                                   return 'Please enter your phone number';
                                 }
                                 if (value.length < 10) {
-                                  return 'Please enter a valid phone number';
+                                  return 'Phone number must be at least 10 digits';
                                 }
                                 return null;
                               },
                             ),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
                             
                             // Modern Password Field
                             TextFormField(
@@ -677,7 +681,7 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
                               },
                             ),
                             
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
                             
                             // Modern Confirm Password Field
                             TextFormField(

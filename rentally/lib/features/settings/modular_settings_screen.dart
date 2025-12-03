@@ -553,8 +553,11 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
                 // Call signOut - router will automatically redirect when auth status changes
                 await ref.read(app.authProvider.notifier).signOut();
                 
-                // The router will automatically redirect to login based on AuthStatus.unauthenticated
-                // No manual navigation needed
+                // After logout, always navigate explicitly to the login screen
+                // so users are not taken back through onboarding.
+                if (context.mounted) {
+                  context.go(Routes.auth);
+                }
               } catch (e) {
                 if (context.mounted) {
                   SnackBarUtils.showError(context, 'Failed to logout. Please try again.');

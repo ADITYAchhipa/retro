@@ -4,6 +4,7 @@ import 'app_state.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/home/original_home_screen.dart';
 import '../features/owner/clean_owner_dashboard_screen.dart';
+import '../features/auth/fixed_modern_login_screen.dart';
 
 /// Auth wrapper that handles immediate routing based on auth state
 /// This prevents the splash screen from showing for authenticated users
@@ -13,6 +14,7 @@ class AuthWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
+    final onboardingComplete = ref.watch(onboardingCompleteProvider);
     
     // Immediately show appropriate screen based on auth state
     switch (authState.status) {
@@ -32,6 +34,13 @@ class AuthWrapper extends ConsumerWidget {
         );
       case AuthStatus.unauthenticated:
       case AuthStatus.initial:
+        // After onboarding is marked complete (either via the onboarding flow
+        // or implicitly by returning users), show the login screen instead of
+        // the marketing splash. This ensures that logging out always leads to
+        // the login form, not back through the splash/onboarding sequence.
+        if (onboardingComplete) {
+          return const FixedModernLoginScreen();
+        }
         return const SplashScreen();
     }
   }

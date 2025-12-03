@@ -1,57 +1,140 @@
-# Rentaly Monorepo
+# Rentaly Flutter App
 
-Enterprise global property and vehicle rental platform.
+End-user Flutter app for the Rentaly marketplace (web + mobile).
 
-## What’s included (Phase 0 scaffold)
-- Django + DRF core service with health endpoint.
-- FastAPI microservices (realtime, fx, ml) with health endpoints.
-- Local infra via Docker Compose: Postgres+PostGIS, Redis, Elasticsearch+Kibana, MinIO, MailHog, stripe-mock.
+## 🚀 Quick Start
 
-## Quickstart (local)
-1) Copy env file
+### Prerequisites
+
+- Flutter SDK 3.0+
+- Dart SDK (matching your Flutter version)
+- Git
+- A running backend API (see `/backend` in the repo)
+
+### Setup
+
 ```bash
-cp infra/docker/.env.example infra/docker/.env
+git clone <repository-url>
+cd rentaly/rentally
+
+flutter pub get
+flutter run            # or: flutter run -d chrome
 ```
 
-2) Build and start
+For web development, you can use:
+
 ```bash
-docker compose -f infra/docker/docker-compose.yml up -d --build
+flutter run -d chrome
+# or
+flutter run -d web-server --web-hostname=0.0.0.0 --web-port=5173
 ```
 
-3) Services
-- Django: http://localhost:8000/health
-- Realtime (FastAPI): http://localhost:8101/health
-- FX (FastAPI): http://localhost:8102/health
-- ML (FastAPI): http://localhost:8103/health
-- Kibana: http://localhost:5601
-- Elasticsearch: http://localhost:9200
-- MinIO Console: http://localhost:9001 (S3 API on :9000)
-- Mailhog: http://localhost:8025
+Make sure the backend is running (by default on `http://localhost:4000`).
 
-## Structure
-```
-rentaly/
-  apps/
-    backend/
-      django_core/
-      fastapi-realtime/
-      fastapi-fx/
-      fastapi-ml/
-    mobile/
-      flutter/              # to be initialized later
-    web/
-      admin-nextjs/         # to be initialized later
-  shared/
-    contracts/
-    libs/
-    i18n/
-  infra/
-    docker/
-    k8s/
-  ci/
+## 🏗️ Project Structure (lib/)
+
+```text
+lib/
+├── main.dart                 # App entry point
+├── app/                      # App-level config, routing, global state
+│   ├── auth_router.dart      # GoRouter configuration & auth redirects
+│   ├── app_state.dart        # Auth + global app state (Riverpod)
+│   └── main_shell.dart       # Main shell with bottom navigation etc.
+├── core/                     # Shared logic & configuration
+│   ├── constants/            # API endpoints, app constants
+│   │   └── api_constants.dart
+│   ├── providers/            # ChangeNotifier-based providers
+│   ├── theme/                # Enterprise light/dark themes
+│   └── widgets/              # Core UI helpers (loading, layouts, etc.)
+├── features/                 # Feature-based modules (UI + logic)
+│   ├── auth/                 # Login, register, forgot/reset password
+│   ├── home/                 # Home screen and sections
+│   ├── booking/              # Booking flows & history
+│   ├── owner/                # Host/owner dashboards & tools
+│   ├── search/               # Search & filters
+│   ├── wishlist/             # Saved listings
+│   ├── settings/             # Settings & preferences
+│   └── ...                   # Other feature modules
+├── l10n/                     # Localization (.arb files + generated Dart)
+└── services/                 # API + domain services (auth, bookings, etc.)
 ```
 
-## Next
-- Implement core domain models and APIs in Django.
-- Flesh out FastAPI services (WebSockets, FX sources, ML stubs).
-- Add OpenAPI contracts and CI/CD.
+## 🔗 Backend Configuration
+
+All API base URLs are defined in:
+
+- `lib/core/constants/api_constants.dart`
+
+By default:
+
+- `baseUrl     = 'http://localhost:4000/api'`
+- `authBaseUrl = 'http://localhost:4000/api/user'`
+
+If you deploy the backend elsewhere, update these constants accordingly.
+
+Authentication state is managed by `AuthNotifier` in:
+
+- `lib/app/app_state.dart`
+
+This integrates with the backend login/register/logout endpoints and stores JWT tokens using `TokenStorageService`.
+
+## 🧑‍💻 Development Workflow
+
+1. Pull latest changes:
+
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+2. Create a feature branch:
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. Run the app and use hot reload while editing:
+
+   ```bash
+   flutter run -d chrome
+   # press `r` in the terminal for hot reload
+   ```
+
+4. Before committing, run basic checks (optional but recommended):
+
+   ```bash
+   flutter analyze
+   flutter test            # if you add tests
+   ```
+
+5. Commit and push:
+
+   ```bash
+   git add .
+   git commit -m "feat: short description of change"
+   git push origin feature/your-feature-name
+   ```
+
+## 🔧 Key Commands
+
+```bash
+flutter run                   # run on default device
+flutter run -d chrome         # run on web (Chrome)
+flutter build apk             # build Android APK
+flutter build web --release   # build web for production
+
+flutter analyze               # static analysis
+flutter test                  # run tests (if present)
+```
+
+## 📚 Related Docs
+
+- `lib/README.md` – additional details about the `lib/` layout (optional)
+- Root-level `README.md` – monorepo overview and backend/admin docs
+
+## ❓ Need Help?
+
+- Ensure the backend is running and reachable from the device/emulator.
+- Check `api_constants.dart` if network calls fail.
+- Use Flutter DevTools and the console for runtime errors.
+

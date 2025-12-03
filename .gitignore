@@ -71,10 +71,6 @@ rentally-admin/dist/
 rentally-admin/.env
 
 # Backend specific
-rentally-backend/node_modules/
-rentally-backend/.env
-rentally-backend/uploads/
-
-# Prisma
-rentally-backend/prisma/migrations/
-!rentally-backend/prisma/migrations/.gitkeep
+backend/node_modules/
+backend/.env
+backend/uploads/

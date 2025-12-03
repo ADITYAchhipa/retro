@@ -554,7 +554,10 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
       final availableStr = core_currency.CurrencyFormatter.formatPrice(available, currency: currency);
       final pendingStr = core_currency.CurrencyFormatter.formatPrice((_walletData['pendingRewards'] as num).toDouble(), currency: currency);
       return Container(
-      padding: EdgeInsets.all(isPhone ? 28 : 36),
+      padding: EdgeInsets.symmetric(
+        horizontal: isPhone ? 20 : 28,
+        vertical: isPhone ? 20 : 24,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -646,43 +649,36 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           
           // Total Balance Label
           Text(
             'Total Balance',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
-              fontSize: isPhone ? 14 : 16,
+              fontSize: isPhone ? 13 : 15,
               fontWeight: FontWeight.w500,
-              letterSpacing: 0.8,
+              letterSpacing: 0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           
           // Total Balance Amount
           Text(
             totalStr,
             style: TextStyle(
               color: Colors.white,
-              fontSize: isPhone ? 44 : 56,
+              fontSize: isPhone ? 32 : 40,
               fontWeight: FontWeight.bold,
               height: 1.1,
-              letterSpacing: -1.5,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  offset: const Offset(0, 2),
-                  blurRadius: 4,
-                ),
-              ],
+              letterSpacing: -0.8,
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 18),
           
           // Breakdown Cards
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(18),
@@ -744,14 +740,14 @@ class _CleanWalletScreenState extends State<CleanWalletScreen>
         Icon(
           icon,
           color: Colors.white.withValues(alpha: 0.9),
-          size: 20,
+          size: 18,
         ),
         const SizedBox(height: 8),
         Text(
           value,
           style: TextStyle(
             color: Colors.white,
-            fontSize: isPhone ? 18 : 20,
+            fontSize: isPhone ? 16 : 18,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.5,
           ),

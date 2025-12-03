@@ -1,190 +1,105 @@
 # Rentaly - Rental Marketplace Platform
 
-A comprehensive rental marketplace platform built with Flutter, Node.js, and React.
+Monorepo for the Rentaly marketplace, consisting of:
+
+- Flutter app (web + mobile) in `rentally/`
+- Node.js + Express backend in `backend/`
+- React + Vite admin panel in `rentally-admin/`
+
+The current stack uses **MongoDB + Mongoose** on the backend, **JWT auth**, and a **Flutter** client with GoRouter and Riverpod.
 
 ## 🏗️ Project Structure
 
-```
+```text
 rentaly/
-├── rentally/                 # Flutter mobile app (main user interface)
-├── rentally-backend/         # Node.js + Express.js API server
-├── rentally-admin/          # React + TypeScript admin panel
-└── docs/                    # Documentation and guides
+├── backend/          # Node.js + Express API (MongoDB, JWT, SendGrid, etc.)
+├── rentally/         # Flutter app (End-user marketplace UI)
+├── rentally-admin/   # React admin dashboard
+└── docs/             # (Optional) extra documentation
 ```
 
-## 🚀 Quick Start for Team Collaboration
+## 🚀 Quick Start
 
-### Prerequisites
-- Node.js v18+ with npm
-- Flutter SDK
-- PostgreSQL database
-- Git
+### 1. Backend API (Node + Express)
 
-### Setup for New Team Member
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd rentaly
-   ```
-
-2. **Backend Setup**:
-   ```bash
-   cd rentally-backend
-   npm install
-   cp .env.example .env
-   # Configure your database and API keys in .env
-   npx prisma migrate dev
-   npm run dev
-   ```
-
-3. **Admin Panel Setup**:
-   ```bash
-   cd rentally-admin
-   npm install
-   npm run dev
-   ```
-
-4. **Flutter App Setup**:
-   ```bash
-   cd rentally
-   flutter pub get
-   flutter run
-   ```
-
-## 🔧 Development Workflow
-
-### Branch Strategy
-- `main` - Production ready code
-- `develop` - Integration branch for features
-- `feature/[name]` - Individual feature development
-- `hotfix/[name]` - Critical bug fixes
-
-### Team Responsibilities
-- **Backend Developer**: API development, database design, authentication
-- **Admin Panel Developer**: React dashboard, analytics, user management
-- **Mobile Developer**: Flutter app, UI/UX, mobile-specific features
-
-## 📱 Components
-
-### Flutter Mobile App (`/rentally`)
-- User authentication and profiles
-- Property browsing and search
-- Booking management
-- In-app messaging
-- Payment integration
-
-### Node.js Backend (`/rentally-backend`)
-- RESTful API endpoints
-- JWT authentication with OAuth2
-- PostgreSQL with Prisma ORM
-- File upload handling
-- Payment processing
-
-### Admin Panel (`/rentally-admin`)
-- User management dashboard
-- Property oversight
-- Booking analytics
-- Platform configuration
-- Revenue tracking
-
-## 🌐 Remote Collaboration Options
-
-### Option 1: Git Repository (Recommended)
 ```bash
-# Create feature branch
+cd backend
+npm install
+npm run dev         # runs server.js, defaults to http://localhost:4000
+```
+
+Backend configuration is controlled by a `.env` file (not committed). Typical variables:
+
+- `MONGO_URI` – MongoDB connection string
+- `JWT_SECRET` – secret key for signing JWTs
+- `SENDGRID_API_KEY` – for email/OTP sending
+- `FROM_EMAIL` – sender address for transactional emails
+
+### 2. Flutter App (rentally)
+
+```bash
+cd rentally
+flutter pub get
+flutter run -d chrome        # or: flutter run -d web-server / mobile device
+```
+
+The app talks to the backend using URLs defined in:
+
+- `lib/core/constants/api_constants.dart`
+
+By default these point to:
+
+- `baseUrl    = http://localhost:4000/api`
+- `authBaseUrl = http://localhost:4000/api/user`
+
+Make sure the backend is running on port **4000** when developing locally.
+
+### 3. Admin Panel (rentally-admin)
+
+```bash
+cd rentally-admin
+npm install
+npm run dev
+```
+
+Then open the URL printed by Vite (typically `http://localhost:3001`).
+
+The admin panel expects an API base like `http://localhost:4000/api` (configurable via `VITE_API_URL` in a local `.env` inside `rentally-admin/`).
+
+## 🔄 Development Workflow
+
+- `main` – primary branch used for production/stable code.
+- Create feature branches for changes (e.g. `feature/auth-ux`).
+- Always pull latest before starting work:
+
+```bash
+git checkout main
+git pull origin main
 git checkout -b feature/your-feature-name
+```
 
-# Make changes and commit
+When ready to share work:
+
+```bash
 git add .
-git commit -m "Add: feature description"
-
-# Push and create pull request
+git commit -m "Describe your change"
 git push origin feature/your-feature-name
 ```
 
-### Option 2: Development Server Sharing
-- Use ngrok for temporary backend sharing
-- Deploy to staging environment for testing
-- Use cloud development environments
+Open a Pull Request on GitHub and review/merge into `main`.
 
-### Option 3: Database Sharing
-- Shared PostgreSQL instance on cloud
-- Docker containers for consistent environments
-- Environment-specific configurations
+## 📚 Component-Specific Docs
 
-## 🔑 Environment Variables
-
-### Backend (.env)
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/rentaly"
-JWT_SECRET="your-jwt-secret"
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-FACEBOOK_APP_ID="your-facebook-app-id"
-FACEBOOK_APP_SECRET="your-facebook-app-secret"
-```
-
-### Admin Panel (.env)
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_APP_NAME=Rentaly Admin
-```
-
-## 🚀 Deployment
-
-### Backend
-- Node.js hosting (Railway, Render, Heroku)
-- PostgreSQL database (Supabase, Railway, AWS RDS)
-- Environment variables configuration
-
-### Admin Panel
-- Static hosting (Netlify, Vercel, AWS S3)
-- Build command: `npm run build`
-- Environment variables for production API
-
-### Mobile App
-- Flutter build for Android/iOS
-- App store deployment
-- Environment-specific builds
-
-## 🤝 Collaboration Best Practices
-
-1. **Communication**:
-   - Daily standup calls
-   - Slack/Discord for quick updates
-   - GitHub issues for bug tracking
-
-2. **Code Quality**:
-   - Code reviews for all pull requests
-   - Consistent coding standards
-   - Automated testing where possible
-
-3. **Development**:
-   - Feature branches for all changes
-   - Regular integration testing
-   - Shared development database
-
-4. **Documentation**:
-   - Update README for new features
-   - API documentation with examples
-   - Code comments for complex logic
-
-## 📞 Support
-
-For setup issues or questions:
-- Check component-specific README files
-- Review API documentation
-- Contact team leads for access credentials
+- Flutter app details: `rentally/README.md`
+- Admin panel quickstart: `rentally-admin/README.md`
+- Backend feature designs (optional, if implemented):
+  - `backend/DISPUTE_SYSTEM.md`
+  - `backend/NOTIFICATION_SYSTEM.md`
 
 ## 🔒 Security Notes
 
-- Never commit `.env` files
-- Use environment variables for all secrets
-- Regular dependency updates
-- Secure API endpoints with proper authentication
+- Never commit `.env` or other secret files.
+- Use environment variables for all secrets (JWT, email providers, DB credentials).
+- Keep dependencies up to date.
+- Protect API endpoints with proper authentication/authorization.
 
----
-
-**Team Setup Complete** ✅
-Ready for distributed development across multiple locations.

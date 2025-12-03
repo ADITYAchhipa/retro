@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Services and utilities
 import '../../services/error_handling_service.dart';
 import '../../services/loading_service.dart';
 import '../../widgets/responsive_layout.dart';
+import '../../utils/snackbar_utils.dart';
 
 // App state and theme
 import '../../app/app_state.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
-import 'dev_login_helper.dart';
 
 class FixedModernLoginScreen extends ConsumerStatefulWidget {
   const FixedModernLoginScreen({super.key});
@@ -35,6 +36,7 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
   
   /// Controls password visibility toggle
   bool _obscurePassword = true;
+  String? _serverError;
 
   // ========================================
   // 🧹 CLEANUP AND DISPOSAL
@@ -64,10 +66,12 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
   /// 5. Navigates to appropriate screen
   /// 
   void _login() async {
-    // Step 1: Validate form inputs
     if (!_formKey.currentState!.validate()) {
       if (mounted) {
-        context.showError('Please fix the validation errors above', type: ErrorType.validation);
+        const message = 'Please enter a valid email and password';
+        setState(() {
+          _serverError = message;
+        });
       }
       return;
     }
@@ -91,17 +95,40 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
       // Step 5: Verify authentication success
       final authState = ref.read(authProvider);
       if (authState.status == AuthStatus.authenticated && authState.user != null) {
+        setState(() {
+          _serverError = null;
+        });
+        // Mark onboarding as complete once the user has successfully signed in,
+        // so subsequent unauthenticated sessions (e.g., after logout) land on
+        // the login screen instead of the marketing splash/onboarding flow.
+        ref.read(onboardingCompleteProvider.notifier).state = true;
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('onboardingComplete', true);
+        } catch (_) {
+          // Ignore persistence errors to avoid blocking login UX
+        }
+        // ignore: use_build_context_synchronously
         context.showSuccess('Successfully signed in!');
         // Let the router handle navigation automatically via redirect logic
         // No manual navigation needed - router will redirect based on auth state
       } else {
         final message = authState.error ?? 'Login failed. Please check your email or password and try again.';
-        context.showError(message);
+        if (mounted) {
+          setState(() {
+            _serverError = message;
+          });
+          _showTopSnackBar(message, Theme.of(context).colorScheme.error);
+        }
       }
     } catch (e) {
       if (mounted) {
         final fallback = e.toString();
-        context.showError(fallback.isNotEmpty ? fallback : 'Login failed. Please try again.');
+        final message = fallback.isNotEmpty ? fallback : 'Login failed. Please try again.';
+        setState(() {
+          _serverError = message;
+        });
+        _showTopSnackBar(message, Theme.of(context).colorScheme.error);
       }
     } finally {
       // Use cached notifier; safe even if this widget was disposed during navigation
@@ -459,6 +486,20 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                             
                             const SizedBox(height: 8),
                             
+                            if (_serverError != null) ...[
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  _serverError!,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            
                             // Modern Login Button
                             Container(
                               width: double.infinity,
@@ -498,56 +539,6 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Test Credentials Section
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark 
-                          ? const Color(0xFF58A6FF).withValues(alpha: 0.1)
-                          : theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isDark 
-                            ? const Color(0xFF58A6FF).withValues(alpha: 0.3)
-                            : theme.colorScheme.primary.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: isDark 
-                                  ? const Color(0xFF58A6FF)
-                                  : theme.colorScheme.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Test Credentials',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: isDark 
-                                    ? const Color(0xFF58A6FF)
-                                    : theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTestCredential('User/Seeker', 'user@test.com', 'user123'),
-                        const SizedBox(height: 4),
-                        _buildTestCredential('Property Owner', 'owner@test.com', 'owner123'),
-                        const SizedBox(height: 4),
-                        _buildTestCredential('Demo', 'demo@rentally.com', 'demo123'),
-                        
-                      ],
                     ),
                   ),
                   
@@ -614,11 +605,6 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
                   
                   const SizedBox(height: 16),
                   
-                  // Development Quick Login Helper
-                  const DevLoginHelper(),
-                  
-                  const SizedBox(height: 16),
-                  
                   // Sign Up Option
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -658,6 +644,20 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
           ),
         ),
       ),
+    );
+  }
+
+  void _showTopSnackBar(String message, Color color) {
+    // Use the global overlay-based snackbar utility so the bar appears
+    // at the top of the screen (below the system/status bar) instead of
+    // the default bottom-anchored Material SnackBar.
+    SnackBarUtils.showFloatingSnackBar(
+      context,
+      message: message,
+      backgroundColor: color,
+      foregroundColor: Colors.white,
+      icon: Icons.error_outline,
+      type: SnackBarType.error,
     );
   }
 
@@ -709,66 +709,4 @@ class _FixedModernLoginScreenState extends ConsumerState<FixedModernLoginScreen>
     );
   }
 
-  Widget _buildTestCredential(String role, String email, String password) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  role,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 10,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  email,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-                Text(
-                  password,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              _emailController.text = email;
-              _passwordController.text = password;
-            },
-            icon: Icon(
-              Icons.copy,
-              size: 16,
-              color: isDark 
-                  ? const Color(0xFF58A6FF)
-                  : theme.colorScheme.primary,
-            ),
-            tooltip: 'Use these credentials',
-          ),
-        ],
-      ),
-    );
-  }
 }

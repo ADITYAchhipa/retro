@@ -41,7 +41,6 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
   final RealApiService _api = RealApiService();
   List<PropertyModel> _nearbyProperties = [];
   List<VehicleModel> _nearbyVehicles = [];
-  bool _nearbyLoading = false;
 
   @override
   void initState() {
@@ -73,7 +72,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
 
   Future<void> _fetchNearby({required double lat, required double lng}) async {
     try {
-      setState(() => _nearbyLoading = true);
+      if (!mounted) return;
       // Fetch nearby from backend with strict 10km cap ONCE - cache the results
       final propsJson = await _api.getNearbyProperties(
         latitude: lat,
@@ -90,6 +89,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
       final props = propsJson.map((e) => PropertyModel.fromJson(e)).toList();
       final vehs = vehsJson.map((e) => VehicleModel.fromJson(e)).toList();
       debugPrint('✅ Nearby properties fetched: ${props.length}, vehicles: ${vehs.length}');
+      if (!mounted) return;
       setState(() {
         _nearbyProperties = props;
         _nearbyVehicles = vehs;
@@ -97,7 +97,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
     } catch (e) {
       debugPrint('Failed to fetch nearby: $e');
     } finally {
-      if (mounted) setState(() => _nearbyLoading = false);
+      // nothing to update while unmounted
     }
   }
 
@@ -276,7 +276,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                 child: TextButton(
                   onPressed: () {
                     final searchType = widget.tabController.index == 0 ? 'properties' : 'vehicles';
-                    context.push('/search?type=$searchType&nearby=true');
+                    context.go('/search?type=$searchType&nearby=true');
                   },
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

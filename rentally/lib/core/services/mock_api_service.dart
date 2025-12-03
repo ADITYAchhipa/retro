@@ -201,7 +201,7 @@ class MockApiService {
       
       // Add category filter if provided and not 'all'
       if (category != null && category.isNotEmpty && category.toLowerCase() != 'all') {
-        params['category'] = category + 's'; // Backend expects plural
+        params['category'] = '${category}s'; // Backend expects plural
       }
       
       // Add excludeIds for duplicate prevention

@@ -166,7 +166,7 @@ class _EnhancedCountrySelectScreenState extends ConsumerState<EnhancedCountrySel
       } catch (e) {
         // If API call fails (user not authenticated or network error), continue anyway
         // Country is still saved locally
-        print('Failed to update country in backend: $e');
+        debugPrint('Failed to update country in backend: $e');
       }
       
       // Auto-select currency based on chosen country and persist globally (if enabled)

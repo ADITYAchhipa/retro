@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -170,23 +171,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    // Watch auth state and reload user data when it changes
-    final authState = ref.watch(authProvider);
-    final user = authState.user;
-    
-    // Update text controllers when user data changes (but only if not currently editing)
-    if (user != null) {
-      // Only update if controllers have different values to avoid cursor jumping during editing
-      if (_nameCtrl.text != user.name) {
-        _nameCtrl.text = user.name;
-      }
-      if (_emailCtrl.text != user.email) {
-        _emailCtrl.text = user.email;
-      }
-      if (_phoneCtrl.text != (user.phone ?? '')) {
-        _phoneCtrl.text = user.phone ?? '';
-      }
-    }
+    // Watch auth state so the screen rebuilds when authentication/user changes
+    ref.watch(authProvider);
 
     return Scaffold(
       backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
@@ -638,20 +624,32 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
       elevation: 0,
       automaticallyImplyLeading: false,
       leading: IconButton(
-          tooltip: 'Back',
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+        tooltip: 'Back',
+        icon: const Icon(
+          Icons.arrow_back_ios_new_rounded,
+          size: 20,
+          color: Colors.white,
+        ),
         onPressed: _handleBack,
         style: IconButton.styleFrom(
-          backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+          backgroundColor: isDark
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.black.withValues(alpha: 0.18),
         ),
       ),
       actions: [
         IconButton(
             tooltip: 'Edit Profile',
-          icon: const Icon(Icons.edit_outlined, size: 20),
+          icon: const Icon(
+            Icons.edit_outlined,
+            size: 20,
+            color: Colors.white,
+          ),
           onPressed: _openEditSheet,
           style: IconButton.styleFrom(
-            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+            backgroundColor: isDark
+                ? Colors.white.withValues(alpha: 0.18)
+                : Colors.black.withValues(alpha: 0.18),
           ),
         ),
         const SizedBox(width: 8),
@@ -675,7 +673,17 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
             ),
             if (cover != null)
               Positioned.fill(
-                child: Image.file(File(cover.path), fit: BoxFit.cover),
+                child: kIsWeb
+                    ? Image.network(
+                        cover.path,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      )
+                    : Image.file(
+                        File(cover.path),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      ),
               ),
             // Gradient overlay
             Container(
@@ -756,7 +764,11 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                           child: CircleAvatar(
                             radius: isPhone ? 34 : 40,
                             backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-                            backgroundImage: avatar != null ? FileImage(File(avatar.path)) : null,
+                            backgroundImage: avatar != null
+                                ? (kIsWeb
+                                    ? NetworkImage(avatar.path)
+                                    : FileImage(File(avatar.path)) as ImageProvider)
+                                : null,
                             child: avatar == null
                                 ? Icon(
                                     Icons.person_rounded,
@@ -1192,119 +1204,201 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark ? theme.colorScheme.surface : Colors.white,
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.only(bottom: viewInsets.bottom),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.96, end: 1.0),
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, (1 - value) * 24),
+                child: Opacity(
+                  opacity: value,
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
+            child: NeoGlass(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              blur: isDark ? 22 : 18,
+              backgroundColor: isDark
+                  ? theme.colorScheme.surface.withValues(alpha: 0.96)
+                  : Colors.white.withValues(alpha: 0.94),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, -3),
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.55)
+                      : Colors.black.withValues(alpha: 0.16),
+                  blurRadius: 30,
+                  offset: const Offset(0, -8),
                 ),
               ],
-            ),
-            child: SafeArea(
-              top: false,
-              bottom: false,
-              child: SingleChildScrollView(
-                primary: false,
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 48,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(3),
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                child: SingleChildScrollView(
+                  primary: false,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(3),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 24),
                           ),
-                          child: const Icon(Icons.edit_rounded, color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        Text('Edit Profile', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: IconButton.styleFrom(
-                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
-                          ),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Divider(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Basic information',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    _bottomSheetField('Full Name', _nameCtrl, Icons.person_outline),
-                    const SizedBox(height: 12),
-                    _bottomSheetField('Email', _emailCtrl, Icons.email_outlined, keyboardType: TextInputType.emailAddress),
-                    const SizedBox(height: 12),
-                    _bottomSheetField('Phone', _phoneCtrl, Icons.phone_outlined, keyboardType: TextInputType.phone),
-                    const SizedBox(height: 12),
-                    _bottomSheetField('Bio', _bioCtrl, Icons.info_outline, maxLines: 3),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
+                          const SizedBox(width: 12),
+                          Text('Edit Profile', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                          const Spacer(),
+                          IconButton(
                             onPressed: () => Navigator.pop(context),
+                            style: IconButton.styleFrom(
+                              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+                            ),
                             icon: const Icon(Icons.close_rounded),
-                            label: const Text('Cancel'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Update how your profile looks to guests and hosts.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Divider(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Basic information',
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(begin: 0.97, end: 1.0),
+                        duration: const Duration(milliseconds: 260),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.scale(
+                            scale: value,
+                            alignment: Alignment.topCenter,
+                            child: child,
+                          );
+                        },
+                        child: NeoGlass(
+                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                          borderRadius: BorderRadius.circular(18),
+                          blur: isDark ? 12 : 0,
+                          backgroundColor: isDark
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : Colors.white,
+                          borderColor: theme.colorScheme.outline
+                              .withValues(alpha: isDark ? 0.30 : 0.12),
+                          borderWidth: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Profile details',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _bottomSheetField('Full Name', _nameCtrl, Icons.person_outline),
+                              const SizedBox(height: 12),
+                              _bottomSheetField(
+                                'Email',
+                                _emailCtrl,
+                                Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 12),
+                              _bottomSheetField(
+                                'Phone',
+                                _phoneCtrl,
+                                Icons.phone_outlined,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 12),
+                              _bottomSheetField(
+                                'Bio',
+                                _bioCtrl,
+                                Icons.info_outline,
+                                maxLines: 3,
+                                helperText:
+                                    'Share a short intro so guests and hosts can get to know you.',
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: _busy
-                                ? null
-                                : () async {
-                                    Navigator.pop(context);
-                                    await _saveProfile();
-                                  },
-                            icon: _busy
-                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.check_circle_outline),
-                            label: Text(_busy ? 'Saving...' : 'Save Changes'),
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded),
+                              label: const Text('Cancel'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: _busy
+                                  ? null
+                                  : () async {
+                                      Navigator.pop(context);
+                                      await _saveProfile();
+                                    },
+                              icon: _busy
+                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : const Icon(Icons.check_circle_outline),
+                              label: Text(_busy ? 'Saving...' : 'Save Changes'),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1314,7 +1408,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     );
   }
 
-  Widget _bottomSheetField(String label, TextEditingController ctrl, IconData icon, {int maxLines = 1, TextInputType? keyboardType}) {
+  Widget _bottomSheetField(String label, TextEditingController ctrl, IconData icon,
+      {int maxLines = 1, TextInputType? keyboardType, String? helperText}) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isPhone = MediaQuery.of(context).size.width < 600;
@@ -1333,6 +1428,11 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         hintStyle: theme.textTheme.bodySmall?.copyWith(
           fontSize: isPhone ? 12 : 13,
           color: theme.colorScheme.onSurfaceVariant,
+        ),
+        helperText: helperText,
+        helperStyle: theme.textTheme.bodySmall?.copyWith(
+          fontSize: isPhone ? 11 : 12,
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
         ),
         prefixIcon: Icon(icon, size: 18, color: theme.colorScheme.primary),
         filled: true,

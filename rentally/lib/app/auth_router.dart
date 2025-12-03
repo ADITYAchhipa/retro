@@ -141,8 +141,14 @@ class Routes {
 
 // Router provider that depends on auth state
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // Only rebuild the router when the authenticated/unauthenticated boundary
+  // changes. This prevents unnecessary router recreation (and page remounts)
+  // on login failures where the user remains unauthenticated.
+  final isAuthenticated = ref.watch(
+    authProvider.select((s) => s.status == AuthStatus.authenticated),
+  );
   final onboardingComplete = ref.watch(onboardingCompleteProvider);
+  final authState = ref.read(authProvider);
 
   // Create navigator keys per GoRouter instance to avoid reusing the same
   // GlobalKey across hot rebuilds or provider-driven router rebuilds
@@ -181,7 +187,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       
       // Handle authenticated users - immediate redirect without splash
-      if (authState.status == AuthStatus.authenticated) {
+      if (isAuthenticated) {
         if (isPublicRoute) {
           // Allow certain public routes even when authenticated
           if (currentPath == Routes.resetPassword || currentPath == Routes.passwordChanged || currentPath == Routes.country) {
@@ -213,7 +219,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           
           // Onboarding flow
-          if (!onboardingComplete && currentPath != Routes.splash && currentPath != Routes.onboarding) {
+          // Do NOT redirect away from the dedicated auth route on onboarding checks.
+          // This ensures that failed logins can show inline snackbar errors without
+          // unmounting the login screen or causing a perceived "page refresh" on web.
+          if (!onboardingComplete &&
+              currentPath != Routes.splash &&
+              currentPath != Routes.onboarding &&
+              currentPath != Routes.auth) {
             final query = state.uri.query;
             return query.isNotEmpty ? '${Routes.onboarding}?$query' : Routes.onboarding;
           }

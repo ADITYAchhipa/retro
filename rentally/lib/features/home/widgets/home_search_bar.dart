@@ -20,8 +20,8 @@ class HomeSearchBar extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          // Navigate to search screen, keeping previous route on the stack for back navigation
-          context.push('/search');
+          // Navigate to search tab so bottom navigation updates the active item
+          context.go('/search');
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

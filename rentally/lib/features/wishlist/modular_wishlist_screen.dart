@@ -637,7 +637,7 @@ class _ModularWishlistScreenState
                 scale: 1.0,
                 duration: const Duration(milliseconds: 300),
                 child: ElevatedButton.icon(
-                  onPressed: () => context.push('/search'),
+                  onPressed: () => context.go('/search'),
                   icon: const Icon(Icons.search, size: 20),
                   label: Text(AppLocalizations.of(context)!.startExploring),
                   style: ElevatedButton.styleFrom(
