@@ -8,6 +8,7 @@ import '../../../core/theme/enterprise_light_theme.dart';
 import '../../../core/providers/property_provider.dart';
 import '../../../core/widgets/loading_states.dart';
 import '../../../core/providers/vehicle_provider.dart';
+import '../../../core/database/models/vehicle_model.dart';
 import '../../../core/widgets/listing_card.dart';
 import '../../../core/widgets/listing_vm_factory.dart';
 import '../../../core/widgets/hover_scale.dart';
@@ -47,8 +48,9 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
   void initState() {
     super.initState();
     // Initialize with default viewport fraction, will be updated in didChangeDependencies
-    _propertyPageController = PageController(viewportFraction: 0.86, initialPage: 0);
-    _vehiclePageController = PageController(viewportFraction: 0.86, initialPage: 0);
+    // keepPage: true ensures scroll position is maintained when items are added
+    _propertyPageController = PageController(viewportFraction: 0.86, initialPage: 0, keepPage: true);
+    _vehiclePageController = PageController(viewportFraction: 0.86, initialPage: 0, keepPage: true);
     widget.tabController.addListener(_onTabChanged);
     // Load featured properties when widget initializes with default category 'all'
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -93,10 +95,28 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     
     // Only update if viewport fraction has changed noticeably
     if ((_propertyPageController.viewportFraction - viewportFraction).abs() > 0.005) {
+      // Save current page positions before recreating controllers
+      final currentPropertyPage = _propertyPageController.hasClients 
+          ? _propertyPageController.page?.round() ?? 0 
+          : 0;
+      final currentVehiclePage = _vehiclePageController.hasClients 
+          ? _vehiclePageController.page?.round() ?? 0 
+          : 0;
+      
       _propertyPageController.dispose();
       _vehiclePageController.dispose();
-      _propertyPageController = PageController(viewportFraction: viewportFraction, initialPage: 0);
-      _vehiclePageController = PageController(viewportFraction: viewportFraction, initialPage: 0);
+      
+      // Recreate with saved positions and keepPage: true to preserve scroll position
+      _propertyPageController = PageController(
+        viewportFraction: viewportFraction,
+        initialPage: currentPropertyPage,
+        keepPage: true,
+      );
+      _vehiclePageController = PageController(
+        viewportFraction: viewportFraction,
+        initialPage: currentVehiclePage,
+        keepPage: true,
+      );
     }
   }
 
@@ -159,6 +179,60 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     final isCompactWidth = cardWidth <= 280;
     final featuredImageAspect = isCompactWidth ? 2.5 : 2.3; // was ~3.0/2.9 in height calc and 3.8/3.2 in card
 
+    // Check if items are empty BEFORE rendering the section
+    // This wraps the entire section to hide header + content when no items
+    return isPropertyTab
+        ? pv.Consumer<PropertyProvider>(
+            builder: (context, propertyProvider, _) {
+              // Don't hide during loading
+              if (propertyProvider.isFeaturedLoading && !propertyProvider.isLoadingMore) {
+                return _buildSectionWithContent(
+                  isPropertyTab, screenWidth, sectionHeight, perItemPadding, 
+                  startPadding, cardWidth, featuredImageAspect, _buildLoadingState(),
+                );
+              }
+              // If no items after loading, hide entire section
+              if (!propertyProvider.isFeaturedLoading && propertyProvider.filteredFeaturedProperties.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return _buildSectionWithContent(
+                isPropertyTab, screenWidth, sectionHeight, perItemPadding,
+                startPadding, cardWidth, featuredImageAspect, 
+                _buildPropertyContent(propertyProvider, screenWidth, perItemPadding, startPadding, cardWidth, featuredImageAspect),
+              );
+            },
+          )
+        : pv.Consumer<VehicleProvider>(
+            builder: (context, vehicleProvider, _) {
+              // Don't hide during loading
+              if (vehicleProvider.isFeaturedLoading) {
+                return _buildSectionWithContent(
+                  isPropertyTab, screenWidth, sectionHeight, perItemPadding,
+                  startPadding, cardWidth, featuredImageAspect, _buildLoadingState(),
+                );
+              }
+              // If no items after loading, hide entire section
+              var items = vehicleProvider.filteredFeaturedVehicles;
+              if (items.isEmpty && vehicleProvider.featuredVehicles.isNotEmpty) {
+                items = vehicleProvider.featuredVehicles;
+              }
+              if (!vehicleProvider.isFeaturedLoading && items.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return _buildSectionWithContent(
+                isPropertyTab, screenWidth, sectionHeight, perItemPadding,
+                startPadding, cardWidth, featuredImageAspect,
+                _buildVehicleContent(vehicleProvider, items, screenWidth, perItemPadding, startPadding, cardWidth, featuredImageAspect),
+              );
+            },
+          );
+  }
+
+  Widget _buildSectionWithContent(
+    bool isPropertyTab, double screenWidth, double sectionHeight, 
+    double perItemPadding, double startPadding, double cardWidth, 
+    double featuredImageAspect, Widget content,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -218,159 +292,279 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
           height: sectionHeight,
           padding: const EdgeInsets.only(top: 8, bottom: 12), // keep in sync with _getSectionHeight containerVerticalPadding
           clipBehavior: Clip.none, // Allow overflow for pop-up effect
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: isPropertyTab
-                ? pv.Consumer<PropertyProvider>(
-                    key: ValueKey('properties_${widget.tabController.index}'),
-                    builder: (context, propertyProvider, child) {
-                      if (propertyProvider.isFeaturedLoading) {
-                        return _buildLoadingState();
-                      }
-                      if (propertyProvider.error != null) {
-                        return _buildErrorState(propertyProvider.error!);
-                      }
-                      final items = propertyProvider.filteredFeaturedProperties;
-                      if (items.isEmpty) {
-                        // If filtering yields no items, show an empty state instead of a loading shimmer
-                        return _buildEmptyState(widget.selectedCategory);
-                      }
-                      // no-op: item count not needed without auto-scroll
-                      final useList = screenWidth > 700; // On desktop/tablet, left-align with a simple list
-                      if (useList) {
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          clipBehavior: Clip.none,
-                          padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            // Trigger load more when approaching end (at index length - 3)
-                            if (index == items.length - 3 && 
-                                !propertyProvider.isFeaturedLoading && 
-                                propertyProvider.hasMoreProperties) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                propertyProvider.loadFeaturedProperties(
-                                  category: widget.selectedCategory,
-                                  loadMore: true,
-                                );
-                              });
-                            }
-                            
-                            final property = items[index];
-                            final vm = ListingViewModelFactory.fromProperty(property);
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                left: index == 0 ? 0 : perItemPadding,
-                                right: perItemPadding,
-                              ),
-                              child: SizedBox(
-                                width: cardWidth,
-                                child: HoverScale(
-                                  scale: 1.02,
-                                  duration: const Duration(milliseconds: 180),
-                                  curve: Curves.easeOutCubic,
-                                  enableOnTouch: true,
-                                  child: ListingCard(
-                                    model: vm,
-                                    isDark: widget.isDark,
-                                    width: cardWidth,
-                                    margin: EdgeInsets.zero,
-                                    chipOnImage: false,
-                                    showInfoChip: false,
-                                    chipInRatingRowRight: true,
-                                    priceBottomLeft: true,
-                                    shareBottomRight: true,
-                                    imageAspectRatio: featuredImageAspect,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      return PageView.builder(
-                        controller: _propertyPageController,
-                        physics: const BouncingScrollPhysics(),
-                        padEnds: false, // Align first card to left so next card peeks on the right
-                        clipBehavior: Clip.none, // Allow cards to overflow
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentPropertyIndex = index;
-                          });
-                        },
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final property = items[index];
-                          final vm = ListingViewModelFactory.fromProperty(property);
-                          final isActive = index == _currentPropertyIndex;
-                          final isFirstOrLast = index == 0 || index == items.length - 1;
-                          final shouldPopUp = isActive && !isFirstOrLast;
-                          
-                          return Container(
-                            width: double.infinity,
-                            alignment: Alignment.centerLeft,
-                            margin: EdgeInsets.only(left: index == 0 ? startPadding : 0, right: perItemPadding),
-                            child: AnimatedScale(
-                                scale: shouldPopUp ? 1.05 : (isActive ? 1.0 : 0.95),
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOutCubic,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutCubic,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    // Apply background shadow for the active visible card on phone
-                                    boxShadow: isActive ? [
-                                      BoxShadow(
-                                        color: widget.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-                                        blurRadius: 10,
-                                        offset: const Offset(-5, -5),
-                                        spreadRadius: 0,
-                                      ),
-                                      BoxShadow(
-                                        color: (widget.isDark
-                                                ? EnterpriseDarkTheme.primaryAccent
-                                                : EnterpriseLightTheme.primaryAccent)
-                                            .withValues(alpha: widget.isDark ? 0.18 : 0.12),
-                                        blurRadius: 10,
-                                        offset: const Offset(5, 5),
-                                        spreadRadius: 0,
-                                      ),
-                                    ] : null,
-                                  ),
-                                  child: HoverScale(
-                                    scale: 1.02,
-                                    duration: const Duration(milliseconds: 150),
-                                    curve: Curves.easeOut,
-                                    enableOnTouch: true,
-                                    child: ListingCard(
-                                      model: vm,
-                                      isDark: widget.isDark,
-                                      width: cardWidth,
-                                      margin: EdgeInsets.zero,
-                                      chipOnImage: false,
-                                      showInfoChip: false,
-                                      chipInRatingRowRight: true,
-                                      priceBottomLeft: true,
-                                      shareBottomRight: true,
-                                      imageAspectRatio: featuredImageAspect,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          );
-                        },
-                      );
-                    },
-                  )
-                : Container(
-                    key: ValueKey('vehicles_${widget.tabController.index}_${widget.selectedCategory}'),
-                    child: _buildVehiclesList(widget.selectedCategory),
-                  ),
-          ),
+          child: content,
         ),
       ],
+    );
+  }
+
+  /// Build property cards content (ListView or PageView)
+  Widget _buildPropertyContent(
+    PropertyProvider propertyProvider, double screenWidth, 
+    double perItemPadding, double startPadding, double cardWidth, 
+    double featuredImageAspect,
+  ) {
+    final items = propertyProvider.filteredFeaturedProperties;
+    if (items.isEmpty) return const SizedBox.shrink();
+    
+    final useList = screenWidth > 700;
+    if (useList) {
+      return ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          if (index == items.length - 3 && 
+              !propertyProvider.isLoadingMore && 
+              propertyProvider.hasMoreProperties) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              propertyProvider.loadFeaturedProperties(
+                category: widget.selectedCategory,
+                loadMore: true,
+              );
+            });
+          }
+          
+          final property = items[index];
+          final vm = ListingViewModelFactory.fromProperty(property);
+          return Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 0 : perItemPadding,
+              right: perItemPadding,
+            ),
+            child: SizedBox(
+              width: cardWidth,
+              child: HoverScale(
+                scale: 1.02,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                enableOnTouch: true,
+                child: ListingCard(
+                  model: vm,
+                  isDark: widget.isDark,
+                  width: cardWidth,
+                  margin: EdgeInsets.zero,
+                  chipOnImage: false,
+                  showInfoChip: false,
+                  chipInRatingRowRight: true,
+                  priceBottomLeft: true,
+                  shareBottomRight: true,
+                  imageAspectRatio: featuredImageAspect,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    return PageView.builder(
+      controller: _propertyPageController,
+      physics: const BouncingScrollPhysics(),
+      padEnds: false,
+      clipBehavior: Clip.none,
+      onPageChanged: (index) {
+        if (_currentPropertyIndex != index) {
+          setState(() { _currentPropertyIndex = index; });
+        }
+        if (index >= items.length - 3 && 
+            !propertyProvider.isLoadingMore && 
+            propertyProvider.hasMoreProperties) {
+          propertyProvider.loadFeaturedProperties(
+            category: widget.selectedCategory,
+            loadMore: true,
+          );
+        }
+      },
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final property = items[index];
+        final vm = ListingViewModelFactory.fromProperty(property);
+        final isActive = index == _currentPropertyIndex;
+        final isFirstOrLast = index == 0 || index == items.length - 1;
+        final shouldPopUp = isActive && !isFirstOrLast;
+        
+        return Container(
+          width: double.infinity,
+          alignment: Alignment.centerLeft,
+          margin: EdgeInsets.only(left: index == 0 ? startPadding : 0, right: perItemPadding),
+          child: AnimatedScale(
+            scale: shouldPopUp ? 1.05 : (isActive ? 1.0 : 0.95),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isActive ? [
+                  BoxShadow(
+                    color: widget.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
+                    blurRadius: 10,
+                    offset: const Offset(-5, -5),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: (widget.isDark
+                            ? EnterpriseDarkTheme.primaryAccent
+                            : EnterpriseLightTheme.primaryAccent)
+                        .withValues(alpha: widget.isDark ? 0.18 : 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(5, 5),
+                    spreadRadius: 0,
+                  ),
+                ] : null,
+              ),
+              child: HoverScale(
+                scale: 1.02,
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                enableOnTouch: true,
+                child: ListingCard(
+                  model: vm,
+                  isDark: widget.isDark,
+                  width: cardWidth,
+                  margin: EdgeInsets.zero,
+                  chipOnImage: false,
+                  showInfoChip: false,
+                  chipInRatingRowRight: true,
+                  priceBottomLeft: true,
+                  shareBottomRight: true,
+                  imageAspectRatio: featuredImageAspect,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Build vehicle cards content
+  Widget _buildVehicleContent(
+    VehicleProvider vehicleProvider, List<VehicleModel> items,
+    double screenWidth, double perItemPadding, double startPadding,
+    double cardWidth, double featuredImageAspect,
+  ) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    
+    // Sync selected category into provider filter
+    if (vehicleProvider.filterCategory != widget.selectedCategory) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        vehicleProvider.setFilterCategory(widget.selectedCategory);
+      });
+    }
+    
+    final useList = screenWidth > 700;
+    if (useList) {
+      return ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.only(left: startPadding, right: perItemPadding),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final v = items[index];
+          final vm = ListingViewModelFactory.fromVehicle(v);
+          return Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 0 : perItemPadding,
+              right: perItemPadding,
+            ),
+            child: SizedBox(
+              width: cardWidth,
+              child: HoverScale(
+                scale: 1.02,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                enableOnTouch: true,
+                child: ListingCard(
+                  model: vm,
+                  isDark: widget.isDark,
+                  width: cardWidth,
+                  margin: EdgeInsets.zero,
+                  chipOnImage: false,
+                  showInfoChip: false,
+                  chipInRatingRowRight: true,
+                  priceBottomLeft: true,
+                  shareBottomRight: true,
+                  imageAspectRatio: featuredImageAspect,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    return PageView.builder(
+      controller: _vehiclePageController,
+      physics: const BouncingScrollPhysics(),
+      padEnds: false,
+      clipBehavior: Clip.none,
+      onPageChanged: (index) {
+        setState(() { _currentVehicleIndex = index; });
+      },
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final v = items[index];
+        final vm = ListingViewModelFactory.fromVehicle(v);
+        final isActive = index == _currentVehicleIndex;
+        final isFirstOrLast = index == 0 || index == items.length - 1;
+        final shouldPopUp = isActive && !isFirstOrLast;
+        
+        return Container(
+          width: double.infinity,
+          alignment: Alignment.centerLeft,
+          margin: EdgeInsets.only(left: index == 0 ? startPadding : 0, right: perItemPadding),
+          child: AnimatedScale(
+            scale: shouldPopUp ? 1.05 : (isActive ? 1.0 : 0.95),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isActive ? [
+                  BoxShadow(
+                    color: widget.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
+                    blurRadius: 10,
+                    offset: const Offset(-5, -5),
+                    spreadRadius: 0,
+                  ),
+                  BoxShadow(
+                    color: (widget.isDark
+                            ? EnterpriseDarkTheme.primaryAccent
+                            : EnterpriseLightTheme.primaryAccent)
+                        .withValues(alpha: widget.isDark ? 0.18 : 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(5, 5),
+                    spreadRadius: 0,
+                  ),
+                ] : null,
+              ),
+              child: HoverScale(
+                scale: 1.02,
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                enableOnTouch: true,
+                child: ListingCard(
+                  model: vm,
+                  isDark: widget.isDark,
+                  width: cardWidth,
+                  margin: EdgeInsets.zero,
+                  chipOnImage: false,
+                  showInfoChip: false,
+                  chipInRatingRowRight: true,
+                  priceBottomLeft: true,
+                  shareBottomRight: true,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -406,7 +600,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
           items = vehicleProvider.featuredVehicles;
         }
         if (items.isEmpty) {
-          return _buildEmptyState(category);
+          return const SizedBox.shrink();
         }
 
         // no-op: item count not needed without auto-scroll

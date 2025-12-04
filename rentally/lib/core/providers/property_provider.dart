@@ -25,10 +25,13 @@ class PropertyProvider with ChangeNotifier {
 
   List<PropertyModel> _properties = [];
   List<PropertyModel> _featuredProperties = [];
+  List<PropertyModel> _recommendedProperties = []; // Personalized recommendations
   List<PropertyModel> _searchResults = [];
   PropertyModel? _selectedProperty;
   bool _isLoading = false;
   bool _isFeaturedLoading = false;
+  bool _isLoadingMore = false; // Separate flag for pagination
+  bool _isRecommendedLoading = false; // For recommendations
   bool _isSearching = false;
   String? _error;
   PropertyType? _filterType;
@@ -36,10 +39,13 @@ class PropertyProvider with ChangeNotifier {
   // Getters
   List<PropertyModel> get properties => _properties;
   List<PropertyModel> get featuredProperties => _featuredProperties;
+  List<PropertyModel> get recommendedProperties => _recommendedProperties; // Recommendations getter
   List<PropertyModel> get searchResults => _searchResults;
   PropertyModel? get selectedProperty => _selectedProperty;
   bool get isLoading => _isLoading;
   bool get isFeaturedLoading => _isFeaturedLoading;
+  bool get isLoadingMore => _isLoadingMore; // Getter for pagination loading
+  bool get isRecommendedLoading => _isRecommendedLoading; // Getter for recommendations loading
   bool get isSearching => _isSearching;
   String? get error => _error;
   PropertyType? get filterType => _filterType;
@@ -121,7 +127,11 @@ class PropertyProvider with ChangeNotifier {
     }
     
     // Fetch from backend
-    _isFeaturedLoading = true;
+    if (loadMore) {
+      _isLoadingMore = true; // Use separate flag for pagination
+    } else {
+      _isFeaturedLoading = true; // Use main flag for initial load
+    }
     _error = null;
     notifyListeners();
 
@@ -167,6 +177,34 @@ class PropertyProvider with ChangeNotifier {
       debugPrint('❌ Error loading featured properties: $e');
     } finally {
       _isFeaturedLoading = false;
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  /// Load personalized recommended properties
+  Future<void> loadRecommendedProperties({String category = 'all'}) async {
+    _isRecommendedLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      debugPrint('🎯 Fetching recommended properties from backend (category: $category)');
+      
+      final response = await _realApiService.getRecommendedProperties(
+        category: category,
+      );
+      
+      final newProperties = response.map((p) => PropertyModel.fromJson(p)).toList();
+      _recommendedProperties = newProperties;
+      
+      debugPrint('✅ Loaded ${newProperties.length} recommended properties');
+    } catch (e) {
+      debugPrint('❌ Error loading recommended properties: $e');
+      _error = 'Failed to load recommended properties';
+      _recommendedProperties = []; // Empty list on error
+    } finally {
+      _isRecommendedLoading = false;
       notifyListeners();
     }
   }

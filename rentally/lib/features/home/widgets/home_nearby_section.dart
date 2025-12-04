@@ -103,25 +103,37 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
 
   /// Filter properties by category on frontend (NO API call)
   List<PropertyModel> _filterPropertiesByCategory(List<PropertyModel> properties) {
-    if (widget.selectedCategory.toLowerCase() == 'all') {
+    final category = widget.selectedCategory.toLowerCase();
+    if (category == 'all') {
       return properties;
+    }
+    
+    // Normalize category: remove trailing 's' for plural categories (e.g., 'apartments' -> 'apartment')
+    String normalizedCategory = category;
+    if (category.endsWith('s') && category != 'townhouses') {
+      normalizedCategory = category.substring(0, category.length - 1);
+    }
+    // Special case: 'townhouses' -> 'townhouse'
+    if (category == 'townhouses') {
+      normalizedCategory = 'townhouse';
     }
     
     // Match category to PropertyType enum
     return properties.where((property) {
-      return property.type.name.toLowerCase() == widget.selectedCategory.toLowerCase();
+      return property.type.name.toLowerCase() == normalizedCategory;
     }).toList();
   }
 
   /// Filter vehicles by category on frontend (NO API call)
   List<VehicleModel> _filterVehiclesByCategory(List<VehicleModel> vehicles) {
-    if (widget.selectedCategory.toLowerCase() == 'all') {
+    final category = widget.selectedCategory.toLowerCase();
+    if (category == 'all') {
       return vehicles;
     }
     
     // Match category string (SUV, Sedan, Electric, etc.)
     return vehicles.where((vehicle) {
-      return vehicle.category.toLowerCase() == widget.selectedCategory.toLowerCase();
+      return vehicle.category.toLowerCase() == category;
     }).toList();
   }
 
@@ -221,9 +233,32 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
   }
 
 
-
   @override
   Widget build(BuildContext context) {
+    // Check if items are empty FIRST - if so, hide entire section (including header)
+    final bool isProperties = widget.tabController.index == 0;
+    
+    if (isProperties) {
+      // For properties - check if filtered nearby properties are empty
+      final source = _nearbyProperties.isNotEmpty
+          ? _nearbyProperties
+          : pv.Provider.of<PropertyProvider>(context).featuredProperties;
+      final filteredProperties = _filterPropertiesByCategory(source.isNotEmpty ? source : []);
+      if (source.isEmpty || filteredProperties.isEmpty) {
+        return const SizedBox.shrink();
+      }
+    } else {
+      // For vehicles - check if filtered vehicles are empty
+      final vehicleProvider = pv.Provider.of<VehicleProvider>(context);
+      final source = _nearbyVehicles.isNotEmpty
+          ? _nearbyVehicles
+          : vehicleProvider.featuredVehicles;
+      final filteredVehicles = _filterVehiclesByCategory(source);
+      if (source.isEmpty || filteredVehicles.isEmpty) {
+        return const SizedBox.shrink();
+      }
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,7 +359,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                             : propertyProvider.featuredProperties;
                         
                         if (source.isEmpty) {
-                          return _buildEmptyState(widget.selectedCategory);
+                          return const SizedBox.shrink();
                         }
                         
                         // Apply category filter on frontend (cached data - NO API call)
@@ -333,7 +368,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                             : _filterNearbyProperties(source);
                         
                         if (properties.isEmpty) {
-                          return _buildEmptyState(widget.selectedCategory);
+                          return const SizedBox.shrink();
                         }
                         
                         final screenWidth = MediaQuery.of(context).size.width;
@@ -380,7 +415,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                             : vehicleProvider.featuredVehicles;
                         
                         if (source.isEmpty) {
-                          return _buildEmptyState(widget.selectedCategory);
+                          return const SizedBox.shrink();
                         }
                         
                         // Apply category filter on frontend (cached data - NO API call)
@@ -389,7 +424,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
                             : source;
                         
                         if (vehicles.isEmpty) {
-                          return _buildEmptyState(widget.selectedCategory);
+                          return const SizedBox.shrink();
                         }
                         
                         final screenWidth = MediaQuery.of(context).size.width;

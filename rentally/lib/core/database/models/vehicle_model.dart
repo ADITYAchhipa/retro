@@ -81,12 +81,13 @@ class VehicleModel {
     }
 
     final double rating = toDouble(json['rating']);
-    final int reviewCount = toInt(json['reviewCount'] ?? json['reviews']);
+    final int reviewCount = toInt(json['reviewCount'] ?? json['reviews'] ?? 0);
     final String category = (json['category'] ?? 'Vehicle').toString();
     final int seats = toInt(json['seats'] ?? json['seatCount']);
     final String transmission = (json['transmission'] ?? 'Auto').toString();
     final String fuel = (json['fuel'] ?? 'Petrol').toString();
-    final bool isFeatured = (json['isFeatured'] is bool) ? (json['isFeatured'] as bool) : false;
+    // Handle boolean safely - backend might return null
+    final bool isFeatured = json['isFeatured'] == true || json['Featured'] == true;
     double? latitude = (json['latitude'] != null) ? toDouble(json['latitude']) : null;
     double? longitude = (json['longitude'] != null) ? toDouble(json['longitude']) : null;
     // DEBUG: derive lat/lng from GeoJSON if direct fields are missing

@@ -7,15 +7,16 @@ typedef _WishlistBuilder = Widget Function(bool isLiked, VoidCallback onToggle);
 
 class _WishlistToggle extends ConsumerWidget {
   final String listingId;
+  final bool isVehicle;
   final _WishlistBuilder builder;
-  const _WishlistToggle({required this.listingId, required this.builder});
+  const _WishlistToggle({required this.listingId, this.isVehicle = false, required this.builder});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLiked = ref.watch(wishlistProvider).isInWishlist(listingId);
     void onToggle() {
       final wasLiked = isLiked;
-      ref.read(wishlistProvider.notifier).toggleWishlist(listingId);
+      ref.read(wishlistProvider.notifier).toggleWishlist(listingId, isVehicle: isVehicle);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(wasLiked ? 'Removed from wishlist' : 'Added to wishlist'),
@@ -30,16 +31,18 @@ class _WishlistToggle extends ConsumerWidget {
 /// Simple inline icon-only button (no background)
 class WishlistIconButton extends StatelessWidget {
   final String listingId;
+  final bool isVehicle;
   final double size;
   final Color? color;
   final Color? activeColor;
-  const WishlistIconButton({super.key, required this.listingId, this.size = 24, this.color, this.activeColor});
+  const WishlistIconButton({super.key, required this.listingId, this.isVehicle = false, this.size = 24, this.color, this.activeColor});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return _WishlistToggle(
       listingId: listingId,
+      isVehicle: isVehicle,
       builder: (isLiked, onToggle) => IconButton(
         onPressed: onToggle,
         icon: Icon(
@@ -55,13 +58,15 @@ class WishlistIconButton extends StatelessWidget {
 /// Circular overlay heart with optimistic animated fade + scale (for cards)
 class WishlistOverlayHeart extends StatelessWidget {
   final String listingId;
+  final bool isVehicle;
   final double size;
-  const WishlistOverlayHeart({super.key, required this.listingId, this.size = 18});
+  const WishlistOverlayHeart({super.key, required this.listingId, this.isVehicle = false, this.size = 18});
 
   @override
   Widget build(BuildContext context) {
     return _WishlistToggle(
       listingId: listingId,
+      isVehicle: isVehicle,
       builder: (isLiked, onToggle) => GestureDetector(
         onTap: onToggle,
         child: AnimatedScale(
@@ -91,16 +96,18 @@ class WishlistOverlayHeart extends StatelessWidget {
 /// Legacy alias for inline circle icon with background
 class WishlistButton extends StatelessWidget {
   final String listingId;
+  final bool isVehicle;
   final double size;
   final Color? activeColor;
   final Color? inactiveColor;
-  const WishlistButton({super.key, required this.listingId, this.size = 24.0, this.activeColor, this.inactiveColor});
+  const WishlistButton({super.key, required this.listingId, this.isVehicle = false, this.size = 24.0, this.activeColor, this.inactiveColor});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return _WishlistToggle(
       listingId: listingId,
+      isVehicle: isVehicle,
       builder: (isLiked, onToggle) => GestureDetector(
         onTap: onToggle,
         child: Container(
@@ -122,3 +129,4 @@ class WishlistButton extends StatelessWidget {
     );
   }
 }
+

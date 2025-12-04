@@ -39,11 +39,31 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
     // Initialize with default viewport fraction, will be updated in didChangeDependencies
     _recPageController = PageController(viewportFraction: 0.86);
     widget.tabController.addListener(_onTabChanged);
-    // Ensure featured data is loaded for both domains
+    // Load data for both domains
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Vehicles are needed for the vehicles tab of this section
+      // Load recommended properties (personalized for logged-in users)
+      pv.Provider.of<PropertyProvider>(context, listen: false)
+          .loadRecommendedProperties(category: widget.selectedCategory);
+      
+      // Vehicles for the vehicles tab
       pv.Provider.of<VehicleProvider>(context, listen: false).loadFeaturedVehicles();
     });
+  }
+
+  @override
+  void didUpdateWidget(HomeRecommendedSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload when category changes
+    if (oldWidget.selectedCategory != widget.selectedCategory) {
+      final isPropertyTab = widget.tabController.index == 0;
+      if (isPropertyTab) {
+        pv.Provider.of<PropertyProvider>(context, listen: false)
+            .loadRecommendedProperties(category: widget.selectedCategory);
+      } else {
+        final vp = pv.Provider.of<VehicleProvider>(context, listen: false);
+        vp.setFilterCategory(widget.selectedCategory);
+      }
+    }
   }
 
   Widget _buildEmptyState(String category) {
@@ -155,6 +175,20 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
     final isCompactWidth = cardWidth <= 280;
     final recImageAspect = isCompactWidth ? 2.7 : 2.6; // keep in sync with _getSectionHeight
     
+    // Check if items are empty FIRST - if so, hide entire section (including header)
+    final bool isPropertyTab = widget.tabController.index == 0;
+    if (isPropertyTab) {
+      final propertyProvider = pv.Provider.of<PropertyProvider>(context);
+      if (!propertyProvider.isRecommendedLoading && propertyProvider.recommendedProperties.isEmpty) {
+        return const SizedBox.shrink();
+      }
+    } else {
+      final vehicleProvider = pv.Provider.of<VehicleProvider>(context);
+      if (!vehicleProvider.isFeaturedLoading && vehicleProvider.filteredFeaturedVehicles.isEmpty) {
+        return const SizedBox.shrink();
+      }
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,12 +251,12 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                   ? pv.Consumer<PropertyProvider>(
                       key: ValueKey('rec_properties_${widget.tabController.index}'),
                       builder: (context, propertyProvider, _) {
-                        if (propertyProvider.isFeaturedLoading) {
+                        if (propertyProvider.isRecommendedLoading) {
                           return _buildShimmerList();
                         }
-                        final items = propertyProvider.filteredFeaturedProperties;
+                        final items = propertyProvider.recommendedProperties;
                         if (items.isEmpty) {
-                          return _buildEmptyState(widget.selectedCategory);
+                          return const SizedBox.shrink();
                         }
                         return _buildRecommendedPager(
                           itemCount: items.length,
@@ -260,7 +294,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                           WidgetsBinding.instance.addPostFrameCallback((_) => vehicleProvider.loadFeaturedVehicles());
                         }
                         if (items.isEmpty) {
-                          return _buildEmptyState(widget.selectedCategory);
+                          return const SizedBox.shrink();
                         }
                         return _buildRecommendedPager(
                           itemCount: items.length,

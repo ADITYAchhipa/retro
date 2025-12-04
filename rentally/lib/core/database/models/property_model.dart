@@ -190,11 +190,12 @@ class PropertyModel {
     final int reviewCount = (ratingObj is Map)
         ? toInt(ratingObj['count'])
         : toInt(json['reviewCount'] ?? json['reviews']);
-    final bool isAvailable = (json['isAvailable'] is bool) ? (json['isAvailable'] as bool) : true;
+    // Handle booleans safely - backend might return null
+    final bool isAvailable = json['isAvailable'] == true || 
+                             json['available'] == true || 
+                             (json['isAvailable'] == null && json['available'] == null); // Default to true if null
     // Backend uses 'Featured' (capital F), frontend uses 'isFeatured'
-    final bool isFeatured = (json['isFeatured'] is bool) 
-        ? (json['isFeatured'] as bool) 
-        : ((json['Featured'] is bool) ? (json['Featured'] as bool) : false);
+    final bool isFeatured = json['isFeatured'] == true || json['Featured'] == true;
     final DateTime createdAt = toDateTime(json['createdAt']);
     final DateTime updatedAt = toDateTime(json['updatedAt']);
 

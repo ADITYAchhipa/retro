@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
+import '../../services/token_storage_service.dart';
 
 /// Mock API Service for development
 class MockApiService {
@@ -201,7 +202,7 @@ class MockApiService {
       
       // Add category filter if provided and not 'all'
       if (category != null && category.isNotEmpty && category.toLowerCase() != 'all') {
-        params['category'] = '${category}s'; // Backend expects plural
+        params['category'] = category; // Send as-is, backend handles normalization
       }
       
       // Add excludeIds for duplicate prevention
@@ -304,6 +305,81 @@ class MockApiService {
     ];
   }
 
+  // Personalized Recommendations
+  Future<List<Map<String, dynamic>>> getRecommendedProperties({
+    String category = 'all',
+  }) async {
+    try {
+      final params = <String, String>{
+        'category': category,
+      };
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/recommended/properties').replace(queryParameters: params);
+      debugPrint('🎯 Fetching recommended properties: $uri');
+      
+      // Get JWT token from storage
+      final token = await TokenStorageService.getToken();
+      debugPrint('🔑 Token available: ${token != null}');
+      
+      // Include Authorization header with token
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      
+      final response = await http.get(uri, headers: headers);
+      
+      debugPrint('📡 Response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        
+        if (body['success'] == true) {
+          final list = (body['results'] as List?)?.cast<Map<String, dynamic>>() ?? const <Map<String, dynamic>>[];
+          debugPrint('✅ Recommended properties fetched: ${list.length}');
+          return list;
+        } else {
+          debugPrint('⚠️ Backend returned success=false: ${body['message'] ?? 'No message'}');
+        }
+      }
+      debugPrint('❌ Recommended properties request failed: ${response.statusCode}');
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      debugPrint('💥 Error fetching recommended properties: $e');
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRecommendedVehicles({
+    String category = 'all',
+  }) async {
+    try {
+      final params = <String, String>{
+        'category': category,
+      };
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/recommended/vehicles').replace(queryParameters: params);
+      debugPrint('🎯 Fetching recommended vehicles: $uri');
+      final response = await http.get(uri);
+      
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true) {
+          final list = (body['results'] as List?)?.cast<Map<String, dynamic>>() ?? const <Map<String, dynamic>>[];
+          debugPrint('✅ Recommended vehicles fetched: ${list.length}');
+          return list;
+        }
+      }
+      debugPrint('❌ Recommended vehicles request failed: ${response.statusCode}\n${response.body}');
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      debugPrint('💥 Error fetching recommended vehicles: $e');
+      return <Map<String, dynamic>>[];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getFeaturedVehicles() async {
     return getVehicles();
   }
@@ -323,6 +399,58 @@ class MockApiService {
       'success': true,
       'data': vehicles.firstWhere((v) => v['id'] == id, orElse: () => vehicles.first),
     };
+  }
+
+  /// Get user's visited properties from backend
+  Future<List<Map<String, dynamic>>> getVisitedProperties({int limit = 10}) async {
+    try {
+      final token = await TokenStorageService.getToken();
+      if (token == null) {
+        debugPrint('⚠️ No token - cannot fetch visited properties');
+        return <Map<String, dynamic>>[];
+      }
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/user/visited?limit=$limit');
+      debugPrint('📍 Fetching visited properties: $uri');
+      
+      final response = await http.get(uri, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+      
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true) {
+          final results = (body['results'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          debugPrint('✅ Visited properties fetched: ${results.length}');
+          return results;
+        }
+      }
+      debugPrint('❌ Visited properties request failed: ${response.statusCode}');
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      debugPrint('💥 Error fetching visited properties: $e');
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  /// Add property to user's visited list
+  Future<bool> addToVisited(String propertyId) async {
+    try {
+      final token = await TokenStorageService.getToken();
+      if (token == null) return false;
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/user/visited/$propertyId');
+      final response = await http.post(uri, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+      
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('💥 Error adding to visited: $e');
+      return false;
+    }
   }
 }
 

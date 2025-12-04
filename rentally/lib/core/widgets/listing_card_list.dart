@@ -297,7 +297,7 @@ class ListingListCard extends rp.ConsumerWidget {
                                   accentColor: Colors.red,
                                   onTap: () {
                                     final wasLiked = isLiked;
-                                    ref.read(wishlistProvider.notifier).toggleWishlist(model.id);
+                                    ref.read(wishlistProvider.notifier).toggleWishlist(model.id, isVehicle: model.isVehicle);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(wasLiked ? 'Removed from wishlist' : 'Added to wishlist'),

@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../widgets/error_boundary.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
+import '../../core/theme/enterprise_light_theme.dart';
 import '../../core/providers/property_provider.dart';
+import '../../core/providers/vehicle_provider.dart';
 import '../../core/database/models/property_model.dart';
 import 'widgets/home_header.dart';
 import 'widgets/home_search_bar.dart';
@@ -15,9 +17,9 @@ import 'widgets/home_recommended_section.dart';
 import 'widgets/home_nearby_section.dart';
 import '../../core/widgets/tab_back_handler.dart';
 import 'package:go_router/go_router.dart';
-import '../../services/recently_viewed_service.dart';
-import '../../core/utils/currency_formatter.dart';
+import '../../core/services/mock_api_service.dart';
 import '../../core/widgets/listing_card.dart';
+import '../../core/widgets/listing_vm_factory.dart';
 
 /// **Original Home Screen**
 /// 
@@ -45,7 +47,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
   
   bool _isLoading = false;
   int _selectedCategoryIndex = 0;
-  List<RecentlyViewedItem> _recentlyViewed = const [];
+  List<PropertyModel> _recentlyViewed = const [];
   
   // Category data
   // Property categories
@@ -129,13 +131,21 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
 
   Future<void> _loadRecentlyViewed() async {
     try {
-      final items = await RecentlyViewedService.list();
+      final apiService = RealApiService();
+      final results = await apiService.getVisitedProperties(limit: 10);
       if (!mounted) return;
+      
+      // Parse visited properties - each result has { property: {...}, visitedAt: ... }
+      final properties = results
+          .where((r) => r['property'] != null)
+          .map((r) => PropertyModel.fromJson(r['property'] as Map<String, dynamic>))
+          .toList();
+      
       setState(() {
-        _recentlyViewed = items;
+        _recentlyViewed = properties;
       });
-    } catch (_) {
-      // ignore failures
+    } catch (e) {
+      debugPrint('Error loading recently viewed: $e');
     }
   }
 
@@ -179,23 +189,9 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
     );
   }
 
-  Widget _buildRecentCard(RecentlyViewedItem item, ThemeData theme) {
+  Widget _buildRecentCard(PropertyModel property, ThemeData theme) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // RecentlyViewedItem doesn't carry type; default to property unit for display consistency
-    const unit = 'month';
-    final vm = ListingViewModel(
-      id: item.id,
-      title: item.title,
-      location: item.location,
-      priceLabel: CurrencyFormatter.formatPricePerUnit(item.price, unit),
-      rentalUnit: unit,
-      imageUrl: item.imageUrl,
-      rating: 0,
-      chips: const [],
-      metaItems: const [],
-      fallbackIcon: Icons.home,
-      isVehicle: false,
-    );
+    final vm = ListingViewModelFactory.fromProperty(property);
     return SizedBox(
       width: 260,
       child: ListingCard(
@@ -203,7 +199,7 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
         isDark: isDark,
         width: 260,
         margin: EdgeInsets.zero,
-        onTap: () => context.push('/listing/${item.id}'),
+        onTap: () => context.push('/listing/${property.id}'),
         chipOnImage: false,
         showInfoChip: false,
         chipInRatingRowRight: true,
@@ -216,6 +212,49 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
   void _showAllRecentlyViewed() {
     // Placeholder for a full-screen Recently Viewed list
     // For now, no-op or could navigate to '/search?recentlyViewed=true'
+  }
+
+  /// Message shown when no items are available for the selected category
+  Widget _buildNoCategoryItemsMessage(ThemeData theme, bool isDark, String category) {
+    final isPropertyTab = _tabController.index == 0;
+    final itemType = isPropertyTab ? 'properties' : 'vehicles';
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      child: Column(
+        children: [
+          Icon(
+            isPropertyTab ? Icons.home_work_outlined : Icons.directions_car_outlined,
+            size: 64,
+            color: isDark 
+                ? EnterpriseDarkTheme.secondaryText.withOpacity(0.5)
+                : EnterpriseLightTheme.secondaryText.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No $itemType found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDark 
+                  ? EnterpriseDarkTheme.primaryText 
+                  : EnterpriseLightTheme.primaryText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'There are no $itemType available for "$category".\nTry selecting a different category.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark 
+                  ? EnterpriseDarkTheme.secondaryText 
+                  : EnterpriseLightTheme.secondaryText,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadInitialData() async {
@@ -442,6 +481,39 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
                 selectedCategory: derivedCategories[_selectedCategoryIndex],
               ),
             ),
+          ),
+
+          // Show message when ALL sections are empty for this category
+          Consumer2<PropertyProvider, VehicleProvider>(
+            builder: (context, propertyProvider, vehicleProvider, _) {
+              final isPropertyTab = _tabController.index == 0;
+              final category = derivedCategories[_selectedCategoryIndex];
+              
+              bool allEmpty = false;
+              if (category.toLowerCase() != 'all') {
+                if (isPropertyTab) {
+                  // Check if all property sections are empty (not loading)
+                  final featuredEmpty = !propertyProvider.isFeaturedLoading && 
+                      propertyProvider.filteredFeaturedProperties.isEmpty;
+                  final recommendedEmpty = !propertyProvider.isRecommendedLoading && 
+                      propertyProvider.recommendedProperties.isEmpty;
+                  // nearbyProvider is same as propertyProvider for now
+                  allEmpty = featuredEmpty && recommendedEmpty;
+                } else {
+                  // Check if all vehicle sections are empty
+                  final featuredEmpty = !vehicleProvider.isFeaturedLoading && 
+                      vehicleProvider.filteredFeaturedVehicles.isEmpty;
+                  allEmpty = featuredEmpty;
+                }
+              }
+              
+              if (allEmpty) {
+                return SliverToBoxAdapter(
+                  child: _buildNoCategoryItemsMessage(theme, isDark, category),
+                );
+              }
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            },
           ),
 
           // Recently Viewed Section (if any)

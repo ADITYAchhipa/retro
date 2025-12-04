@@ -4,6 +4,7 @@ import '../../services/wishlist_service.dart';
 
 class WishlistButton extends ConsumerWidget {
   final String listingId;
+  final bool isVehicle;
   final double size;
   final Color? activeColor;
   final Color? inactiveColor;
@@ -11,6 +12,7 @@ class WishlistButton extends ConsumerWidget {
   const WishlistButton({
     super.key,
     required this.listingId,
+    this.isVehicle = false,
     this.size = 24.0,
     this.activeColor,
     this.inactiveColor,
@@ -23,7 +25,7 @@ class WishlistButton extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return GestureDetector(
-      onTap: () => ref.read(wishlistProvider.notifier).toggleWishlist(listingId),
+      onTap: () => ref.read(wishlistProvider.notifier).toggleWishlist(listingId, isVehicle: isVehicle),
       child: Icon(
         isInWishlist ? Icons.favorite : Icons.favorite_border,
         size: size,
@@ -37,11 +39,13 @@ class WishlistButton extends ConsumerWidget {
 
 class WishlistIconButton extends ConsumerWidget {
   final String listingId;
+  final bool isVehicle;
   final VoidCallback? onPressed;
 
   const WishlistIconButton({
     super.key,
     required this.listingId,
+    this.isVehicle = false,
     this.onPressed,
   });
 
@@ -52,7 +56,7 @@ class WishlistIconButton extends ConsumerWidget {
 
     return IconButton(
       onPressed: () {
-        ref.read(wishlistProvider.notifier).toggleWishlist(listingId);
+        ref.read(wishlistProvider.notifier).toggleWishlist(listingId, isVehicle: isVehicle);
         onPressed?.call();
       },
       icon: Icon(
@@ -62,3 +66,4 @@ class WishlistIconButton extends ConsumerWidget {
     );
   }
 }
+
