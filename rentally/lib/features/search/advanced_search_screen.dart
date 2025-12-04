@@ -18,6 +18,7 @@ import '../../services/listing_service.dart' as ls;
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
+import '../../core/services/mock_api_service.dart' show RealApiService;
 
 /// Quick filter model for search screen
 class QuickFilter {
@@ -195,97 +196,164 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       _searchQuery = _searchController.text;
       _isSearching = true;
     });
-    
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (mounted) {
-      setState(() {
-        List<PropertyResult> results = _isVehicleMode ? _generateVehicleResults() : _generateMockResults();
-        final t = _propertyType.toLowerCase();
-        final bool knownPropertyType = _propertyTypes.contains(t);
-        if (!_isVehicleMode && t != 'all' && knownPropertyType) {
-          results = results.where((r) => r.type.toLowerCase() == t).toList();
-        }
-        // Apply simple text filter
-        if (_searchQuery.isNotEmpty) {
-          results = results.where((r) => r.title.toLowerCase().contains(_searchQuery.toLowerCase()) || r.location.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-        }
-        // Apply top-level category filter (Residential / Commercial)
-        if (!_isVehicleMode) {
-          const residentialTypes = {'apartment','house','villa','studio','room'};
-          const commercialTypes = {'office','retail','showroom','warehouse'};
-          if (_toRentCategory == 'residential') {
-            results = results.where((r) => residentialTypes.contains(r.type.toLowerCase())).toList();
-          } else if (_toRentCategory == 'commercial') {
-            results = results.where((r) => commercialTypes.contains(r.type.toLowerCase())).toList();
-          }
-        }
-        // Apply property-specific filters from the filter sheet
-        if (!_isVehicleMode) {
-          results = results.where((r) {
-            final bool isResidential = _toRentCategory == 'residential';
-            final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
-            final bool bedsOk = !isResidential || _bedrooms == 0 || r.bedrooms >= _bedrooms; // apply only for residential
-            final bool bathsOk = !isResidential || _bathrooms == 0 || r.bathrooms >= _bathrooms; // apply only for residential
-            final bool instantOk = !_instantBooking || r.instantBooking;
-            final bool verifiedOk = !_verifiedOnly || r.isVerified;
-            final bool imagesOk = !_imagesOnly || (r.imageUrl.trim().isNotEmpty);
-            final bool builtMinOk = _builtUpMinSqFt == 0 || r.builtUpArea >= _builtUpMinSqFt;
-            final bool builtMaxOk = (_builtUpMaxSqFt == 0 || _builtUpMaxSqFt == 4000)
-                ? true
-                : r.builtUpArea <= _builtUpMaxSqFt;
-            final bool furnishOk = _furnishType == 'any' || r.furnishType == _furnishType;
-            final bool tenantOk = !isResidential || _preferredTenant == 'any' || r.preferredTenant == _preferredTenant; // apply only for residential
-            final bool amenityOk = _amenities.isEmpty || _amenities.every((a) => r.amenities.contains(a));
-            return priceOk && bedsOk && bathsOk && instantOk && verifiedOk && imagesOk && builtMinOk && builtMaxOk && furnishOk && tenantOk && amenityOk;
-          }).toList();
-        }
-        // Apply vehicle-specific filters
-        else {
-          results = results.where((r) {
-            final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
-            final bool instantOk = !_instantBooking || r.instantBooking;
-            final bool verifiedOk = !_verifiedOnly || r.isVerified;
-            return priceOk && instantOk && verifiedOk;
-          }).toList();
-        }
-        // Apply radius filter (if any)
-        if (_radiusKm > 0) {
-          results = results.where((r) {
-            final d = _distanceKm(_centerLat, _centerLng, r.latitude, r.longitude);
-            return d <= _radiusKm;
-          }).toList();
-        }
-        // Apply sorting
-        switch (_sortOption) {
-          case 'price_asc':
-            results.sort((a, b) => a.price.compareTo(b.price));
-            break;
-          case 'price_desc':
-            results.sort((a, b) => b.price.compareTo(a.price));
-            break;
-          case 'rating_desc':
-            results.sort((a, b) => b.rating.compareTo(a.rating));
-            break;
-          case 'distance_asc':
-            results.sort((a, b) {
-              final da = _distanceKm(_centerLat, _centerLng, a.latitude, a.longitude);
-              final db = _distanceKm(_centerLat, _centerLng, b.latitude, b.longitude);
-              return da.compareTo(db);
-            });
-            break;
-          case 'relevance':
-          default:
-            // keep current ordering
-            break;
-        }
-        _searchResults = results;
-        _isSearching = false;
-      });
 
-      // Saved search notifications removed
+    // Fetch base results from RealApiService so IDs match what
+    // ModularListingDetailScreen expects, falling back to local
+    // mock generators if anything goes wrong.
+    List<PropertyResult> baseResults;
+    try {
+      final api = RealApiService();
+      if (_isVehicleMode) {
+        final vehicles = await api.getVehicles();
+        baseResults = vehicles.map<PropertyResult>((v) {
+          final id = (v['id'] ?? '').toString();
+          final title = (v['title'] ?? '').toString();
+          final price = (v['price'] is num) ? (v['price'] as num).toDouble() : 0.0;
+          final rating = (v['rating'] is num) ? (v['rating'] as num).toDouble() : 0.0;
+          final imageUrl = (v['imageUrl'] ?? '').toString();
+          final location = (v['location'] ?? '').toString();
+          final seats = (v['seats'] is num) ? (v['seats'] as num).toInt() : 0;
+          final lat = (v['latitude'] is num) ? (v['latitude'] as num).toDouble() : _centerLat;
+          final lng = (v['longitude'] is num) ? (v['longitude'] as num).toDouble() : _centerLng;
+          return PropertyResult(
+            id: id,
+            title: title,
+            price: price,
+            rating: rating,
+            imageUrl: imageUrl,
+            location: location,
+            type: 'vehicle',
+            bedrooms: seats,
+            bathrooms: 0,
+            isVerified: false,
+            instantBooking: false,
+            latitude: lat,
+            longitude: lng,
+          );
+        }).toList();
+      } else {
+        final properties = await api.getProperties();
+        baseResults = properties.map<PropertyResult>((p) {
+          final id = (p['id'] ?? '').toString();
+          final title = (p['title'] ?? '').toString();
+          final price = (p['price'] is num) ? (p['price'] as num).toDouble() : 0.0;
+          final rating = (p['rating'] is num) ? (p['rating'] as num).toDouble() : 0.0;
+          final imageUrl = (p['imageUrl'] ?? '').toString();
+          final location = (p['location'] ?? '').toString();
+          final type = (p['type'] ?? 'apartment').toString();
+          final lat = (p['latitude'] is num) ? (p['latitude'] as num).toDouble() : _centerLat;
+          final lng = (p['longitude'] is num) ? (p['longitude'] as num).toDouble() : _centerLng;
+          return PropertyResult(
+            id: id,
+            title: title,
+            price: price,
+            rating: rating,
+            imageUrl: imageUrl,
+            location: location,
+            type: type,
+            bedrooms: 0,
+            bathrooms: 0,
+            isVerified: false,
+            instantBooking: false,
+            latitude: lat,
+            longitude: lng,
+          );
+        }).toList();
+      }
+    } catch (_) {
+      // Fall back to local mock generators if API fails
+      baseResults = _isVehicleMode ? _generateVehicleResults() : _generateMockResults();
     }
+
+    if (!mounted) return;
+
+    setState(() {
+      List<PropertyResult> results = baseResults;
+      final t = _propertyType.toLowerCase();
+      final bool knownPropertyType = _propertyTypes.contains(t);
+      if (!_isVehicleMode && t != 'all' && knownPropertyType) {
+        results = results.where((r) => r.type.toLowerCase() == t).toList();
+      }
+      // Apply simple text filter
+      if (_searchQuery.isNotEmpty) {
+        results = results
+            .where((r) => r.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                r.location.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
+      }
+      // Apply top-level category filter (Residential / Commercial)
+      if (!_isVehicleMode) {
+        const residentialTypes = {'apartment', 'house', 'villa', 'studio', 'room'};
+        const commercialTypes = {'office', 'retail', 'showroom', 'warehouse'};
+        if (_toRentCategory == 'residential') {
+          results = results.where((r) => residentialTypes.contains(r.type.toLowerCase())).toList();
+        } else if (_toRentCategory == 'commercial') {
+          results = results.where((r) => commercialTypes.contains(r.type.toLowerCase())).toList();
+        }
+      }
+      // Apply property-specific filters from the filter sheet
+      if (!_isVehicleMode) {
+        results = results.where((r) {
+          final bool isResidential = _toRentCategory == 'residential';
+          final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
+          final bool bedsOk = !isResidential || _bedrooms == 0 || r.bedrooms >= _bedrooms;
+          final bool bathsOk = !isResidential || _bathrooms == 0 || r.bathrooms >= _bathrooms;
+          final bool instantOk = !_instantBooking || r.instantBooking;
+          final bool verifiedOk = !_verifiedOnly || r.isVerified;
+          final bool imagesOk = !_imagesOnly || (r.imageUrl.trim().isNotEmpty);
+          final bool builtMinOk = _builtUpMinSqFt == 0 || r.builtUpArea >= _builtUpMinSqFt;
+          final bool builtMaxOk = (_builtUpMaxSqFt == 0 || _builtUpMaxSqFt == 4000)
+              ? true
+              : r.builtUpArea <= _builtUpMaxSqFt;
+          final bool furnishOk = _furnishType == 'any' || r.furnishType == _furnishType;
+          final bool tenantOk = !isResidential || _preferredTenant == 'any' || r.preferredTenant == _preferredTenant;
+          final bool amenityOk = _amenities.isEmpty || _amenities.every((a) => r.amenities.contains(a));
+          return priceOk && bedsOk && bathsOk && instantOk && verifiedOk && imagesOk && builtMinOk && builtMaxOk && furnishOk && tenantOk && amenityOk;
+        }).toList();
+      } else {
+        // Apply vehicle-specific filters
+        results = results.where((r) {
+          final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
+          final bool instantOk = !_instantBooking || r.instantBooking;
+          final bool verifiedOk = !_verifiedOnly || r.isVerified;
+          return priceOk && instantOk && verifiedOk;
+        }).toList();
+      }
+      // Apply radius filter (if any)
+      if (_radiusKm > 0) {
+        results = results.where((r) {
+          final d = _distanceKm(_centerLat, _centerLng, r.latitude, r.longitude);
+          return d <= _radiusKm;
+        }).toList();
+      }
+      // Apply sorting
+      switch (_sortOption) {
+        case 'price_asc':
+          results.sort((a, b) => a.price.compareTo(b.price));
+          break;
+        case 'price_desc':
+          results.sort((a, b) => b.price.compareTo(a.price));
+          break;
+        case 'rating_desc':
+          results.sort((a, b) => b.rating.compareTo(a.rating));
+          break;
+        case 'distance_asc':
+          results.sort((a, b) {
+            final da = _distanceKm(_centerLat, _centerLng, a.latitude, a.longitude);
+            final db = _distanceKm(_centerLat, _centerLng, b.latitude, b.longitude);
+            return da.compareTo(db);
+          });
+          break;
+        case 'relevance':
+        default:
+          // keep current ordering
+          break;
+      }
+      _searchResults = results;
+      _isSearching = false;
+    });
+
+    // Saved search notifications removed
   }
 
   // Distance helpers (Haversine)
@@ -2604,7 +2672,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                   final double estimatedDetailsHeightLocal = tileWidthLocal > 280 ? detailsHeightRegular : detailsHeightCompact;
                   const double imageAspectLocal = 3.3; // slightly taller image section
                   final double textScale = MediaQuery.textScalerOf(context).scale(16.0) / 16.0;
-                  final double fudge = 3.0 + (textScale > 1.0 ? (textScale - 1.0) * 18.0 : 0.0);
+                  // Slightly increase fudge to give cards a bit more vertical space
+                  final double fudge = 9.0 + (textScale > 1.0 ? (textScale - 1.0) * 18.0 : 0.0);
                   double computedChildAspectRatioLocal = tileWidthLocal / (tileWidthLocal / imageAspectLocal + estimatedDetailsHeightLocal + fudge);
                   if (crossAxisCountLocal == 1) {
                     computedChildAspectRatioLocal = computedChildAspectRatioLocal.clamp(1.28, 1.38).toDouble();

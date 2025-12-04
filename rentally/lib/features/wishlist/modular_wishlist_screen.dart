@@ -815,7 +815,7 @@ class _ModularWishlistScreenState
       } else {
         infoBase = 74.0;
       }
-      const contentAllowance = 20.0;
+      const contentAllowance = 26.0; // slightly more room for text and badges
       const borderExtra = 8.0;
       final textScale = MediaQuery.textScalerOf(context).scale(16.0) / 16.0;
       final textScalePad = textScale > 1.0 ? (textScale - 1.0) * 16.0 : 0.0;

@@ -76,301 +76,98 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
   void _showFeedbackDialog() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _FeedbackSheet(theme: theme, isDark: isDark),
-    );
-  }
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  void _showDataExportSheet() {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        bool preparing = false;
-        bool ready = false;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 16,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      barrierDismissible: true,
+      barrierLabel: 'Send Feedback',
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 420),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        final scaleAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        return FadeTransition(
+          opacity: curvedAnimation,
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.96,
+              end: 1.0,
+            ).animate(scaleAnimation),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        final contentAnimation = CurvedAnimation(
+          parent: animation,
+          curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
+        );
+
+        return Align(
+          alignment: Alignment.center,
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.8,
+                  maxWidth: 480,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.download_outlined),
-                      SizedBox(width: 8),
-                      Text('Export My Data', style: TextStyle(fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (!preparing && !ready) ...[
-                    const Text('Prepare a copy of your account data for download.'),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          setModalState(() => preparing = true);
-                          Future.delayed(const Duration(milliseconds: 1500), () {
-                            if (!context.mounted) return;
-                            setModalState(() {
-                              preparing = false;
-                              ready = true;
-                            });
-                          });
-                        },
-                        icon: const Icon(Icons.settings_backup_restore_outlined),
-                        label: const Text('Prepare export'),
-                      ),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF141414) : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 32,
+                      offset: const Offset(0, 16),
                     ),
-                  ] else if (preparing) ...[
-                    const SizedBox(height: 8),
-                    const Row(
-                      children: [
-                        SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                        SizedBox(width: 12),
-                        Text('Preparing your data...'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ] else if (ready) ...[
-                    const Text('Your export is ready.'),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            if (!context.mounted) return;
-                            SnackBarUtils.showSuccess(context, 'We\'ll email your data shortly.');
-                          },
-                          icon: const Icon(Icons.email_outlined),
-                          label: const Text('Email me a copy'),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            if (!context.mounted) return;
-                            SnackBarUtils.showSuccess(context, 'Download started (mock).');
-                          },
-                          icon: const Icon(Icons.download),
-                          label: const Text('Download'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                   ],
-                ],
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.04),
+                      end: Offset.zero,
+                    ).animate(contentAnimation),
+                    child: _FeedbackSheet(theme: theme, isDark: isDark),
+                  ),
+                ),
               ),
             ),
-            );
-          },
+          ),
         );
       },
     );
   }
-
-  void _showAboutAppDialog() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header with App Icon & Name
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.primary.withValues(alpha: 0.7),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          Icons.home_work,
-                          size: 48,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Rentally',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Version 1.0.0 (Build 1)',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                // Content
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Description
-                      Text(
-                        'A modern rental platform for properties and vehicles.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? Colors.white70 : Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // What's New
-                      _buildSectionTitle('What\'s New', Icons.new_releases, theme),
-                      const SizedBox(height: 12),
-                      _buildChangelogItem('✨', 'Modern UI with glass-morphism design', isDark),
-                      _buildChangelogItem('🚀', 'Enhanced booking experience', isDark),
-                      _buildChangelogItem('💳', 'Improved payment flow', isDark),
-                      _buildChangelogItem('🔔', 'Smart notifications system', isDark),
-                      _buildChangelogItem('🌙', 'Better dark mode support', isDark),
-                      const SizedBox(height: 20),
-                      
-                      // License & Copyright
-                      _buildSectionTitle('Legal', Icons.gavel, theme),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[300]!,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '© 2025 Rentally. All rights reserved.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'This app uses open source libraries and follows industry best practices for security and privacy.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark ? Colors.white60 : Colors.grey[600],
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Close Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text('Close'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
   
-  Widget _buildSectionTitle(String title, IconData icon, ThemeData theme) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildChangelogItem(String emoji, String text, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.white70 : Colors.grey[700],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _loadUserSettings() async {
     setState(() {
       _isLoading = true;
@@ -1361,13 +1158,13 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
     if (!_isSearching || showAny(['Referral & Earn', 'Wallet & Rewards', 'Payout Methods', 'Subscription Plans'])) {
       sections..add(_buildMonetizationSection(theme))..add(const SizedBox(height: 16));
     }
-    if (!_isSearching || showAny(['Notifications', 'Email Notifications', 'Push Notifications', 'SMS Notifications'])) {
+    if (!_isSearching || showAny(['Notifications', 'Email Notifications'])) {
       sections..add(_buildNotificationsSection(theme))..add(const SizedBox(height: 16));
     }
     if (!_isSearching || showAny(['Rent Reminders', 'Manage Rent Reminders', 'Exact Alarm Permission'])) {
       sections..add(_buildRentRemindersSection(theme))..add(const SizedBox(height: 16));
     }
-    if (!_isSearching || showAny(['Location Services', 'Analytics', 'Crash Reporting', 'Download My Data'])) {
+    if (!_isSearching || showAny(['Location Services', 'Analytics'])) {
       sections..add(_buildPrivacySection(theme))..add(const SizedBox(height: 16));
     }
     if (!_isSearching || showAny(['Change Password', 'Biometric Authentication', 'Two-Factor Authentication', 'Auto Logout'])) {
@@ -1554,22 +1351,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.teal.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.phone_android, color: Colors.teal),
-          ),
-          title: const Text('Push Notifications'),
-          subtitle: const Text('Receive push notifications'),
-          value: _userSettings?.pushNotifications ?? true,
-          onChanged: allOn ? (value) => _updateSetting('pushNotifications', value) : null,
-        ),
-        const Divider(height: 1),
-        SwitchListTile(
-          secondary: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
               color: Colors.blue.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -1579,22 +1360,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           subtitle: const Text('Receive email updates'),
           value: _userSettings?.emailNotifications ?? true,
           onChanged: allOn ? (value) => _updateSetting('emailNotifications', value) : null,
-        ),
-        const Divider(height: 1),
-        SwitchListTile(
-          secondary: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.purple.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.sms, color: Colors.purple),
-          ),
-          title: const Text('SMS Notifications'),
-          subtitle: const Text('Receive SMS updates'),
-          value: _userSettings?.smsNotifications ?? false,
-          onChanged: allOn ? (value) => _updateSetting('smsNotifications', value) : null,
         ),
       ],
     );
@@ -1636,38 +1401,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           subtitle: const Text('Help improve the app'),
           value: _userSettings?.analytics ?? true,
           onChanged: (value) => _updateSetting('analytics', value),
-        ),
-        const Divider(height: 1),
-        SwitchListTile(
-          secondary: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.bug_report, color: Colors.red),
-          ),
-          title: const Text('Crash Reporting'),
-          subtitle: const Text('Send crash reports'),
-          value: _userSettings?.crashReporting ?? true,
-          onChanged: (value) => _updateSetting('crashReporting', value),
-        ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.blueGrey.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.download, color: Colors.blueGrey),
-          ),
-          title: const Text('Download My Data'),
-          subtitle: const Text('Export your personal data'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: _showDataExportSheet,
         ),
       ],
     );
@@ -1823,7 +1556,6 @@ class _ModularSettingsScreenState extends ConsumerState<ModularSettingsScreen> {
           ),
           title: const Text('App Version'),
           subtitle: const Text('1.0.0 (Build 1)'),
-          onTap: _showAboutAppDialog,
         ),
         const Divider(height: 1),
         ListTile(
@@ -2740,338 +2472,317 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
     final media = MediaQuery.of(context);
     final isPhone = media.size.width < 600;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: widget.isDark ? widget.theme.colorScheme.surface : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 8,
-            bottom: media.viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        widget.theme.colorScheme.primary,
+                        widget.theme.colorScheme.primary.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.theme.colorScheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.feedback_rounded, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Send Feedback',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Help us improve your experience',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: widget.isDark ? Colors.white70 : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: 'Close',
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            // Rating
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: widget.isDark 
+                    ? Colors.white.withValues(alpha: 0.05) 
+                    : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.isDark 
+                      ? Colors.white.withValues(alpha: 0.1) 
+                      : Colors.grey.shade200,
                 ),
               ),
-              
-              // Header
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          widget.theme.colorScheme.primary,
-                          widget.theme.colorScheme.primary.withValues(alpha: 0.7),
-                        ],
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        size: 20,
+                        color: widget.theme.colorScheme.primary,
                       ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: widget.theme.colorScheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Rate your experience',
+                        style: widget.theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-                    child: const Icon(Icons.feedback_rounded, color: Colors.white, size: 26),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Send Feedback',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      return InkWell(
+                        onTap: () => setState(() => _rating = starIndex),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            _rating >= starIndex
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            size: isPhone ? 32 : 36,
+                            color: _rating >= starIndex
+                                ? Colors.amber.shade600
+                                : Colors.grey.shade400,
                           ),
                         ),
-                        Text(
-                          'Help us improve your experience',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: widget.isDark ? Colors.white70 : Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    tooltip: 'Close',
+                      );
+                    }),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              
-              // Rating
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
+            ),
+            const SizedBox(height: 16),
+            
+            // Category selection
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: widget.isDark 
+                    ? Colors.white.withValues(alpha: 0.05) 
+                    : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
                   color: widget.isDark 
-                      ? Colors.white.withValues(alpha: 0.05) 
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: widget.isDark 
-                        ? Colors.white.withValues(alpha: 0.1) 
-                        : Colors.grey.shade200,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 20,
-                          color: widget.theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Rate your experience',
-                          style: widget.theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(5, (index) {
-                        final starIndex = index + 1;
-                        return InkWell(
-                          onTap: () => setState(() => _rating = starIndex),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Icon(
-                              _rating >= starIndex
-                                  ? Icons.star_rounded
-                                  : Icons.star_outline_rounded,
-                              size: isPhone ? 32 : 36,
-                              color: _rating >= starIndex
-                                  ? Colors.amber.shade600
-                                  : Colors.grey.shade400,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
+                      ? Colors.white.withValues(alpha: 0.1) 
+                      : Colors.grey.shade200,
                 ),
               ),
-              const SizedBox(height: 16),
-              
-              // Category selection
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: widget.isDark 
-                      ? Colors.white.withValues(alpha: 0.05) 
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: widget.isDark 
-                        ? Colors.white.withValues(alpha: 0.1) 
-                        : Colors.grey.shade200,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.category_rounded,
-                          size: 20,
-                          color: widget.theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Category',
-                          style: widget.theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: ['General', 'Bug', 'Feature', 'Other']
-                          .map((category) => ChoiceChip(
-                                label: Text(category),
-                                selected: _selectedCategory == category,
-                                showCheckmark: false,
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    setState(() => _selectedCategory = category);
-                                  }
-                                },
-                                selectedColor: widget.theme.colorScheme.primary.withValues(alpha: 0.2),
-                                labelStyle: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: _selectedCategory == category 
-                                      ? FontWeight.bold 
-                                      : FontWeight.w500,
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                              ))
-                          .toList(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Feedback text field
-              TextField(
-                controller: _feedbackController,
-                maxLines: 5,
-                maxLength: 500,
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Your feedback',
-                  hintText: 'Tell us what you think...',
-                  hintStyle: TextStyle(
-                    color: widget.isDark 
-                        ? Colors.white.withValues(alpha: 0.4) 
-                        : Colors.grey[400],
-                  ),
-                  filled: true,
-                  fillColor: widget.isDark 
-                      ? Colors.white.withValues(alpha: 0.05) 
-                      : Colors.grey[50],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: widget.isDark 
-                          ? Colors.white.withValues(alpha: 0.1) 
-                          : Colors.grey[300]!,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: widget.isDark 
-                          ? Colors.white.withValues(alpha: 0.1) 
-                          : Colors.grey[300]!,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: widget.theme.colorScheme.primary,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // Action buttons
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.category_rounded,
+                        size: 20,
+                        color: widget.theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Category',
+                        style: widget.theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: ['General', 'Bug', 'Feature', 'Other']
+                        .map((category) => ChoiceChip(
+                              label: Text(category),
+                              selected: _selectedCategory == category,
+                              showCheckmark: false,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() => _selectedCategory = category);
+                                }
+                              },
+                              selectedColor: widget.theme.colorScheme.primary.withValues(alpha: 0.2),
+                              labelStyle: TextStyle(
+                                fontSize: 12,
+                                fontWeight: _selectedCategory == category 
+                                    ? FontWeight.bold 
+                                    : FontWeight.w500,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                            ))
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Feedback text field
+            TextField(
+              controller: _feedbackController,
+              maxLines: 5,
+              maxLength: 500,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                labelText: 'Your feedback',
+                hintText: 'Tell us what you think...',
+                hintStyle: TextStyle(
+                  color: widget.isDark
+                      ? Colors.white.withValues(alpha: 0.4)
+                      : Colors.grey[400],
+                ),
+                filled: true,
+                fillColor: widget.isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey[50],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: widget.isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.grey[300]!,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: widget.isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.grey[300]!,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: widget.theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        if (_feedbackController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Row(
-                                children: [
-                                  Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Please enter your feedback'),
-                                ],
-                              ),
-                              backgroundColor: Colors.orange,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        
-                        Navigator.of(context).pop();
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      if (_feedbackController.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Row(
                               children: [
-                                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
                                 SizedBox(width: 8),
-                                Text('Thank you for your feedback!'),
+                                Text('Please enter your feedback'),
                               ],
                             ),
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.orange,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         );
-                      },
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                        return;
+                      }
+
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text('Thank you for your feedback!'),
+                            ],
+                          ),
+                          backgroundColor: Colors.green,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.send_rounded, size: 20),
-                      label: const Text(
-                        'Submit Feedback',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
+                    icon: const Icon(Icons.send_rounded, size: 20),
+                    label: const Text(
+                      'Submit Feedback',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

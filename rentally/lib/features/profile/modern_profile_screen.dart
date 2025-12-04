@@ -28,6 +28,16 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
 
   bool _busy = false;
   bool _isAvatarCameraHovered = false;
+  bool _isEditingProfile = false;
+
+  String? _originalName;
+  String? _originalEmail;
+  String? _originalPhone;
+  String? _originalBio;
+  XFile? _originalAvatarImage;
+  XFile? _originalIdImage;
+
+  XFile? _editingAvatarImage;
 
   // Form controllers
   final _nameCtrl = TextEditingController();
@@ -95,6 +105,32 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     } catch (_) {}
   }
 
+  void _snapshotProfileForEdit() {
+    setState(() {
+      _originalName = _nameCtrl.text;
+      _originalEmail = _emailCtrl.text;
+      _originalPhone = _phoneCtrl.text;
+      _originalBio = _bioCtrl.text;
+      _originalAvatarImage = _avatarImage;
+      _originalIdImage = _idImage;
+      _editingAvatarImage = _avatarImage;
+      _isEditingProfile = true;
+    });
+  }
+
+  void _discardEditChanges() {
+    setState(() {
+      if (_originalName != null) _nameCtrl.text = _originalName!;
+      if (_originalEmail != null) _emailCtrl.text = _originalEmail!;
+      if (_originalPhone != null) _phoneCtrl.text = _originalPhone!;
+      if (_originalBio != null) _bioCtrl.text = _originalBio!;
+      _avatarImage = _originalAvatarImage;
+      _idImage = _originalIdImage;
+      _editingAvatarImage = _originalAvatarImage;
+      _isEditingProfile = false;
+    });
+  }
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -125,9 +161,9 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     ];
   }
 
-  Future<void> _pickAvatar() async {
+  Future<XFile?> _pickAvatar() async {
     final img = await _picker.pickImage(source: ImageSource.gallery);
-    if (img != null) setState(() => _avatarImage = img);
+    return img;
   }
 
   Future<void> _pickCover() async {
@@ -646,12 +682,15 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
 
   SliverAppBar _buildHeader(ThemeData theme, bool isDark) {
     final cover = _coverImage;
-    final avatar = _avatarImage;
+    final avatar = _isEditingProfile ? _originalAvatarImage : _avatarImage;
     final isPhone = MediaQuery.of(context).size.width < 600;
     final selectedCountry = ref.watch(countryProvider);
     final countryFlag = selectedCountry != null
         ? CountryService.getFlagEmojiForCountry(selectedCountry)
         : null;
+
+    final displayName = _isEditingProfile && _originalName != null ? _originalName! : _nameCtrl.text;
+    final displayEmail = _isEditingProfile && _originalEmail != null ? _originalEmail! : _emailCtrl.text;
 
     return SliverAppBar(
       expandedHeight: isPhone ? 200 : 240,
@@ -797,21 +836,32 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                         child: CircleAvatar(
                           radius: isPhone ? 36 : 42,
                           backgroundColor: Colors.white,
-                          child: CircleAvatar(
-                            radius: isPhone ? 34 : 40,
-                            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-                            backgroundImage: avatar != null
-                                ? (kIsWeb
-                                    ? NetworkImage(avatar.path)
-                                    : FileImage(File(avatar.path)) as ImageProvider)
-                                : null,
-                            child: avatar == null
-                                ? Icon(
-                                    Icons.person_rounded,
-                                    size: isPhone ? 32 : 38,
-                                    color: theme.colorScheme.primary,
-                                  )
-                                : null,
+                          child: Container(
+                            width: (isPhone ? 34 : 40) * 2,
+                            height: (isPhone ? 34 : 40) * 2,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            ),
+                            child: ClipOval(
+                              child: avatar != null
+                                  ? (kIsWeb
+                                      ? Image.network(
+                                          avatar.path,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.file(
+                                          File(avatar.path),
+                                          fit: BoxFit.cover,
+                                        ))
+                                  : Center(
+                                      child: Icon(
+                                        Icons.person_rounded,
+                                        size: isPhone ? 32 : 38,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                            ),
                           ),
                         ),
                       ),
@@ -828,7 +878,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                           children: [
                             Flexible(
                               child: Text(
-                                _nameCtrl.text,
+                                displayName,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: isPhone ? 18 : 22,
@@ -853,7 +903,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _emailCtrl.text,
+                          displayEmail,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.95),
                             fontSize: isPhone ? 12 : 13,
@@ -1016,6 +1066,10 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
 
   Widget _buildAboutCard(ThemeData theme, bool isDark) {
     final isPhone = MediaQuery.of(context).size.width < 600;
+    final displayName = _isEditingProfile && _originalName != null ? _originalName! : _nameCtrl.text;
+    final displayEmail = _isEditingProfile && _originalEmail != null ? _originalEmail! : _emailCtrl.text;
+    final displayPhone = _isEditingProfile && _originalPhone != null ? _originalPhone! : _phoneCtrl.text;
+    final displayBio = _isEditingProfile && _originalBio != null ? _originalBio! : _bioCtrl.text;
     return Container(
       padding: EdgeInsets.all(isPhone ? 14 : 18),
       decoration: BoxDecoration(
@@ -1030,15 +1084,15 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _infoRow(Icons.person_outline_rounded, _nameCtrl.text),
+          _infoRow(Icons.person_outline_rounded, displayName),
           const SizedBox(height: 12),
-          _infoRow(Icons.email_outlined, _emailCtrl.text),
+          _infoRow(Icons.email_outlined, displayEmail),
           const SizedBox(height: 12),
-          _infoRow(Icons.phone_outlined, _phoneCtrl.text),
+          _infoRow(Icons.phone_outlined, displayPhone),
           const SizedBox(height: 12),
           _buildCountryRow(theme, isDark),
           const SizedBox(height: 12),
-          _infoRow(Icons.info_outline_rounded, _bioCtrl.text, maxLines: 3),
+          _infoRow(Icons.info_outline_rounded, displayBio, maxLines: 3),
         ],
       ),
     );
@@ -1206,6 +1260,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    _snapshotProfileForEdit();
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -1246,73 +1302,87 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
           curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
         );
 
-        return Align(
-          alignment: Alignment.center,
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.only(
-              bottom: viewInsets.bottom,
-              left: 16,
-              right: 16,
-              top: 16,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: screenHeight * 0.85,
-                  maxWidth: 480,
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            Future<void> handleAvatarTap() async {
+              final img = await _pickAvatar();
+              if (img != null) {
+                setState(() {
+                  _editingAvatarImage = img;
+                });
+                setDialogState(() {});
+              }
+            }
+
+            return Align(
+              alignment: Alignment.center,
+              child: AnimatedPadding(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                padding: EdgeInsets.only(
+                  bottom: viewInsets.bottom,
+                  left: 16,
+                  right: 16,
+                  top: 16,
                 ),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF141414) : Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 32,
-                      offset: const Offset(0, 16),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: screenHeight * 0.85,
+                      maxWidth: 480,
                     ),
-                  ],
-                  border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
-                    width: 1,
-                  ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0, 0.04),
-                      end: Offset.zero,
-                    ).animate(contentAnimation),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildEnterpriseHeader(theme, isDark),
-                        Flexible(
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 32),
-                                _buildEnterpriseAvatar(theme, isDark),
-                                const SizedBox(height: 32),
-                                _buildEnterpriseFields(theme, isDark),
-                                const SizedBox(height: 24),
-                              ],
-                            ),
-                          ),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF141414) : Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 32,
+                          offset: const Offset(0, 16),
                         ),
-                        _buildEnterpriseFooter(theme, isDark),
                       ],
+                      border: Border.all(
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                        width: 1,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.04),
+                          end: Offset.zero,
+                        ).animate(contentAnimation),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildEnterpriseHeader(theme, isDark),
+                            Flexible(
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 32),
+                                    _buildEnterpriseAvatar(theme, isDark, handleAvatarTap),
+                                    const SizedBox(height: 32),
+                                    _buildEnterpriseFields(theme, isDark),
+                                    const SizedBox(height: 24),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            _buildEnterpriseFooter(theme, isDark),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -1341,7 +1411,10 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
           ),
           const Spacer(),
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _discardEditChanges();
+              Navigator.pop(context);
+            },
             style: IconButton.styleFrom(
               padding: const EdgeInsets.all(8),
               minimumSize: Size.zero,
@@ -1358,8 +1431,12 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     );
   }
 
-  Widget _buildEnterpriseAvatar(ThemeData theme, bool isDark) {
-    final avatar = _avatarImage;
+  Widget _buildEnterpriseAvatar(
+    ThemeData theme,
+    bool isDark,
+    VoidCallback onAvatarTap,
+  ) {
+    final avatar = _editingAvatarImage ?? _avatarImage;
     return Center(
       child: Stack(
         children: [
@@ -1393,7 +1470,9 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 radius: 48,
                 backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
                 backgroundImage: avatar != null
-                    ? (kIsWeb ? NetworkImage(avatar.path) : FileImage(File(avatar.path)) as ImageProvider)
+                    ? (kIsWeb
+                        ? NetworkImage(avatar.path)
+                        : FileImage(File(avatar.path)) as ImageProvider)
                     : null,
                 child: avatar == null
                     ? Icon(
@@ -1426,7 +1505,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 onTapCancel: () {
                   setState(() => _isAvatarCameraHovered = false);
                 },
-                onTap: _pickAvatar,
+                onTap: onAvatarTap,
                 child: AnimatedScale(
                   scale: _isAvatarCameraHovered ? 1.25 : 1.0,
                   duration: const Duration(milliseconds: 140),
@@ -1523,7 +1602,10 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              _discardEditChanges();
+              Navigator.pop(context);
+            },
             style: TextButton.styleFrom(
               foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -1552,9 +1634,16 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
               onPressed: _busy
                   ? null
                   : () async {
+                      // Commit editing changes
+                      setState(() {
+                        if (_editingAvatarImage != null) {
+                          _avatarImage = _editingAvatarImage;
+                        }
+                        _isEditingProfile = false;
+                      });
                       Navigator.pop(context);
                       await _saveProfile();
-                    },
+                  },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
