@@ -3095,7 +3095,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             onChanged: (value) => setState(() => _petsAllowed = value),
           ),
           SwitchListTile(
-            title: const Text('Require Seeker ID at booking'),
+            title: const Text('Require government ID to book'),
             subtitle: const Text('Seeker must upload a government ID photo during booking'),
             value: _requireSeekerId,
             onChanged: (value) {

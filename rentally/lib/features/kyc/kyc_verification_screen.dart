@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import '../../core/widgets/tab_back_handler.dart';
 import '../../app/app_state.dart';
@@ -24,6 +25,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   File? _frontIdImage;
   File? _backIdImage;
   File? _selfieImage;
+  File? _profileIdImage;
   String _selectedDocumentType = 'passport';
   
   // Personal information
@@ -47,6 +49,13 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   Future<void> _loadProfile() async {
     try {
       final profile = await KycService.instance.getProfile();
+
+      String? profileIdPath;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        profileIdPath = prefs.getString('user_id_document_path');
+      } catch (_) {}
+
       if (!mounted) return;
       setState(() {
         _selectedDocumentType = profile.documentType;
@@ -60,6 +69,11 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
         if (profile.frontIdPath != null) _frontIdImage = File(profile.frontIdPath!);
         if (profile.backIdPath != null) _backIdImage = File(profile.backIdPath!);
         if (profile.selfiePath != null) _selfieImage = File(profile.selfiePath!);
+
+        // Load ID document previously uploaded in the profile screen (if any)
+        if (profileIdPath != null) {
+          _profileIdImage = File(profileIdPath);
+        }
       });
     } catch (_) {}
   }
@@ -598,6 +612,47 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                   Text('• Good lighting, no glare', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                   Text('• Entire document in frame', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                   Text('• Text and photo clearly visible', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                  if (_profileIdImage != null && _frontIdImage == null) ...[
+                    const SizedBox(height: 6),
+                    Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.3)),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.badge_outlined, size: 14, color: theme.colorScheme.primary),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'You already uploaded an ID in your profile. You can reuse it here for faster KYC.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () async {
+                            if (_profileIdImage == null) return;
+                            setState(() {
+                              _frontIdImage = _profileIdImage;
+                            });
+                            try {
+                              await KycService.instance.saveDocumentPaths(frontIdPath: _profileIdImage!.path);
+                            } catch (_) {}
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Use profile ID',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

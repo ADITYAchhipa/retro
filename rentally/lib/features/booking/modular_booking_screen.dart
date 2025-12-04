@@ -21,6 +21,7 @@ import 'package:rentally/widgets/unified_card.dart';
 import '../../services/image_service.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/kyc/kyc_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Industrial-Grade Modular Booking Screen
 /// 
@@ -232,7 +233,19 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
     if (_seekerIdImageUrl != null && _seekerIdImageUrl!.isNotEmpty) return;
     try {
       final profile = await KycService.instance.getProfile();
-      final path = profile.frontIdPath;
+      String? path = profile.frontIdPath;
+
+      // Fallback to ID uploaded in Profile → Edit Profile (stored locally)
+      if (path == null || path.isEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final profileIdPath = prefs.getString('user_id_document_path');
+          if (profileIdPath != null && profileIdPath.isNotEmpty) {
+            path = profileIdPath;
+          }
+        } catch (_) {}
+      }
+
       if (path == null || path.isEmpty) return;
       setState(() => _uploadingSeekerId = true);
       final imageService = ref.read(imageServiceProvider);
@@ -2979,12 +2992,28 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
     try {
       setState(() => _uploadingSeekerId = true);
       final profile = await KycService.instance.getProfile();
-      final path = profile.frontIdPath;
+      String? path = profile.frontIdPath;
+
+      // If KYC has no saved front ID yet, fall back to the ID uploaded in Profile → Edit Profile
+      if (path == null || path.isEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final profileIdPath = prefs.getString('user_id_document_path');
+          if (profileIdPath != null && profileIdPath.isNotEmpty) {
+            path = profileIdPath;
+          }
+        } catch (_) {}
+      }
+
       if (path == null || path.isEmpty) {
         if (mounted) {
           setState(() => _uploadingSeekerId = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No saved ID found. Complete KYC to store your ID.')),
+            const SnackBar(
+              content: Text(
+                'No uploaded ID found.\nPlease open your Profile → Edit Profile → ID Verification section to upload your ID first, then return here and tap "Use saved ID".',
+              ),
+            ),
           );
         }
         return;
@@ -3003,7 +3032,7 @@ class _ModularBookingScreenState extends ConsumerState<ModularBookingScreen>
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved ID attached successfully')),
+          const SnackBar(content: Text('Your uploaded ID has been attached successfully.')),
         );
       }
     } catch (e) {

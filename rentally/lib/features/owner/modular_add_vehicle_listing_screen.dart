@@ -895,7 +895,7 @@ class _ModularAddVehicleListingScreenState
           _buildAvailabilitySettings(),
           const SizedBox(height: 16),
           SwitchListTile(
-            title: const Text('Require Seeker ID at booking'),
+            title: const Text('Require government ID to book'),
             subtitle: const Text('Seeker must upload a government ID photo during booking'),
             value: _requireSeekerId,
             onChanged: (v) => setState(() => _requireSeekerId = v),
