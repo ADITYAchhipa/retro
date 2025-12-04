@@ -221,6 +221,49 @@ class WishlistService {
     }
   }
 
+  /// Fetch sorted favourites with full details from backend
+  /// Returns list of items with complete property/vehicle information
+  Future<List<Map<String, dynamic>>> getSortedFavourites({
+    String type = 'all', // all, properties, vehicles
+    String sort = 'date', // date, priceAsc, priceDesc, rating
+  }) async {
+    try {
+      final token = await TokenStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        debugPrint('❌ [Wishlist] No token available for sorted fetch');
+        return [];
+      }
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/favourite/sorted?type=$type&sort=$sort');
+      debugPrint('🔄 [Wishlist] Fetching sorted favourites: type=$type, sort=$sort');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true && body['data'] != null) {
+          final data = body['data'] as Map<String, dynamic>;
+          final results = (data['results'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          
+          debugPrint('✅ [Wishlist] Loaded ${results.length} sorted favourites');
+          return results;
+        }
+      }
+
+      debugPrint('⚠️ [Wishlist] Backend returned non-success: ${response.statusCode}');
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Wishlist] Error fetching sorted favourites: $e');
+      return [];
+    }
+  }
+
   /// Check if a listing is a vehicle
   Future<bool> isVehicle(String listingId) async {
     final typeMap = await getTypeMapping();

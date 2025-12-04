@@ -56,10 +56,9 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
     WidgetsBinding.instance.addPostFrameCallback((_) {
       pv.Provider.of<PropertyProvider>(context, listen: false)
           .loadFeaturedProperties(category: widget.selectedCategory);
-      // Ensure vehicles are loaded too so the vehicle tab has data
-      final vp = pv.Provider.of<VehicleProvider>(context, listen: false);
-      vp.loadVehicles();
-      vp.loadFeaturedVehicles();
+      // Load featured vehicles from backend (not all vehicles)
+      pv.Provider.of<VehicleProvider>(context, listen: false)
+          .loadFeaturedVehicles();
       // Ensure any previously running timers from hot-reload are cancelled
       _startAutoScroll();
     });
@@ -212,10 +211,7 @@ class _HomeFeaturedSectionState extends State<HomeFeaturedSection> with TickerPr
                 );
               }
               // If no items after loading, hide entire section
-              var items = vehicleProvider.filteredFeaturedVehicles;
-              if (items.isEmpty && vehicleProvider.featuredVehicles.isNotEmpty) {
-                items = vehicleProvider.featuredVehicles;
-              }
+              final items = vehicleProvider.filteredFeaturedVehicles;
               if (!vehicleProvider.isFeaturedLoading && items.isEmpty) {
                 return const SizedBox.shrink();
               }

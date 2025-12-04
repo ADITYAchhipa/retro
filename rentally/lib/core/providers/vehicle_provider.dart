@@ -11,10 +11,14 @@ class VehicleProvider with ChangeNotifier {
 
   List<VehicleModel> _vehicles = [];
   List<VehicleModel> _featuredVehicles = [];
+  List<VehicleModel> _recommendedVehicles = [];
+  List<VehicleModel> _nearbyVehicles = [];
   List<VehicleModel> _searchResults = [];
 
   bool _isLoading = false;
   bool _isFeaturedLoading = false;
+  bool _isRecommendedLoading = false;
+  bool _isNearbyLoading = false;
   bool _isSearching = false;
   String? _error;
 
@@ -23,36 +27,40 @@ class VehicleProvider with ChangeNotifier {
   // Getters
   List<VehicleModel> get vehicles => _vehicles;
   List<VehicleModel> get featuredVehicles => _featuredVehicles;
+  List<VehicleModel> get recommendedVehicles => _recommendedVehicles;
+  List<VehicleModel> get nearbyVehicles => _nearbyVehicles;
   List<VehicleModel> get searchResults => _searchResults;
   bool get isLoading => _isLoading;
   bool get isFeaturedLoading => _isFeaturedLoading;
+  bool get isRecommendedLoading => _isRecommendedLoading;
+  bool get isNearbyLoading => _isNearbyLoading;
   bool get isSearching => _isSearching;
   String? get error => _error;
   String? get filterCategory => _filterCategory;
 
   List<VehicleModel> get filteredVehicles => _applyCategoryFilter(_vehicles);
-  // If no featured list is present, gracefully fall back to the full vehicle list
   List<VehicleModel> get filteredFeaturedVehicles => _applyCategoryFilter(
         _featuredVehicles.isNotEmpty ? _featuredVehicles : _vehicles,
       );
+  List<VehicleModel> get filteredRecommendedVehicles => _applyCategoryFilter(_recommendedVehicles);
+  List<VehicleModel> get filteredNearbyVehicles => _applyCategoryFilter(_nearbyVehicles);
 
   List<VehicleModel> _applyCategoryFilter(List<VehicleModel> list) {
     final cat = _filterCategory?.trim().toLowerCase();
-    if (cat == null || cat.isEmpty || cat == 'all' || cat == 'cars') return list;
+    if (cat == null || cat.isEmpty || cat == 'all') return list;
+    
+    // Filter by category field (VehicleModel uses category, not vehicleType)
+    // Backend uses vehicleType but frontend model uses category
     return list.where((v) {
-      final c = v.category.toString().trim().toLowerCase();
-      final title = v.title.toLowerCase();
-      if (cat == 'electric') return c == 'electric';
-      if (cat == 'suv') return c == 'suv';
-      if (cat == 'sedan') return c == 'sedan';
-      if (cat == 'luxury') return c == 'luxury' || title.contains('luxury');
-      if (cat == 'hatchback') return title.contains('hatch');
-      if (cat == 'trucks' || cat == 'truck') return title.contains('truck') || c == 'truck';
-      if (cat == 'vans' || cat == 'van') return title.contains('van') || c == 'van';
-      if (cat == 'convertible') return title.contains('convertible') || c == 'convertible';
-      if (cat == 'bikes' || cat == 'bike') return title.contains('bike');
-      if (cat == 'scooters' || cat == 'scooter') return title.contains('scooter');
-      return true;
+      final vehicleCat = v.category.trim().toLowerCase();
+      
+      // Handle plural forms: 'cars' -> 'car', 'bikes' -> 'bike'
+      String normalizedCat = cat;
+      if (cat.endsWith('s')) {
+        normalizedCat = cat.substring(0, cat.length - 1);
+      }
+      
+      return vehicleCat == normalizedCat || vehicleCat == cat;
     }).toList();
   }
 
@@ -80,7 +88,7 @@ class VehicleProvider with ChangeNotifier {
     }
   }
 
-  Future<void> loadFeaturedVehicles() async {
+  Future<void> loadFeaturedVehicles({String? category}) async {
     _isFeaturedLoading = true;
     _error = null;
     notifyListeners();
@@ -91,6 +99,40 @@ class VehicleProvider with ChangeNotifier {
       _error = 'Failed to load featured vehicles: $e';
     } finally {
       _isFeaturedLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadRecommendedVehicles({String? category}) async {
+    _isRecommendedLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final response = await _realApiService.getRecommendedVehicles();
+      _recommendedVehicles = response.map((v) => VehicleModel.fromJson(v)).toList();
+    } catch (e) {
+      _error = 'Failed to load recommended vehicles: $e';
+    } finally {
+      _isRecommendedLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadNearbyVehicles({String? category, double? latitude, double? longitude, double? maxDistance}) async {
+    _isNearbyLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final response = await _realApiService.getNearbyVehicles(
+        latitude: latitude,
+        longitude: longitude,
+        maxDistanceKm: maxDistance ?? 30, // 30km default
+      );
+      _nearbyVehicles = response.map((v) => VehicleModel.fromJson(v)).toList();
+    } catch (e) {
+      _error = 'Failed to load nearby vehicles: $e';
+    } finally {
+      _isNearbyLoading = false;
       notifyListeners();
     }
   }

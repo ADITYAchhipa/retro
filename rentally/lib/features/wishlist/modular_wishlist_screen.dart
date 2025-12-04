@@ -5,6 +5,7 @@ import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../services/wishlist_service.dart';
 import '../../services/listing_service.dart';
+import '../../services/token_storage_service.dart';
 import '../../core/widgets/listing_vm_factory.dart';
 import '../../core/widgets/listing_card.dart';
 import '../../core/widgets/listing_card_list.dart';
@@ -41,18 +42,21 @@ class _ModularWishlistScreenState
   final _scrollController = ScrollController();
   
   final Set<String> _selectedItems = {};
-  String _category = 'all'; // all, apartment, house, villa
+  String _category = 'all'; // all, property, vehicle
   final String _query = '';
+  
+  // Backend-fetched wishlist items
+  List<Map<String, dynamic>> _backendItems = [];
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _scrollController.addListener(_onScroll);
-    // Ensure listings are refreshed once the screen mounts
+    // Load wishlist items from backend (or local if not logged in)
+    _loadWishlistFromBackend();
+    // Also refresh listings for guest users
     Future.microtask(() => ref.read(listingProvider.notifier).refreshListings());
-    // Loading is managed by providers; ensure local flag does not block UI
-    _isLoading = false;
     // Default to list view on phones
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bool isPhoneWidth = MediaQuery.of(context).size.width < 600;
@@ -62,6 +66,82 @@ class _ModularWishlistScreenState
         });
       }
     });
+  }
+
+  Future<void> _loadWishlistFromBackend() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final wishlistService = ref.read(wishlistServiceProvider);
+      final token = await TokenStorageService.getToken();
+      
+      if (token != null && token.isNotEmpty) {
+        // User is logged in - fetch from backend
+        // Map sort values to backend format
+        String backendSort;
+        switch (_sortBy) {
+          case 'price_low':
+            backendSort = 'priceAsc';
+            break;
+          case 'price_high':
+            backendSort = 'priceDesc';
+            break;
+          case 'rating':
+            backendSort = 'rating';
+            break;
+          case 'recent':
+          default:
+            backendSort = 'date';
+        }
+        
+        // Map category to backend type
+        String backendType;
+        if (_category == 'property') {
+          backendType = 'properties';
+        } else if (_category == 'vehicle') {
+          backendType = 'vehicles';
+        } else {
+          backendType = 'all';
+        }
+        
+        final items = await wishlistService.getSortedFavourites(
+          type: backendType,
+          sort: backendSort,
+        );
+        
+        if (mounted) {
+          setState(() {
+            _backendItems = items;
+            _isLoading = false;
+          });
+        }
+      } else {
+        // User not logged in - use local wishlist + cached listings
+        debugPrint('📱 [Wishlist] Using local wishlist (not logged in)');
+        final listingState = ref.read(listingProvider);
+        final wishlistState = ref.read(wishlistProvider);
+        final items = _computeBaseItems(listingState, wishlistState);
+        final sortedItems = _getSortedItems(items);
+        
+        if (mounted) {
+          setState(() {
+            _backendItems = sortedItems;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading wishlist: $e');
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load wishlist';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   ListingViewModel _toViewModel(Map<String, dynamic> item) {
@@ -226,16 +306,13 @@ class _ModularWishlistScreenState
 
   Widget _buildModernHeader(ThemeData theme, bool isDark) {
     final wishlistCount = ref.watch(wishlistProvider).wishlistIds.length;
-    // Compute counts to render filter chips inside the pinned header
-    final listingState = ref.watch(listingProvider);
-    final wishlistState = ref.watch(wishlistProvider);
-    final items = _computeBaseItems(listingState, wishlistState);
-    final int allCount = items.length;
-    final int propertyCount = items
-        .where((i) => (i['type'] ?? '').toString().toLowerCase() != 'vehicle')
+    // Compute counts from backend items for filter chips
+    final int allCount = _backendItems.length;
+    final int propertyCount = _backendItems
+        .where((i) => (i['itemType'] ?? i['type'] ?? '').toString().toLowerCase() != 'vehicle')
         .length;
-    final int vehicleCount = items
-        .where((i) => (i['type'] ?? '').toString().toLowerCase() == 'vehicle')
+    final int vehicleCount = _backendItems
+        .where((i) => (i['itemType'] ?? i['type'] ?? '').toString().toLowerCase() == 'vehicle')
         .length;
     
     return NeoGlass(
@@ -356,7 +433,10 @@ class _ModularWishlistScreenState
     return PopupMenuButton<String>(
       tooltip: 'Sort',
       initialValue: _sortBy,
-      onSelected: (value) => setState(() => _sortBy = value),
+      onSelected: (value) {
+        setState(() => _sortBy = value);
+        _loadWishlistFromBackend(); // Reload with new sort
+      },
       offset: const Offset(0, 40),
       itemBuilder: (context) => const [
         PopupMenuItem(value: 'recent', child: Text('Recently Added')),
@@ -373,23 +453,20 @@ class _ModularWishlistScreenState
   }
 
   Widget _buildContent() {
-    final listingState = ref.watch(listingProvider);
-    final wishlistState = ref.watch(wishlistProvider);
-
     if (_error != null) {
       return _buildErrorState();
     }
 
-    if (listingState.isLoading) {
+    if (_isLoading) {
       return _buildLoadingState();
     }
 
-    final baseItems = _computeBaseItems(listingState, wishlistState);
-    final sortedItems = _getSortedItems(baseItems);
+    // Use backend-fetched items directly
+    final sortedItems = _backendItems;
 
     return RefreshIndicator(
       key: _refreshKey,
-      onRefresh: () => ref.read(listingProvider.notifier).refreshListings(),
+      onRefresh: _loadWishlistFromBackend,
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
@@ -448,7 +525,10 @@ class _ModularWishlistScreenState
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       child: GestureDetector(
-        onTap: () => setState(() => _category = value),
+        onTap: () {
+          setState(() => _category = value);
+          _loadWishlistFromBackend(); // Reload with new category
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,

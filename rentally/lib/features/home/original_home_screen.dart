@@ -79,35 +79,21 @@ class _OriginalHomeScreenState extends State<OriginalHomeScreen>
     Icons.home_work,
   ];
 
-  // Vehicle categories
+  // Vehicle categories - matching backend vehicleType enum: car, bike, van, scooter
   final List<String> _vehicleCategories = const [
     'All',
     'Cars',
-    'SUV',
-    'Sedan',
-    'Hatchback',
     'Bikes',
-    'Scooters',
-    'Trucks',
     'Vans',
-    'Luxury',
-    'Electric',
-    'Convertible',
+    'Scooters',
   ];
 
   final List<IconData> _vehicleCategoryIcons = const [
     Icons.apps,
     Icons.directions_car,
-    Icons.sports_motorsports, // SUV icon substitute
-    Icons.directions_car_filled_outlined,
-    Icons.directions_car_outlined,
-    Icons.pedal_bike,
-    Icons.electric_scooter,
-    Icons.local_shipping,
+    Icons.two_wheeler,
     Icons.airport_shuttle,
-    Icons.diamond_outlined,
-    Icons.electric_car,
-    Icons.time_to_leave, // convertible substitute
+    Icons.electric_scooter,
   ];
 
   // Removed unused _currentCategories and _currentCategoryIcons

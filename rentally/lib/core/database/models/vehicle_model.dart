@@ -59,20 +59,43 @@ class VehicleModel {
       return <String>[];
     }
 
-    final String id = (json['id'] ?? '').toString();
-    final String title = (json['title'] ?? '').toString();
-    final String location = (json['location'] ?? '').toString();
-    // Treat 'price' as hourly for vehicles when explicit hourly fields are absent
-    final double pricePerDay = toDouble(json['pricePerDay'] ?? json['dayPrice']);
-    final double? pricePerHour = (json.containsKey('pricePerHour') || json.containsKey('hourPrice'))
-        ? toDouble(json['pricePerHour'] ?? json['hourPrice'])
-        : (json.containsKey('price') ? toDouble(json['price']) : null);
+    final String id = (json['_id'] ?? json['id'] ?? '').toString();
+    
+    // Backend uses make + model, frontend expects title
+    String title = (json['title'] ?? '').toString();
+    if (title.isEmpty && json['make'] != null && json['model'] != null) {
+      title = '${json['make']} ${json['model']}';
+    }
+    
+    // Backend location can be an object or string
+    String location = '';
+    if (json['location'] is Map) {
+      final loc = json['location'] as Map;
+      location = loc['city']?.toString() ?? loc['address']?.toString() ?? '';
+    } else {
+      location = (json['location'] ?? '').toString();
+    }
+    
+    // Backend uses price.perDay and price.perHour
+    double pricePerDay = 0.0;
+    double? pricePerHour;
+    if (json['price'] is Map) {
+      final priceMap = json['price'] as Map;
+      pricePerDay = toDouble(priceMap['perDay']);
+      pricePerHour = toDouble(priceMap['perHour']);
+    } else {
+      pricePerDay = toDouble(json['pricePerDay'] ?? json['dayPrice']);
+      pricePerHour = (json.containsKey('pricePerHour') || json.containsKey('hourPrice'))
+          ? toDouble(json['pricePerHour'] ?? json['hourPrice'])
+          : (json.containsKey('price') ? toDouble(json['price']) : null);
+    }
+    
     final double? discountPercent = (json.containsKey('discountPercent') || json.containsKey('discount'))
         ? toDouble(json['discountPercent'] ?? json['discount'])
         : null;
 
-    // Images may come as 'image'/'imageUrl' or a list 'images'
-    List<String> images = toStringList(json['images']);
+    // Backend uses 'photos', frontend expects 'images'
+    List<String> images = toStringList(json['images'] ?? json['photos']);
     if (images.isEmpty) {
       final dynamic single = json['image'] ?? json['imageUrl'];
       if (single != null && single.toString().isNotEmpty) {
@@ -80,12 +103,26 @@ class VehicleModel {
       }
     }
 
-    final double rating = toDouble(json['rating']);
-    final int reviewCount = toInt(json['reviewCount'] ?? json['reviews'] ?? 0);
-    final String category = (json['category'] ?? 'Vehicle').toString();
+    // Backend uses rating.avg and rating.count
+    double rating = 0.0;
+    int reviewCount = 0;
+    if (json['rating'] is Map) {
+      final ratingMap = json['rating'] as Map;
+      rating = toDouble(ratingMap['avg'] ?? ratingMap['average']);
+      reviewCount = toInt(ratingMap['count'] ?? 0);
+    } else {
+      rating = toDouble(json['rating']);
+      reviewCount = toInt(json['reviewCount'] ?? json['reviews'] ?? 0);
+    }
+    
+    // Backend uses vehicleType for category (car/bike/van/scooter)
+    final String category = (json['vehicleType'] ?? json['category'] ?? 'Vehicle').toString();
     final int seats = toInt(json['seats'] ?? json['seatCount']);
     final String transmission = (json['transmission'] ?? 'Auto').toString();
-    final String fuel = (json['fuel'] ?? 'Petrol').toString();
+    
+    // Backend uses fuelType, frontend expects fuel
+    final String fuel = (json['fuelType'] ?? json['fuel'] ?? 'Petrol').toString();
+    
     // Handle boolean safely - backend might return null
     final bool isFeatured = json['isFeatured'] == true || json['Featured'] == true;
     double? latitude = (json['latitude'] != null) ? toDouble(json['latitude']) : null;

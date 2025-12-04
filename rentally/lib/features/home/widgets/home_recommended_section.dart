@@ -45,8 +45,9 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
       pv.Provider.of<PropertyProvider>(context, listen: false)
           .loadRecommendedProperties(category: widget.selectedCategory);
       
-      // Vehicles for the vehicles tab
-      pv.Provider.of<VehicleProvider>(context, listen: false).loadFeaturedVehicles();
+      // Load recommended vehicles
+      pv.Provider.of<VehicleProvider>(context, listen: false)
+          .loadRecommendedVehicles(category: widget.selectedCategory);
     });
   }
 
@@ -60,8 +61,8 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
         pv.Provider.of<PropertyProvider>(context, listen: false)
             .loadRecommendedProperties(category: widget.selectedCategory);
       } else {
-        final vp = pv.Provider.of<VehicleProvider>(context, listen: false);
-        vp.setFilterCategory(widget.selectedCategory);
+        pv.Provider.of<VehicleProvider>(context, listen: false)
+            .loadRecommendedVehicles(category: widget.selectedCategory);
       }
     }
   }
@@ -184,7 +185,7 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
       }
     } else {
       final vehicleProvider = pv.Provider.of<VehicleProvider>(context);
-      if (!vehicleProvider.isFeaturedLoading && vehicleProvider.filteredFeaturedVehicles.isEmpty) {
+      if (!vehicleProvider.isRecommendedLoading && vehicleProvider.filteredRecommendedVehicles.isEmpty) {
         return const SizedBox.shrink();
       }
     }
@@ -282,16 +283,12 @@ class _HomeRecommendedSectionState extends State<HomeRecommendedSection> {
                   : pv.Consumer<VehicleProvider>(
                       key: ValueKey('rec_vehicles_${widget.tabController.index}_${widget.selectedCategory}'),
                       builder: (context, vehicleProvider, _) {
-                        // filter by selectedCategory
-                        if (vehicleProvider.filterCategory != widget.selectedCategory) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) => vehicleProvider.setFilterCategory(widget.selectedCategory));
-                        }
-                        if (vehicleProvider.isFeaturedLoading) {
+                        if (vehicleProvider.isRecommendedLoading) {
                           return _buildShimmerList();
                         }
-                        final items = vehicleProvider.filteredFeaturedVehicles;
-                        if (!vehicleProvider.isFeaturedLoading && vehicleProvider.error == null && items.isEmpty) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) => vehicleProvider.loadFeaturedVehicles());
+                        final items = vehicleProvider.filteredRecommendedVehicles;
+                        if (!vehicleProvider.isRecommendedLoading && vehicleProvider.error == null && items.isEmpty) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) => vehicleProvider.loadRecommendedVehicles(category: widget.selectedCategory));
                         }
                         if (items.isEmpty) {
                           return const SizedBox.shrink();

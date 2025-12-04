@@ -362,7 +362,22 @@ class MockApiService {
 
       final uri = Uri.parse('${ApiConstants.baseUrl}/recommended/vehicles').replace(queryParameters: params);
       debugPrint('🎯 Fetching recommended vehicles: $uri');
-      final response = await http.get(uri);
+      
+      // Get JWT token from storage for authentication
+      final token = await TokenStorageService.getToken();
+      debugPrint('🔑 Token available: ${token != null}');
+      
+      // Include Authorization header with token
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      
+      final response = await http.get(uri, headers: headers);
+      
+      debugPrint('📡 Response status: ${response.statusCode}');
       
       if (response.statusCode == 200) {
         final body = json.decode(response.body) as Map<String, dynamic>;
@@ -370,6 +385,8 @@ class MockApiService {
           final list = (body['results'] as List?)?.cast<Map<String, dynamic>>() ?? const <Map<String, dynamic>>[];
           debugPrint('✅ Recommended vehicles fetched: ${list.length}');
           return list;
+        } else {
+          debugPrint('⚠️ Backend returned success=false: ${body['message'] ?? 'No message'}');
         }
       }
       debugPrint('❌ Recommended vehicles request failed: ${response.statusCode}\n${response.body}');
@@ -380,8 +397,57 @@ class MockApiService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getFeaturedVehicles() async {
-    return getVehicles();
+  Future<List<Map<String, dynamic>>> getFeaturedVehicles({
+    String? category,
+    int page = 1,
+    int limit = 10,
+    List<String> excludeIds = const [],
+  }) async {
+    try {
+      // Build URL with pagination and duplicate prevention
+      final params = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      
+      // Add category filter if provided and not 'all'
+      if (category != null && category.isNotEmpty && category.toLowerCase() != 'all') {
+        params['search'] = category; // Backend uses 'search' param for vehicleType filtering
+      }
+      
+      // Add excludeIds for duplicate prevention
+      if (excludeIds.isNotEmpty) {
+        params['excludeIds'] = excludeIds.join(',');
+      }
+      
+      final uri = Uri.parse('${ApiConstants.baseUrl}/featured/vehicles')
+          .replace(queryParameters: params);
+      
+      debugPrint('🔍 Fetching featured vehicles: $uri');
+      
+      final response = await http.get(uri);
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          // Safely handle results - could be null or empty
+          final resultsList = data['results'];
+          if (resultsList != null && resultsList is List) {
+            final results = resultsList.cast<Map<String, dynamic>>();
+            debugPrint('✅ Fetched ${results.length} featured vehicles (page $page)');
+            return results;
+          } else {
+            debugPrint('⚠️ No results field or empty results');
+            return [];
+          }
+        }
+      }
+      debugPrint('❌ Failed to fetch featured vehicles: ${response.statusCode}');
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error fetching featured vehicles: $e');
+      return [];
+    }
   }
 
   Future<Map<String, dynamic>> searchVehicles(Map<String, dynamic> filters) async {

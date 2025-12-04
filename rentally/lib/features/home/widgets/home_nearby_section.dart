@@ -83,7 +83,7 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
       final vehsJson = await _api.getNearbyVehicles(
         latitude: lat,
         longitude: lng,
-        maxDistanceKm: 10,
+        maxDistanceKm: 30, // 30km for vehicles
         debug: true,
       );
       final props = propsJson.map((e) => PropertyModel.fromJson(e)).toList();
@@ -131,9 +131,16 @@ class _HomeNearbySectionState extends State<HomeNearbySection> {
       return vehicles;
     }
     
-    // Match category string (SUV, Sedan, Electric, etc.)
+    // Normalize category: remove trailing 's' for plural (e.g., 'cars' -> 'car')
+    String normalizedCategory = category;
+    if (category.endsWith('s')) {
+      normalizedCategory = category.substring(0, category.length - 1);
+    }
+    
+    // Match against category OR vehicleType field (backend uses vehicleType)
     return vehicles.where((vehicle) {
-      return vehicle.category.toLowerCase() == category;
+      final vehicleCat = vehicle.category.toLowerCase();
+      return vehicleCat == category || vehicleCat == normalizedCategory;
     }).toList();
   }
 
