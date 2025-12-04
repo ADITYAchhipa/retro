@@ -24,6 +24,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   final ImagePicker _picker = ImagePicker();
   XFile? _avatarImage;
   XFile? _coverImage;
+  XFile? _idImage;
 
   bool _busy = false;
 
@@ -37,6 +38,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   void initState() {
     super.initState();
     _loadFromUser();
+    _loadIdDocument();
     _initCountryAndCurrency();
   }
 
@@ -130,6 +132,39 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   Future<void> _pickCover() async {
     final img = await _picker.pickImage(source: ImageSource.gallery);
     if (img != null) setState(() => _coverImage = img);
+  }
+
+  Future<void> _pickIdDocument() async {
+    final img = await _picker.pickImage(source: ImageSource.gallery);
+    if (img != null) {
+      setState(() => _idImage = img);
+      await _saveIdDocument(img.path);
+    }
+  }
+
+  Future<void> _loadIdDocument() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final idPath = prefs.getString('user_id_document_path');
+      if (idPath != null && File(idPath).existsSync()) {
+        setState(() => _idImage = XFile(idPath));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveIdDocument(String path) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_id_document_path', path);
+    } catch (_) {}
+  }
+
+  Future<void> _deleteIdDocument() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_id_document_path');
+      setState(() => _idImage = null);
+    } catch (_) {}
   }
 
   Future<void> _saveProfile() async {
@@ -1200,203 +1235,110 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   void _openEditSheet() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    showModalBottomSheet(
+
+    showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (context) {
+      barrierDismissible: true,
+      barrierLabel: 'Edit Profile',
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 600),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        // Primary animation with smooth spring-like curve
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: const Cubic(0.05, 0.7, 0.1, 1.0), // Custom spring curve
+          reverseCurve: Curves.easeInCubic,
+        );
+        
+        // Secondary bounce for scale
+        final scaleAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack, // Overshoot effect
+          reverseCurve: Curves.easeInCubic,
+        );
+
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.15), // More dramatic slide
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.85, // Start smaller
+              end: 1.0,
+            ).animate(scaleAnimation),
+            child: FadeTransition(
+              opacity: Tween<double>(
+                begin: 0.0,
+                end: 1.0,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+              )),
+              child: child,
+            ),
+          ),
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) {
         final viewInsets = MediaQuery.of(context).viewInsets;
-        return AnimatedPadding(
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.only(bottom: viewInsets.bottom),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.96, end: 1.0),
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, (1 - value) * 24),
-                child: Opacity(
-                  opacity: value,
-                  child: child ?? const SizedBox.shrink(),
+        final screenHeight = MediaQuery.of(context).size.height;
+
+        return Align(
+          alignment: Alignment.center,
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.85,
+                  maxWidth: 480,
                 ),
-              );
-            },
-            child: NeoGlass(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              blur: isDark ? 22 : 18,
-              backgroundColor: isDark
-                  ? theme.colorScheme.surface.withValues(alpha: 0.96)
-                  : Colors.white.withValues(alpha: 0.94),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.55)
-                      : Colors.black.withValues(alpha: 0.16),
-                  blurRadius: 30,
-                  offset: const Offset(0, -8),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF141414) : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 32,
+                      offset: const Offset(0, 16),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                    width: 1,
+                  ),
                 ),
-              ],
-              child: SafeArea(
-                top: false,
-                bottom: false,
-                child: SingleChildScrollView(
-                  primary: false,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Container(
-                          width: 48,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey[300],
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.7)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.edit_rounded, color: Colors.white, size: 24),
-                          ),
-                          const SizedBox(width: 12),
-                          Text('Edit Profile', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                          const Spacer(),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: IconButton.styleFrom(
-                              backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
-                            ),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Update how your profile looks to guests and hosts.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Divider(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Basic information',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 8),
-                      TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0.97, end: 1.0),
-                        duration: const Duration(milliseconds: 260),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            alignment: Alignment.topCenter,
-                            child: child,
-                          );
-                        },
-                        child: NeoGlass(
-                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-                          borderRadius: BorderRadius.circular(18),
-                          blur: isDark ? 12 : 0,
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.06)
-                              : Colors.white,
-                          borderColor: theme.colorScheme.outline
-                              .withValues(alpha: isDark ? 0.30 : 0.12),
-                          borderWidth: 1,
+                      _buildEnterpriseHeader(theme, isDark),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Profile details',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              _bottomSheetField('Full Name', _nameCtrl, Icons.person_outline),
-                              const SizedBox(height: 12),
-                              _bottomSheetField(
-                                'Email',
-                                _emailCtrl,
-                                Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              const SizedBox(height: 12),
-                              _bottomSheetField(
-                                'Phone',
-                                _phoneCtrl,
-                                Icons.phone_outlined,
-                                keyboardType: TextInputType.phone,
-                              ),
-                              const SizedBox(height: 12),
-                              _bottomSheetField(
-                                'Bio',
-                                _bioCtrl,
-                                Icons.info_outline,
-                                maxLines: 3,
-                                helperText:
-                                    'Share a short intro so guests and hosts can get to know you.',
-                              ),
+                              const SizedBox(height: 32),
+                              _buildEnterpriseAvatar(theme, isDark),
+                              const SizedBox(height: 32),
+                              _buildEnterpriseFields(theme, isDark),
+                              const SizedBox(height: 24),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close_rounded),
-                              label: const Text('Cancel'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: _busy
-                                  ? null
-                                  : () async {
-                                      Navigator.pop(context);
-                                      await _saveProfile();
-                                    },
-                              icon: _busy
-                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                                  : const Icon(Icons.check_circle_outline),
-                              label: Text(_busy ? 'Saving...' : 'Save Changes'),
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildEnterpriseFooter(theme, isDark),
                     ],
                   ),
                 ),
@@ -1408,47 +1350,416 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     );
   }
 
-  Widget _bottomSheetField(String label, TextEditingController ctrl, IconData icon,
-      {int maxLines = 1, TextInputType? keyboardType, String? helperText}) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    return TextField(
-      controller: ctrl,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      style: TextStyle(fontSize: isPhone ? 13 : 14),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: 'Enter $label',
-        labelStyle: theme.textTheme.bodySmall?.copyWith(
-          fontSize: isPhone ? 12 : 13,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+  Widget _buildEnterpriseHeader(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.15),
+            width: 1,
+          ),
         ),
-        hintStyle: theme.textTheme.bodySmall?.copyWith(
-          fontSize: isPhone ? 12 : 13,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-        helperText: helperText,
-        helperStyle: theme.textTheme.bodySmall?.copyWith(
-          fontSize: isPhone ? 11 : 12,
-          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
-        ),
-        prefixIcon: Icon(icon, size: 18, color: theme.colorScheme.primary),
-        filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.6),
-        ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Edit Profile',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            style: IconButton.styleFrom(
+              padding: const EdgeInsets.all(8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: Icon(
+              Icons.close_rounded,
+              size: 20,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildEnterpriseAvatar(ThemeData theme, bool isDark) {
+    final avatar = _avatarImage;
+    return Center(
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3), // Space for the border
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.tertiary,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(3), // White/Dark gap between border and image
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark ? const Color(0xFF141414) : Colors.white,
+              ),
+              child: CircleAvatar(
+                radius: 48,
+                backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                backgroundImage: avatar != null
+                    ? (kIsWeb ? NetworkImage(avatar.path) : FileImage(File(avatar.path)) as ImageProvider)
+                    : null,
+                child: avatar == null
+                    ? Icon(Icons.person, size: 48, color: theme.colorScheme.onSurface.withValues(alpha: 0.2))
+                    : null,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: _pickAvatar,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF141414) : Colors.white,
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnterpriseFields(ThemeData theme, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _EnterpriseTextField(
+          label: 'Full Name',
+          controller: _nameCtrl,
+          isDark: isDark,
+          theme: theme,
+          icon: Icons.person_outline_rounded,
+        ),
+        const SizedBox(height: 20),
+        _EnterpriseTextField(
+          label: 'Email',
+          controller: _emailCtrl,
+          isDark: isDark,
+          theme: theme,
+          keyboardType: TextInputType.emailAddress,
+          icon: Icons.email_outlined,
+        ),
+        const SizedBox(height: 20),
+        _EnterpriseTextField(
+          label: 'Phone',
+          controller: _phoneCtrl,
+          isDark: isDark,
+          theme: theme,
+          keyboardType: TextInputType.phone,
+          icon: Icons.phone_outlined,
+        ),
+        const SizedBox(height: 20),
+        _EnterpriseTextField(
+          label: 'Bio',
+          controller: _bioCtrl,
+          isDark: isDark,
+          theme: theme,
+          maxLines: 3,
+          icon: Icons.edit_note_rounded,
+          hintText: 'Tell others about yourself, your interests, and what makes you unique',
+        ),
+        const SizedBox(height: 24),
+        _buildIdVerificationSection(theme, isDark),
+      ],
+    );
+  }
+
+  Widget _buildEnterpriseFooter(ThemeData theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _busy
+                  ? null
+                  : () async {
+                      Navigator.pop(context);
+                      await _saveProfile();
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: _busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIdVerificationSection(ThemeData theme, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.badge_outlined, size: 18, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('ID Verification', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, fontSize: 15)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text('Upload your government ID for property/vehicle bookings', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)),
+        const SizedBox(height: 12),
+        _idImage == null ? _buildIdUploadCard(theme, isDark) : _buildIdPreviewCard(theme, isDark),
+      ],
+    );
+  }
+
+  Widget _buildIdUploadCard(ThemeData theme, bool isDark) {
+    return GestureDetector(
+      onTap: _pickIdDocument,
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: isDark ? EnterpriseDarkTheme.inputBackground : theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline, width: 1.5, strokeAlign: BorderSide.strokeAlignInside),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.1) : theme.colorScheme.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.add_photo_alternate_outlined, color: isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text('Upload ID Document', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text('Driver License, Passport, or Government ID', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIdPreviewCard(ThemeData theme, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? EnterpriseDarkTheme.inputBackground : theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.3) : theme.colorScheme.primary.withValues(alpha: 0.2), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+            child: Image.file(File(_idImage!.path), height: 120, width: double.infinity, fit: BoxFit.cover),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.verified, size: 16, color: Colors.green),
+                const SizedBox(width: 6),
+                Expanded(child: Text('ID Uploaded', style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600))),
+                TextButton.icon(
+                  onPressed: _pickIdDocument,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Replace'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _deleteIdDocument,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  color: theme.colorScheme.error,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _EnterpriseTextField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final bool isDark;
+  final ThemeData theme;
+  final int maxLines;
+  final TextInputType? keyboardType;
+  final IconData icon;
+  final String? hintText;
+
+  const _EnterpriseTextField({
+    required this.label,
+    required this.controller,
+    required this.isDark,
+    required this.theme,
+    required this.icon,
+    this.maxLines = 1,
+    this.keyboardType,
+    this.hintText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: TextStyle(
+        color: theme.colorScheme.onSurface,
+        fontSize: 13,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hintText ?? 'Enter your ${label.toLowerCase()}',
+        labelStyle: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          fontSize: 12,
+        ),
+        hintStyle: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          fontSize: 12,
+        ),
+        prefixIcon: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? EnterpriseDarkTheme.primaryAccent.withValues(alpha: 0.1)
+                : theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: isDark 
+                ? EnterpriseDarkTheme.primaryAccent
+                : theme.colorScheme.primary,
+            size: 16,
+          ),
+        ),
+        filled: true,
+        fillColor: isDark ? EnterpriseDarkTheme.inputBackground : theme.colorScheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline,
+            width: 1.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.22) : theme.colorScheme.outline,
+            width: 1.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: isDark ? EnterpriseDarkTheme.primaryAccent : theme.colorScheme.primary,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+      ),
+    );
+  }
 }
