@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/mock_api_service.dart';
 import '../database/models/user_model.dart';
 
@@ -282,34 +283,82 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Private methods for data persistence (simulated)
+  // Private methods for data persistence
+  static const String _roleKey = 'user_role';
+  
   Future<void> _loadStoredUser() async {
-    // In a real app, you'd load from secure storage
-    // For demo purposes, we'll simulate having a stored user
-    await Future.delayed(const Duration(milliseconds: 200));
-    
-    // In a real app, check for stored auth tokens and validate with backend
+    // Load role from SharedPreferences
     try {
-      final response = await _realApiService.getUserProfile('stored_user_id');
-      if (response['id'] != null) {
-        _currentUser = UserModel.fromJson(response);
-      } else {
-        _error = response['message'] ?? 'Failed to load profile';
+      final prefs = await SharedPreferences.getInstance();
+      final storedRole = prefs.getString(_roleKey);
+      debugPrint('[UserProvider] Loaded stored role: $storedRole');
+      
+      if (storedRole != null) {
+        UserRole role;
+        switch (storedRole) {
+          case 'owner':
+            role = UserRole.owner;
+            break;
+          case 'seeker':
+            role = UserRole.seeker;
+            break;
+          default:
+            role = UserRole.guest;
+        }
+        
+        // Create user with stored role
+        _currentUser = UserModel(
+          id: 'guest',
+          email: 'user@example.com',
+          firstName: 'User',
+          lastName: 'Guest',
+          role: role,
+          isVerified: false,
+          isActive: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          preferences: UserPreferences(
+            currency: 'USD',
+            language: 'en',
+            darkMode: false,
+            notifications: true,
+            emailUpdates: true,
+          ),
+          stats: UserStats(
+            totalBookings: 0,
+            totalProperties: 0,
+            totalEarnings: 0,
+            averageRating: 0,
+            reviewCount: 0,
+            referralCount: 0,
+            tokenBalance: 0,
+          ),
+        );
+        debugPrint('[UserProvider] Restored user with role: ${role.name}');
+        notifyListeners();
       }
     } catch (e) {
-      // No stored user found
+      debugPrint('[UserProvider] Error loading stored user: $e');
     }
   }
 
   Future<void> _storeUserData(UserModel user, String? token) async {
-    // In a real app, you'd store in secure storage
-    await Future.delayed(const Duration(milliseconds: 100));
-    // Simulate storing user data and auth token
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_roleKey, user.role.name);
+      debugPrint('[UserProvider] Stored role: ${user.role.name}');
+    } catch (e) {
+      debugPrint('[UserProvider] Error storing user data: $e');
+    }
   }
 
   Future<void> _clearStoredData() async {
-    // In a real app, you'd clear from secure storage
-    await Future.delayed(const Duration(milliseconds: 100));
-    // Simulate clearing stored data
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_roleKey);
+      debugPrint('[UserProvider] Cleared stored role');
+    } catch (e) {
+      debugPrint('[UserProvider] Error clearing stored data: $e');
+    }
   }
 }

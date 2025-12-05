@@ -7,6 +7,7 @@ import '../../widgets/responsive_layout.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/providers/ui_visibility_provider.dart';
 import '../../services/user_preferences_service.dart';
+import '../../services/owner_listing_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
@@ -113,31 +114,23 @@ class _ModularManageListingsScreenState
         _error = null;
       });
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      // Fetch from backend API
+      final result = await OwnerListingService.getOwnerListings();
       
-      final mockListings = List.generate(10, (index) => {
-        'id': 'listing_$index',
-        'title': 'Property ${index + 1}',
-        'address': '${100 + index} Main St, City',
-        'price': 150.0 + (index * 25),
-        'status': ['active', 'inactive', 'pending'][index % 3],
-        // Use a stable placeholder source to avoid 404s
-        'image': 'https://picsum.photos/seed/listing_$index/400/300',
-        'bookings': index * 3,
-        'revenue': (150.0 + (index * 25)) * (index * 3),
-        'rating': 4.0 + (index % 10) * 0.1,
-        'reviews': index * 2,
-        'lastBooked': DateTime.now().subtract(Duration(days: index)),
-      });
-      
-      if (mounted) {
-        setState(() {
-          _listings = mockListings;
-          _isLoading = false;
-        });
+      if (result['success'] == true) {
+        final listings = result['listings'] as List<Map<String, dynamic>>;
+        
+        if (mounted) {
+          setState(() {
+            _listings = listings;
+            _isLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load listings');
       }
     } catch (e) {
+      debugPrint('Error loading listings: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -478,7 +471,7 @@ class _ModularManageListingsScreenState
       {'key': 'all', 'label': 'All', 'count': _listings.length},
       {'key': 'active', 'label': 'Active', 'count': _listings.where((l) => l['status'] == 'active').length},
       {'key': 'inactive', 'label': 'Inactive', 'count': _listings.where((l) => l['status'] == 'inactive').length},
-      {'key': 'pending', 'label': 'Pending', 'count': _listings.where((l) => l['status'] == 'pending').length},
+      {'key': 'pending', 'label': 'Pending', 'count': _listings.where((l) => l['status'] == 'suspended').length},
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -808,7 +801,7 @@ class _ModularManageListingsScreenState
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(
-                        imageUrl: listing['image'],
+                        imageUrl: listing['image'] ?? '',
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
@@ -817,7 +810,7 @@ class _ModularManageListingsScreenState
                           width: 80,
                           height: 80,
                           color: Colors.grey[300],
-                          child: const Icon(Icons.error),
+                          child: const Icon(Icons.home),
                         ),
                       ),
                     ),
@@ -842,18 +835,18 @@ class _ModularManageListingsScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              listing['title'],
+                              listing['title'] ?? 'Untitled',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                          _buildStatusChip(listing['status']),
+                          _buildStatusChip(listing['status'] ?? 'unknown'),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        listing['address'],
+                        listing['address'] ?? 'No address',
                         style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: 8),
@@ -861,7 +854,7 @@ class _ModularManageListingsScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              CurrencyFormatter.formatPricePerUnit((listing['price'] as num).toDouble(), 'month', currency: currency),
+                              CurrencyFormatter.formatPricePerUnit(((listing['price'] ?? 0) as num).toDouble(), listing['priceType'] ?? 'month', currency: currency),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.titleSmall?.copyWith(
@@ -878,7 +871,7 @@ class _ModularManageListingsScreenState
                                 const SizedBox(width: 2),
                                 Flexible(
                                   child: Text(
-                                    ' ${listing['rating'].toStringAsFixed(1)} (${listing['reviews']})',
+                                    ' ${((listing['rating'] ?? 0) as num).toStringAsFixed(1)} (${listing['reviewCount'] ?? 0})',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -893,21 +886,9 @@ class _ModularManageListingsScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              '${listing['bookings']} bookings',
+                              '${listing['bookings'] ?? 0} bookings',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Flexible(
-                            child: Text(
-                              '${CurrencyFormatter.formatPrice((listing['revenue'] as num).toDouble(), currency: currency)} revenue',
-                              maxLines: 1,
-                              textAlign: TextAlign.right,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.green[600],
-                                fontWeight: FontWeight.w500,
-                              ),
                             ),
                           ),
                         ],
@@ -970,7 +951,7 @@ class _ModularManageListingsScreenState
                     ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                       child: CachedNetworkImage(
-                        imageUrl: listing['image'],
+                        imageUrl: listing['image'] ?? '',
                         width: double.infinity,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(color: Colors.grey[300]),
@@ -979,7 +960,7 @@ class _ModularManageListingsScreenState
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: _buildStatusChip(listing['status']),
+                      child: _buildStatusChip(listing['status'] ?? 'unknown'),
                     ),
                     Positioned(
                       top: 4,
@@ -1002,7 +983,7 @@ class _ModularManageListingsScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        listing['title'],
+                        listing['title'] ?? 'Untitled',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -1011,7 +992,7 @@ class _ModularManageListingsScreenState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        CurrencyFormatter.formatPricePerUnit((listing['price'] as num).toDouble(), 'month', currency: currency),
+                        CurrencyFormatter.formatPricePerUnit(((listing['price'] ?? 0) as num).toDouble(), listing['priceType'] ?? 'month', currency: currency),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
@@ -1022,12 +1003,12 @@ class _ModularManageListingsScreenState
                         children: [
                           Icon(Icons.star, size: 14, color: Colors.amber[600]),
                           Text(
-                            ' ${listing['rating'].toStringAsFixed(1)}',
+                            ' ${((listing['rating'] ?? 0) as num).toStringAsFixed(1)}',
                             style: theme.textTheme.bodySmall,
                           ),
                           const Spacer(),
                           Text(
-                            '${listing['bookings']} bookings',
+                            '${listing['bookings'] ?? 0} bookings',
                             style: theme.textTheme.bodySmall,
                           ),
                         ],
@@ -1057,6 +1038,7 @@ class _ModularManageListingsScreenState
         label = 'Inactive';
         break;
       case 'pending':
+      case 'suspended':
         color = Colors.orange;
         label = 'Pending';
         break;
@@ -1085,12 +1067,22 @@ class _ModularManageListingsScreenState
 
   List<Map<String, dynamic>> _getFilteredListings() {
     var filtered = _listings.where((listing) {
+      final title = (listing['title'] ?? '').toString().toLowerCase();
+      final address = (listing['address'] ?? '').toString().toLowerCase();
       final matchesSearch = _searchQuery.isEmpty ||
-          listing['title'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          listing['address'].toLowerCase().contains(_searchQuery.toLowerCase());
+          title.contains(_searchQuery.toLowerCase()) ||
+          address.contains(_searchQuery.toLowerCase());
       
-      final matchesFilter = _selectedFilter == 'all' ||
-          listing['status'] == _selectedFilter;
+      // Map frontend filter keys to backend status values
+      bool matchesFilter;
+      if (_selectedFilter == 'all') {
+        matchesFilter = true;
+      } else if (_selectedFilter == 'pending') {
+        // Frontend 'pending' maps to backend 'suspended'
+        matchesFilter = listing['status'] == 'suspended';
+      } else {
+        matchesFilter = listing['status'] == _selectedFilter;
+      }
       
       return matchesSearch && matchesFilter;
     }).toList();
@@ -1101,20 +1093,24 @@ class _ModularManageListingsScreenState
   void _applySort(List<Map<String, dynamic>> items) {
     switch (_sortKey) {
       case 'price_low':
-        items.sort((a, b) => ((a['price'] as num).toDouble()).compareTo(((b['price'] as num).toDouble())));
+        items.sort((a, b) => ((a['price'] ?? 0) as num).compareTo((b['price'] ?? 0) as num));
         break;
       case 'price_high':
-        items.sort((a, b) => ((b['price'] as num).toDouble()).compareTo(((a['price'] as num).toDouble())));
+        items.sort((a, b) => ((b['price'] ?? 0) as num).compareTo((a['price'] ?? 0) as num));
         break;
       case 'bookings':
-        items.sort((a, b) => ((b['bookings'] as num).toInt()).compareTo(((a['bookings'] as num).toInt())));
+        items.sort((a, b) => ((b['bookings'] ?? 0) as num).compareTo((a['bookings'] ?? 0) as num));
         break;
       case 'rating':
-        items.sort((a, b) => ((b['rating'] as num).toDouble()).compareTo(((a['rating'] as num).toDouble())));
+        items.sort((a, b) => ((b['rating'] ?? 0) as num).compareTo((a['rating'] ?? 0) as num));
         break;
       case 'recent':
       default:
-        items.sort((a, b) => (b['lastBooked'] as DateTime).compareTo(a['lastBooked'] as DateTime));
+        items.sort((a, b) {
+          final aDate = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime(2000);
+          final bDate = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime(2000);
+          return bDate.compareTo(aDate);
+        });
     }
   }
 

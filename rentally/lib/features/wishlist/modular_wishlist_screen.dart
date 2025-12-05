@@ -145,163 +145,246 @@ class _ModularWishlistScreenState
   }
 
   ListingViewModel _toViewModel(Map<String, dynamic> item) {
-    String type = (item['type']?.toString() ?? 'property');
-    String cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-    String typeChipLabel(String rawType) {
-      final lower = rawType.toLowerCase();
-      if (lower == 'vehicle') return 'Vehicle';
-      if (lower == 'property') return 'Property';
-      if (lower.startsWith('venue_')) {
-        switch (lower) {
-          case 'venue_banquet_hall': return 'Banquet Hall';
-          case 'venue_wedding_venue': return 'Wedding Venue';
-          case 'venue_party_hall': return 'Party Hall';
-          case 'venue_conference_room': return 'Conference Room';
-          case 'venue_meeting_room': return 'Meeting Room';
-          case 'venue_auditorium_theatre': return 'Auditorium / Theatre';
-          case 'venue_outdoor_lawn_garden': return 'Outdoor Lawn / Garden';
-          case 'venue_rooftop_venue': return 'Rooftop Venue';
-          case 'venue_hotel_ballroom': return 'Hotel Ballroom';
-          case 'venue_resort_venue': return 'Resort Venue';
-          case 'venue_farmhouse_villa_event_space': return 'Farmhouse / Villa Event Space';
-          case 'venue_studio_(photo_video_music)': return 'Studio (Photo / Video / Music)';
-          case 'venue_exhibition_center': return 'Exhibition Center';
-          case 'venue_club_lounge_event_space': return 'Club / Lounge Event Space';
-          case 'venue_private_dining_room': return 'Private Dining Room';
-          case 'venue_co-working_event_lounge': return 'Co-working Event Lounge';
-          case 'venue_retreat_site_campground': return 'Retreat Site / Campground';
+    try {
+      // Safely get type from either 'type' or 'itemType' field
+      String type = (item['itemType']?.toString() ?? item['type']?.toString() ?? 'property');
+      String cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+      String typeChipLabel(String rawType) {
+        final lower = rawType.toLowerCase();
+        if (lower == 'vehicle') return 'Vehicle';
+        if (lower == 'property') return 'Property';
+        if (lower.startsWith('venue_')) {
+          switch (lower) {
+            case 'venue_banquet_hall': return 'Banquet Hall';
+            case 'venue_wedding_venue': return 'Wedding Venue';
+            case 'venue_party_hall': return 'Party Hall';
+            case 'venue_conference_room': return 'Conference Room';
+            case 'venue_meeting_room': return 'Meeting Room';
+            case 'venue_auditorium_theatre': return 'Auditorium / Theatre';
+            case 'venue_outdoor_lawn_garden': return 'Outdoor Lawn / Garden';
+            case 'venue_rooftop_venue': return 'Rooftop Venue';
+            case 'venue_hotel_ballroom': return 'Hotel Ballroom';
+            case 'venue_resort_venue': return 'Resort Venue';
+            case 'venue_farmhouse_villa_event_space': return 'Farmhouse / Villa Event Space';
+            case 'venue_studio_(photo_video_music)': return 'Studio (Photo / Video / Music)';
+            case 'venue_exhibition_center': return 'Exhibition Center';
+            case 'venue_club_lounge_event_space': return 'Club / Lounge Event Space';
+            case 'venue_private_dining_room': return 'Private Dining Room';
+            case 'venue_co-working_event_lounge': return 'Co-working Event Lounge';
+            case 'venue_retreat_site_campground': return 'Retreat Site / Campground';
+          }
+          final slug = lower.substring('venue_'.length);
+          final parts = slug.split('_').where((p) => p.isNotEmpty).toList();
+          if (parts.isEmpty) return 'Venue';
+          return parts.map(cap).join(' ');
         }
-        final slug = lower.substring('venue_'.length);
-        final parts = slug.split('_').where((p) => p.isNotEmpty).toList();
-        if (parts.isEmpty) return 'Venue';
-        return parts.map(cap).join(' ');
+        return cap(rawType);
       }
-      return cap(rawType);
-    }
-    final Map<String, dynamic> am = (item['amenities'] as Map<String, dynamic>? ) ?? const {};
-    final metas = <ListingMetaItem>[];
-
-    // Category-aware meta items
-    final String typeLower = type.toLowerCase();
-    final bool isVehicle = (typeLower == 'vehicle');
-    final bool isVenue = typeLower.startsWith('venue_') || typeLower == 'venue';
-
-    if (isVehicle) {
-      // Seats
-      int seats = 0;
-      final seatsRaw = item['seats'] ?? item['seatCount'];
-      if (seatsRaw is num) seats = seatsRaw.toInt();
-      if (seats == 0 && am['seats'] is num) seats = (am['seats'] as num).toInt();
-      if (seats > 0) {
-        metas.add(ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '$seats'));
-      }
-      // Transmission
-      final transRaw = (item['transmission'] ?? am['transmission'] ?? '').toString().toLowerCase();
-      final String transLabel = transRaw.isEmpty
-          ? ''
-          : (transRaw[0].toUpperCase() + transRaw.substring(1));
-      if (transLabel.isNotEmpty) {
-        metas.add(ListingMetaItem(icon: Icons.settings, text: transLabel));
-      }
-      // Fuel
-      final fuelRaw = (item['fuel'] ?? item['fuelType'] ?? am['fuel'] ?? am['fuel_type'] ?? '').toString().toLowerCase();
-      final String fuelLabel = fuelRaw.isEmpty
-          ? ''
-          : (fuelRaw[0].toUpperCase() + fuelRaw.substring(1));
-      if (fuelLabel.isNotEmpty) {
-        final fuelIcon = fuelRaw == 'electric' ? Icons.electric_bolt : Icons.local_gas_station;
-        metas.add(ListingMetaItem(icon: fuelIcon, text: fuelLabel));
-      }
-    } else if (isVenue) {
-      // Venue seating / guests from amenities map when available
-      int seating = 0;
-      int maxGuests = 0;
-      final s1 = am['seating_capacity'];
-      final s2 = am['venue_seated_capacity'];
-      final mg = am['max_guests'];
-      if (s1 is num) seating = s1.toInt();
-      if (seating == 0 && s2 is num) seating = s2.toInt();
-      if (mg is num) maxGuests = mg.toInt();
-      if (seating > 0) {
-        metas.add(ListingMetaItem(icon: Icons.event_seat, text: '$seating seating'));
-      }
-      if (maxGuests > 0) {
-        metas.add(ListingMetaItem(icon: Icons.groups, text: '$maxGuests guests'));
-      }
-    } else {
-      // Generic property meta based on common amenities
-      if ((am['wifi'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.wifi, text: 'WiFi'));
-      if ((am['parking'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.local_parking, text: 'Parking'));
-      if ((am['pool'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.pool, text: 'Pool'));
-    }
-
-    // Pick a primary image from supported keys
-    String? pickImage(Map<String, dynamic> it) {
-      String? url;
-      // Common keys
-      final keys = [
-        'image', 'imageUrl', 'image_url', 'thumbnail', 'thumb', 'cover', 'coverImage', 'cover_image',
-        'photo', 'picture', 'img'
-      ];
-      for (final k in keys) {
-        final v = it[k];
-        if (v is String && v.trim().isNotEmpty) {
-          url = v.trim();
-          break;
+      final amenitiesRaw = item['amenities'];
+      final Map<String, dynamic> am;
+      
+      // Handle amenities being either a List or a Map
+      if (amenitiesRaw is Map<String, dynamic>) {
+        am = amenitiesRaw;
+      } else if (amenitiesRaw is Map) {
+        am = Map<String, dynamic>.from(amenitiesRaw);
+      } else if (amenitiesRaw is List) {
+        // If it's a list of strings (like ["wifi", "parking"]), convert to map
+        am = {};
+        for (var item in amenitiesRaw) {
+          if (item is String) {
+            am[item] = true;
+          }
         }
+      } else {
+        am = const {};
       }
-      // From arrays
-      if (url == null) {
-        final arrayKeys = ['images', 'photos', 'pictures', 'thumbnails'];
-        for (final ak in arrayKeys) {
-          final arr = it[ak];
-          if (arr is List && arr.isNotEmpty) {
-            final first = arr.first;
-            if (first is String && first.trim().isNotEmpty) {
-              url = first.trim();
-              break;
+      final metas = <ListingMetaItem>[];
+
+      // Category-aware meta items
+      final String typeLower = type.toLowerCase();
+      final bool isVehicle = (typeLower == 'vehicle');
+      final bool isVenue = typeLower.startsWith('venue_') || typeLower == 'venue';
+
+      if (isVehicle) {
+        // Seats
+        int seats = 0;
+        final seatsRaw = item['seats'] ?? item['seatCount'];
+        if (seatsRaw is num) seats = seatsRaw.toInt();
+        if (seats == 0 && am['seats'] is num) seats = (am['seats'] as num).toInt();
+        if (seats > 0) {
+          metas.add(ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '$seats'));
+        }
+        // Transmission
+        final transRaw = (item['transmission'] ?? am['transmission'] ?? '').toString().toLowerCase();
+        final String transLabel = transRaw.isEmpty
+            ? ''
+            : (transRaw[0].toUpperCase() + transRaw.substring(1));
+        if (transLabel.isNotEmpty) {
+          metas.add(ListingMetaItem(icon: Icons.settings, text: transLabel));
+        }
+        // Fuel
+        final fuelRaw = (item['fuel'] ?? item['fuelType'] ?? am['fuel'] ?? am['fuel_type'] ?? '').toString().toLowerCase();
+        final String fuelLabel = fuelRaw.isEmpty
+            ? ''
+            : (fuelRaw[0].toUpperCase() + fuelRaw.substring(1));
+        if (fuelLabel.isNotEmpty) {
+          final fuelIcon = fuelRaw == 'electric' ? Icons.electric_bolt : Icons.local_gas_station;
+          metas.add(ListingMetaItem(icon: fuelIcon, text: fuelLabel));
+        }
+      } else if (isVenue) {
+        // Venue seating / guests from amenities map when available
+        int seating = 0;
+        int maxGuests = 0;
+        final s1 = am['seating_capacity'];
+        final s2 = am['venue_seated_capacity'];
+        final mg = am['max_guests'];
+        if (s1 is num) seating = s1.toInt();
+        if (seating == 0 && s2 is num) seating = s2.toInt();
+        if (mg is num) maxGuests = mg.toInt();
+        if (seating > 0) {
+          metas.add(ListingMetaItem(icon: Icons.event_seat, text: '$seating seating'));
+        }
+        if (maxGuests > 0) {
+          metas.add(ListingMetaItem(icon: Icons.groups, text: '$maxGuests guests'));
+        }
+      } else {
+        // Generic property meta based on common amenities
+        if ((am['wifi'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.wifi, text: 'WiFi'));
+        if ((am['parking'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.local_parking, text: 'Parking'));
+        if ((am['pool'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.pool, text: 'Pool'));
+      }
+
+      // Pick a primary image from supported keys
+      String? pickImage(Map<String, dynamic> it) {
+        String? url;
+        // Common keys
+        final keys = [
+          'image', 'imageUrl', 'image_url', 'thumbnail', 'thumb', 'cover', 'coverImage', 'cover_image',
+          'photo', 'picture', 'img'
+        ];
+        for (final k in keys) {
+          final v = it[k];
+          if (v is String && v.trim().isNotEmpty) {
+            url = v.trim();
+            break;
+          }
+        }
+        // From arrays
+        if (url == null) {
+          final arrayKeys = ['images', 'photos', 'pictures', 'thumbnails'];
+          for (final ak in arrayKeys) {
+            final arr = it[ak];
+            if (arr is List && arr.isNotEmpty) {
+              final first = arr.first;
+              if (first is String && first.trim().isNotEmpty) {
+                url = first.trim();
+                break;
+              }
             }
           }
         }
+        if (url == null) return null;
+        // Return original URL; display layer will attempt https fallback if needed
+        return url;
       }
-      if (url == null) return null;
-      // Return original URL; display layer will attempt https fallback if needed
-      return url;
+
+      // Location fallback
+      String pickLocation(Map<String, dynamic> it) {
+        final loc = (it['location']?.toString() ?? '').trim();
+        if (loc.isNotEmpty) return loc;
+        final city = (it['city']?.toString() ?? '').trim();
+        final state = (it['state']?.toString() ?? '').trim();
+        if (city.isNotEmpty && state.isNotEmpty) return '$city, $state';
+        if (city.isNotEmpty) return city;
+        return state;
+      }
+
+      // Determine proper unit based on owner-selected unit (from ListingService.Listing)
+      final String ru = (item['rentalUnit']?.toString().toLowerCase() ?? '').trim();
+      final String unit = isVehicle ? (ru.isNotEmpty ? ru : 'day') : (ru.isNotEmpty ? ru : 'month');
+      
+      // Extract price - can be a number or an object like {perMonth: 123, perDay: 456}
+      final double amount;
+      final priceRaw = item['price'];
+      if (priceRaw is num) {
+        amount = priceRaw.toDouble();
+      } else if (priceRaw is Map) {
+        // Extract based on unit or default
+        if (unit == 'month' && priceRaw['perMonth'] is num) {
+          amount = (priceRaw['perMonth'] as num).toDouble();
+        } else if (unit == 'day' && priceRaw['perDay'] is num) {
+          amount = (priceRaw['perDay'] as num).toDouble();
+        } else if (priceRaw['perMonth'] is num) {
+          amount = (priceRaw['perMonth'] as num).toDouble();
+        } else if (priceRaw['perDay'] is num) {
+          amount = (priceRaw['perDay'] as num).toDouble();
+        } else {
+          amount = 0.0;
+        }
+      } else {
+        amount = 0.0;
+      }
+      
+      // Extract rating - can be a number or an object like {avg: 4.5, count: 12}
+      final double ratingValue;
+      final ratingRaw = item['rating'];
+      if (ratingRaw is num) {
+        ratingValue = ratingRaw.toDouble();
+      } else if (ratingRaw is Map && ratingRaw['avg'] is num) {
+        ratingValue = (ratingRaw['avg'] as num).toDouble();
+      } else {
+        ratingValue = 0.0;
+      }
+      
+      // Extract review count
+      final int? reviewCount;
+      if (ratingRaw is Map && ratingRaw['count'] is num) {
+        reviewCount = (ratingRaw['count'] as num).toInt();
+      } else {
+        reviewCount = (item['reviews'] ?? item['reviewCount']) as int?;
+      }
+
+      return ListingViewModelFactory.fromRaw(
+        ref,
+        id: item['id']?.toString() ?? item['_id']?.toString() ?? '',
+        title: item['title']?.toString() ?? item['name']?.toString() ?? 'Untitled',
+        location: pickLocation(item),
+        price: amount,
+        rentalUnit: unit,
+        imageUrl: pickImage(item),
+        rating: ratingValue,
+        reviewCount: reviewCount,
+        chips: [typeChipLabel(type)],
+        metaItems: metas,
+        fallbackIcon: isVehicle ? Icons.directions_car : Icons.home,
+        isVehicle: isVehicle,
+        isFavorite: true,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ [Wishlist] Error converting item to ViewModel: $e');
+      debugPrint('Item data: $item');
+      debugPrint('Stack trace: $stackTrace');
+      // Return a fallback ViewModel
+      return ListingViewModelFactory.fromRaw(
+        ref,
+        id: item['id']?.toString() ?? item['_id']?.toString() ?? 'unknown',
+        title: 'Error loading item',
+        location: 'Unknown',
+        price: 0,
+        rentalUnit: 'month',
+        imageUrl: null,
+        rating: 0,
+        reviewCount: null,
+        chips: ['Error'],
+        metaItems: [],
+        fallbackIcon: Icons.error,
+        isVehicle: false,
+        isFavorite: true,
+      );
     }
-
-    // Location fallback
-    String pickLocation(Map<String, dynamic> it) {
-      final loc = (it['location']?.toString() ?? '').trim();
-      if (loc.isNotEmpty) return loc;
-      final city = (it['city']?.toString() ?? '').trim();
-      final state = (it['state']?.toString() ?? '').trim();
-      if (city.isNotEmpty && state.isNotEmpty) return '$city, $state';
-      if (city.isNotEmpty) return city;
-      return state;
-    }
-
-    // Determine proper unit based on owner-selected unit (from ListingService.Listing)
-    final String ru = (item['rentalUnit']?.toString().toLowerCase() ?? '').trim();
-    final String unit = isVehicle ? (ru.isNotEmpty ? ru : 'day') : (ru.isNotEmpty ? ru : 'month');
-    final double amount = (item['price'] is num) ? (item['price'] as num).toDouble() : 0.0;
-
-    return ListingViewModelFactory.fromRaw(
-      ref,
-      id: item['id'] as String,
-      title: item['title']?.toString() ?? '',
-      location: pickLocation(item),
-      price: amount,
-      rentalUnit: unit,
-      imageUrl: pickImage(item),
-      rating: (item['rating'] as num?)?.toDouble() ?? 0,
-      reviewCount: (item['reviews'] ?? item['reviewCount']) as int?,
-      chips: [typeChipLabel(type)],
-      metaItems: metas,
-      fallbackIcon: isVehicle ? Icons.directions_car : Icons.home,
-      isVehicle: isVehicle,
-      isFavorite: true,
-    );
   }
+  
   
   void _initializeAnimations() {
     _fadeController = AnimationController(
@@ -842,7 +925,7 @@ class _ModularWishlistScreenState
             );
           },
           child: Dismissible(
-            key: Key(item['id'] as String),
+            key: Key(item['id']?.toString() ?? item['_id']?.toString() ?? 'unknown-${item.hashCode}'),
             direction: DismissDirection.endToStart,
             background: Container(
               margin: const EdgeInsets.only(bottom: 10),
@@ -855,17 +938,17 @@ class _ModularWishlistScreenState
               child: const Icon(Icons.delete, color: Colors.white, size: 28),
             ),
             confirmDismiss: (direction) async {
-              return await _showRemoveDialog(item['id'] as String);
+              return await _showRemoveDialog(item['id']?.toString() ?? item['_id']?.toString() ?? '');
             },
             onDismissed: (direction) {
-              ref.read(wishlistProvider.notifier).removeFromWishlist(item['id'] as String);
+              ref.read(wishlistProvider.notifier).removeFromWishlist(item['id']?.toString() ?? item['_id']?.toString() ?? '');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Removed from wishlist'),
                   action: SnackBarAction(
                     label: 'Undo',
                     onPressed: () {
-                      ref.read(wishlistProvider.notifier).addToWishlist(item['id'] as String);
+                      ref.read(wishlistProvider.notifier).addToWishlist(item['id']?.toString() ?? item['_id']?.toString() ?? '');
                     },
                   ),
                   duration: const Duration(seconds: 3),
@@ -1032,8 +1115,8 @@ class _ModularWishlistScreenState
             isDark: isDark,
             width: w,
             margin: EdgeInsets.zero,
-            onTap: () => _navigateToDetail(item['id'] as String),
-            onLongPress: () => _toggleSelection(item['id'] as String),
+            onTap: () => _navigateToDetail(item['id']?.toString() ?? item['_id']?.toString() ?? ''),
+            onLongPress: () => _toggleSelection(item['id']?.toString() ?? item['_id']?.toString() ?? ''),
             chipOnImage: false,
             showInfoChip: false,
             chipBelowImage: true,
@@ -1062,8 +1145,8 @@ class _ModularWishlistScreenState
           isDark: isDark,
           width: cellWidth,
           margin: EdgeInsets.zero,
-          onTap: () => _navigateToDetail(item['id'] as String),
-          onLongPress: () => _toggleSelection(item['id'] as String),
+          onTap: () => _navigateToDetail(item['id']?.toString() ?? item['_id']?.toString() ?? ''),
+          onLongPress: () => _toggleSelection(item['id']?.toString() ?? item['_id']?.toString() ?? ''),
           chipOnImage: false,
           showInfoChip: false,
           chipInRatingRowRight: true,

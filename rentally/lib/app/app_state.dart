@@ -128,7 +128,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
                 phone: userData['phone'] as String?,
                 country: userData['Country'] as String?,
                 role: role,
-                profileImageUrl: userData['profileImageUrl'] as String?,
+                // Backend returns 'avatar', check both fields
+                profileImageUrl: userData['avatar'] as String? ?? userData['profileImageUrl'] as String?,
                 isKycVerified: userData['isKycVerified'] as bool? ?? false,
               );
 

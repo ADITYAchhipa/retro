@@ -1,16 +1,21 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
+import '../../core/constants/api_constants.dart';
 import '../../app/app_state.dart';
 import '../../services/country_service.dart';
 import '../../services/user_preferences_service.dart';
+import '../../services/token_storage_service.dart';
 import '../../core/utils/currency_formatter.dart';
 
 class ModernProfileScreen extends ConsumerStatefulWidget {
@@ -22,9 +27,13 @@ class ModernProfileScreen extends ConsumerStatefulWidget {
 
 class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
-  XFile? _avatarImage;
+  XFile? _avatarImage;  // For newly picked images
   XFile? _coverImage;
   XFile? _idImage;
+  
+  // URLs from database
+  String? _avatarUrl;
+  String? _bannerUrl;
 
   bool _busy = false;
   bool _isAvatarCameraHovered = false;
@@ -36,6 +45,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
   String? _originalBio;
   XFile? _originalAvatarImage;
   XFile? _originalIdImage;
+  String? _originalAvatarUrl;
 
   XFile? _editingAvatarImage;
 
@@ -62,6 +72,12 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
       _nameCtrl.text = user.name;
       _emailCtrl.text = user.email;
       _phoneCtrl.text = user.phone ?? '';
+      
+      // Load avatar URL from database
+      if (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) {
+        _avatarUrl = user.profileImageUrl;
+        debugPrint('📷 [Profile] Loaded avatar URL: $_avatarUrl');
+      }
     } else {
       // Fallback to empty values if no user is authenticated
       _nameCtrl.text = '';
@@ -72,6 +88,40 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     // Bio is not stored in backend yet, keep default
     if (_bioCtrl.text.isEmpty) {
       _bioCtrl.text = 'Passionate host and traveler. Love meeting people around the world!';
+    }
+    
+    // Load banner URL from backend
+    _loadBannerFromBackend();
+  }
+  
+  Future<void> _loadBannerFromBackend() async {
+    try {
+      final token = await TokenStorageService.getToken();
+      if (token == null) return;
+      
+      final url = Uri.parse('${ApiConstants.baseUrl}/user/is-auth');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['user'] != null) {
+          final bannerUrl = data['user']['banner'] as String?;
+          if (bannerUrl != null && bannerUrl.isNotEmpty) {
+            setState(() {
+              _bannerUrl = bannerUrl;
+            });
+            debugPrint('🖼️ [Profile] Loaded banner URL: $_bannerUrl');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading banner: $e');
     }
   }
 
@@ -168,7 +218,133 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
 
   Future<void> _pickCover() async {
     final img = await _picker.pickImage(source: ImageSource.gallery);
-    if (img != null) setState(() => _coverImage = img);
+    if (img == null) return;
+    
+    // Validate file - check mimeType first (works better on web), then extension
+    bool isValidImage = false;
+    
+    // Check mimeType if available
+    final mimeType = img.mimeType?.toLowerCase() ?? '';
+    if (mimeType.startsWith('image/')) {
+      isValidImage = true;
+    } else {
+      // Fallback to extension check (for non-web platforms)
+      final extension = img.path.split('.').last.toLowerCase();
+      final validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'];
+      isValidImage = validExtensions.contains(extension);
+    }
+    
+    // On web, if image picker returned something, trust it
+    if (kIsWeb && img.path.isNotEmpty) {
+      isValidImage = true;
+    }
+    
+    if (!isValidImage) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please select a valid image file'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Show loading state
+    setState(() => _busy = true);
+    
+    try {
+      final token = await TokenStorageService.getToken();
+      if (token == null) {
+        _showError('Not authenticated. Please log in again.');
+        return;
+      }
+      
+      // Upload to backend
+      final success = await _uploadBanner(token, img);
+      
+      if (success && mounted) {
+        // Update local state to show new cover immediately
+        setState(() {
+          _coverImage = img;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Cover photo updated successfully!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error uploading cover: $e');
+      if (mounted) {
+        _showError('Failed to update cover photo');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+  
+  /// Upload banner image to backend
+  Future<bool> _uploadBanner(String token, XFile imageFile) async {
+    try {
+      debugPrint('🖼️ [Banner] Starting banner upload...');
+      
+      final uri = Uri.parse('${ApiConstants.baseUrl}/user/updateBanner');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      // Add file
+      if (kIsWeb) {
+        final bytes = await imageFile.readAsBytes();
+        request.files.add(http.MultipartFile.fromBytes(
+          'banner',
+          bytes,
+          filename: imageFile.name,
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      } else {
+        request.files.add(await http.MultipartFile.fromPath(
+          'banner',
+          imageFile.path,
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      }
+      
+      debugPrint('🖼️ [Banner] Sending request...');
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      debugPrint('🖼️ [Banner] Response status: ${response.statusCode}');
+      debugPrint('🖼️ [Banner] Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true) {
+          // Get the new banner URL from response
+          final newBannerUrl = body['user']?['banner'] as String?;
+          if (newBannerUrl != null && newBannerUrl.isNotEmpty) {
+            debugPrint('🖼️ [Banner] New banner URL: $newBannerUrl');
+            setState(() {
+              _bannerUrl = newBannerUrl;
+            });
+          }
+          return true;
+        } else {
+          _showError(body['message'] ?? 'Failed to upload banner');
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error uploading banner: $e');
+      return false;
+    }
   }
 
   Future<void> _pickIdDocument() async {
@@ -204,36 +380,265 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     } catch (_) {}
   }
 
-  Future<void> _saveProfile() async {
-    setState(() => _busy = true);
-    try {
-      // Simulate save delay
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      if (!mounted) return;
-      
-      // Show success message
+  /// Validate that all required fields are filled
+  bool _validateFields() {
+    if (_nameCtrl.text.trim().isEmpty) {
+      _showError('Please enter your name');
+      return false;
+    }
+    if (_emailCtrl.text.trim().isEmpty) {
+      _showError('Please enter your email');
+      return false;
+    }
+    if (_phoneCtrl.text.trim().isEmpty) {
+      _showError('Please enter your phone number');
+      return false;
+    }
+    if (_bioCtrl.text.trim().isEmpty) {
+      _showError('Please enter your bio');
+      return false;
+    }
+    return true;
+  }
+
+  void _showError(String message) {
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Profile updated successfully'),
-          backgroundColor: Colors.green,
+          content: Text(message),
+          backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
-    } catch (e) {
+    }
+  }
+
+  /// Check if profile picture has changed
+  bool _hasImageChanged() {
+    return _editingAvatarImage != null && _editingAvatarImage != _originalAvatarImage;
+  }
+
+  /// Check if any detail fields have changed
+  bool _hasDetailsChanged() {
+    return _nameCtrl.text.trim() != (_originalName ?? '').trim() ||
+           _emailCtrl.text.trim() != (_originalEmail ?? '').trim() ||
+           _phoneCtrl.text.trim() != (_originalPhone ?? '').trim() ||
+           _bioCtrl.text.trim() != (_originalBio ?? '').trim();
+  }
+
+  /// Save profile with optional explicit params
+  /// If imageToUpload is provided, upload that image
+  /// If shouldSaveDetails is provided, use that value to determine if details should be saved
+  Future<void> _saveProfile({XFile? imageToUpload, bool? shouldSaveDetails}) async {
+    debugPrint('💾 [Save] _saveProfile called');
+    debugPrint('💾 [Save] imageToUpload: $imageToUpload');
+    debugPrint('💾 [Save] shouldSaveDetails: $shouldSaveDetails');
+    
+    // Validate all fields first
+    if (!_validateFields()) {
+      return;
+    }
+
+    // Use provided values or compute them
+    final hasNewImage = imageToUpload != null;
+    final detailsChanged = shouldSaveDetails ?? _hasDetailsChanged();
+    
+    debugPrint('💾 [Save] hasNewImage: $hasNewImage, detailsChanged: $detailsChanged');
+
+    if (!hasNewImage && !detailsChanged) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Colors.red,
+            content: const Text('No changes to save'),
+            backgroundColor: Colors.grey,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
+      return;
+    }
+
+    setState(() => _busy = true);
+    
+    try {
+      final token = await TokenStorageService.getToken();
+      
+      if (token == null) {
+        _showError('Not authenticated. Please log in again.');
+        return;
+      }
+
+      bool imageSuccess = true;
+      bool detailsSuccess = true;
+
+      // Upload profile image if provided
+      if (hasNewImage) {
+        debugPrint('💾 [Save] Uploading image...');
+        final imageResult = await _uploadProfileImage(token, imageToUpload);
+        imageSuccess = imageResult;
+        debugPrint('💾 [Save] Image upload result: $imageSuccess');
+      }
+
+      // Update details if changed
+      if (detailsChanged) {
+        debugPrint('💾 [Save] Updating details...');
+        final detailsResult = await _updateDetails(token);
+        detailsSuccess = detailsResult;
+        debugPrint('💾 [Save] Details update result: $detailsSuccess');
+      }
+      
+      if (!mounted) return;
+      
+      if (imageSuccess && detailsSuccess) {
+        // Update local state
+        if (hasNewImage) {
+          _avatarImage = imageToUpload;
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Profile updated successfully!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      } else {
+        _showError('Some changes could not be saved. Please try again.');
+      }
+    } catch (e) {
+      debugPrint('Error saving profile: $e');
+      if (mounted) {
+        _showError('Failed to save: ${e.toString()}');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Upload profile image to backend
+  Future<bool> _uploadProfileImage(String token, XFile imageFile) async {
+    try {
+      debugPrint('🖼️ [Upload] Starting profile image upload...');
+      debugPrint('🖼️ [Upload] Token: ${token.substring(0, 20)}...');
+      debugPrint('🖼️ [Upload] Image path: ${imageFile.path}');
+      debugPrint('🖼️ [Upload] Image name: ${imageFile.name}');
+      
+      final uri = Uri.parse('${ApiConstants.baseUrl}/user/updateProfileImage');
+      debugPrint('🖼️ [Upload] URI: $uri');
+      
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      // Add file
+      if (kIsWeb) {
+        // For web, read as bytes
+        debugPrint('🖼️ [Upload] Reading bytes for web...');
+        final bytes = await imageFile.readAsBytes();
+        debugPrint('🖼️ [Upload] Got ${bytes.length} bytes');
+        request.files.add(http.MultipartFile.fromBytes(
+          'profile',
+          bytes,
+          filename: imageFile.name,
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      } else {
+        // For mobile, use path
+        debugPrint('🖼️ [Upload] Adding file from path for mobile...');
+        request.files.add(await http.MultipartFile.fromPath(
+          'profile',
+          imageFile.path,
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      }
+      
+      debugPrint('🖼️ [Upload] Sending request...');
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      debugPrint('🖼️ [Upload] Response status: ${response.statusCode}');
+      debugPrint('🖼️ [Upload] Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true) {
+          // Get the new avatar URL from response
+          final newAvatarUrl = body['user']?['avatar'] as String?;
+          if (newAvatarUrl != null && newAvatarUrl.isNotEmpty) {
+            debugPrint('🖼️ [Upload] New avatar URL: $newAvatarUrl');
+            
+            // Update local state
+            setState(() {
+              _avatarUrl = newAvatarUrl;
+            });
+            
+            // Update auth provider
+            final currentAuth = ref.read(authProvider);
+            if (currentAuth.user != null) {
+              final updatedUser = currentAuth.user!.copyWith(
+                profileImageUrl: newAvatarUrl,
+              );
+              ref.read(authProvider.notifier).updateProfile(updatedUser);
+            }
+          }
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error uploading profile image: $e');
+      return false;
+    }
+  }
+
+  /// Update user details on backend
+  Future<bool> _updateDetails(String token) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/user/updateDetails');
+      
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'name': _nameCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
+          'phone': _phoneCtrl.text.trim(),
+          'bio': _bioCtrl.text.trim(),
+        }),
+      );
+      
+      debugPrint('Update details response: ${response.statusCode}');
+      debugPrint('Update details body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true) {
+          // Update the auth provider with new user data
+          final currentAuth = ref.read(authProvider);
+          if (currentAuth.user != null) {
+            final updatedUser = currentAuth.user!.copyWith(
+              name: _nameCtrl.text.trim(),
+              email: _emailCtrl.text.trim(),
+              phone: _phoneCtrl.text.trim(),
+            );
+            ref.read(authProvider.notifier).updateProfile(updatedUser);
+          }
+          return true;
+        } else {
+          // Show specific error message from backend
+          _showError(body['message'] ?? 'Failed to update details');
+          return false;
+        }
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error updating details: $e');
+      return false;
     }
   }
 
@@ -682,7 +1087,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
 
   SliverAppBar _buildHeader(ThemeData theme, bool isDark) {
     final cover = _coverImage;
-    final avatar = _isEditingProfile ? _originalAvatarImage : _avatarImage;
+    final avatarFile = _isEditingProfile ? _originalAvatarImage : _avatarImage;
     final isPhone = MediaQuery.of(context).size.width < 600;
     final selectedCountry = ref.watch(countryProvider);
     final countryFlag = selectedCountry != null
@@ -691,6 +1096,45 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
 
     final displayName = _isEditingProfile && _originalName != null ? _originalName! : _nameCtrl.text;
     final displayEmail = _isEditingProfile && _originalEmail != null ? _originalEmail! : _emailCtrl.text;
+
+    // Build avatar widget - prioritize: picked file > database URL > default icon
+    Widget buildAvatarImage() {
+      // If there's a newly picked file, show that
+      if (avatarFile != null) {
+        if (kIsWeb) {
+          return Image.network(avatarFile.path, fit: BoxFit.cover);
+        } else {
+          return Image.file(File(avatarFile.path), fit: BoxFit.cover);
+        }
+      }
+      
+      // Otherwise, if there's a URL from database, show that
+      if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
+        return Image.network(
+          _avatarUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('Error loading avatar URL: $error');
+            return Center(
+              child: Icon(
+                Icons.person_rounded,
+                size: isPhone ? 32 : 38,
+                color: theme.colorScheme.primary,
+              ),
+            );
+          },
+        );
+      }
+      
+      // Default: show icon
+      return Center(
+        child: Icon(
+          Icons.person_rounded,
+          size: isPhone ? 32 : 38,
+          color: theme.colorScheme.primary,
+        ),
+      );
+    }
 
     return SliverAppBar(
       expandedHeight: isPhone ? 200 : 240,
@@ -746,6 +1190,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                 ),
               ),
             ),
+            // Show cover - prioritize: picked file > database URL > gradient
             if (cover != null)
               Positioned.fill(
                 child: kIsWeb
@@ -759,6 +1204,14 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                       ),
+              )
+            else if (_bannerUrl != null && _bannerUrl!.isNotEmpty)
+              Positioned.fill(
+                child: Image.network(
+                  _bannerUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                ),
               ),
             // Gradient overlay
             Container(
@@ -844,23 +1297,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
                               color: theme.colorScheme.primary.withValues(alpha: 0.2),
                             ),
                             child: ClipOval(
-                              child: avatar != null
-                                  ? (kIsWeb
-                                      ? Image.network(
-                                          avatar.path,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Image.file(
-                                          File(avatar.path),
-                                          fit: BoxFit.cover,
-                                        ))
-                                  : Center(
-                                      child: Icon(
-                                        Icons.person_rounded,
-                                        size: isPhone ? 32 : 38,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ),
+                              child: buildAvatarImage(),
                             ),
                           ),
                         ),
@@ -1436,7 +1873,20 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
     bool isDark,
     VoidCallback onAvatarTap,
   ) {
-    final avatar = _editingAvatarImage ?? _avatarImage;
+    final avatarFile = _editingAvatarImage ?? _avatarImage;
+    
+    // Determine avatar image provider
+    ImageProvider? avatarImageProvider;
+    if (avatarFile != null) {
+      // Use picked file
+      avatarImageProvider = kIsWeb
+          ? NetworkImage(avatarFile.path)
+          : FileImage(File(avatarFile.path)) as ImageProvider;
+    } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
+      // Use URL from database
+      avatarImageProvider = NetworkImage(_avatarUrl!);
+    }
+    
     return Center(
       child: Stack(
         children: [
@@ -1469,12 +1919,8 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
               child: CircleAvatar(
                 radius: 48,
                 backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
-                backgroundImage: avatar != null
-                    ? (kIsWeb
-                        ? NetworkImage(avatar.path)
-                        : FileImage(File(avatar.path)) as ImageProvider)
-                    : null,
-                child: avatar == null
+                backgroundImage: avatarImageProvider,
+                child: avatarImageProvider == null
                     ? Icon(
                         Icons.person,
                         size: 48,
@@ -1581,8 +2027,7 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
           icon: Icons.edit_note_rounded,
           hintText: 'Tell others about yourself, your interests, and what makes you unique',
         ),
-        const SizedBox(height: 24),
-        _buildIdVerificationSection(theme, isDark),
+        // ID Verification section removed
       ],
     );
   }
@@ -1634,15 +2079,40 @@ class _ModernProfileScreenState extends ConsumerState<ModernProfileScreen> with 
               onPressed: _busy
                   ? null
                   : () async {
-                      // Commit editing changes
+                      // Validate fields first - don't close dialog if validation fails
+                      if (!_validateFields()) {
+                        return;
+                      }
+                      
+                      // Check if there are any changes BEFORE closing dialog
+                      final imageToUpload = _hasImageChanged() ? _editingAvatarImage : null;
+                      final detailsChanged = _hasDetailsChanged();
+                      
+                      if (imageToUpload == null && !detailsChanged) {
+                        // No changes - show message and close
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('No changes to save'),
+                            backgroundColor: Colors.grey,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                        Navigator.pop(context);
+                        return;
+                      }
+                      
+                      // Has changes - close dialog and save
                       setState(() {
-                        if (_editingAvatarImage != null) {
-                          _avatarImage = _editingAvatarImage;
-                        }
                         _isEditingProfile = false;
                       });
                       Navigator.pop(context);
-                      await _saveProfile();
+                      
+                      // Pass the image and details flag explicitly
+                      await _saveProfile(
+                        imageToUpload: imageToUpload,
+                        shouldSaveDetails: detailsChanged,
+                      );
                   },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,

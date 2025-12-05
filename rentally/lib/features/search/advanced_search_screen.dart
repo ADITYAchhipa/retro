@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/auth_router.dart';
+import '../../core/constants/api_constants.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/widgets/loading_states.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -20,6 +23,7 @@ import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
 import '../../core/services/mock_api_service.dart' show RealApiService;
 import '../../core/providers/ui_visibility_provider.dart';
+import '../../services/token_storage_service.dart';
 
 /// Quick filter model for search screen
 class QuickFilter {
@@ -67,9 +71,18 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   final bool _showMapView = false; // toggles between list/grid vs map view
   String _sortOption = 'relevance'; // relevance | price_asc | price_desc | rating_desc | distance_asc
   
+  // Pagination state for infinite scroll
+  int _currentPage = 1;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  Set<String> _fetchedIds = {};
+  static const int _initialLimit = 20;
+  static const int _loadMoreLimit = 10;
+  static const int _loadMoreThreshold = 4; // Load more when 4 items from end
+  
   // Filter values
   String _propertyType = 'all';
-  RangeValues _priceRange = const RangeValues(0, 5000);
+  RangeValues _priceRange = const RangeValues(0, 100000); // Default to high range to not filter
   int _bedrooms = 0;
   int _bathrooms = 0;
   bool _instantBooking = false;
@@ -184,6 +197,12 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     if (!_scrollController.hasClients) return;
     
     final currentOffset = _scrollController.offset;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    
+    // Infinite scroll: load more when near the end
+    if (!_isLoadingMore && _hasMore && currentOffset > maxScroll - 300) {
+      _loadMore();
+    }
     
     // Always show controls when near the top (extended comfort zone)
     if (currentOffset < 100) {
@@ -225,30 +244,392 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     });
   }
   
+  /// Load more items for infinite scroll
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore) return;
+    
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final type = _isVehicleMode ? 'vehicle' : 'property';
+      final excludeIds = _fetchedIds.join(',');
+      
+      // Map frontend sort option to backend sort parameter
+      String backendSort;
+      switch (_sortOption) {
+        case 'price_asc':
+          backendSort = 'price_asc';
+          break;
+        case 'price_desc':
+          backendSort = 'price_desc';
+          break;
+        case 'rating_desc':
+          backendSort = 'rating';
+          break;
+        case 'distance_asc':
+          backendSort = 'nearest';
+          break;
+        case 'relevance':
+        default:
+          backendSort = 'relevance';
+          break;
+      }
+      
+      // Get JWT token for relevance sorting (optional)
+      final token = await TokenStorageService.getToken();
+      
+      // Build query parameters
+      final queryParams = <String, String>{
+        'type': type,
+        'page': (_currentPage + 1).toString(),
+        'limit': _loadMoreLimit.toString(),
+        'exclude': excludeIds,
+        'query': _searchQuery,
+        'sort': backendSort,
+      };
+      
+      // Add coordinates for nearest sorting
+      if (_centerLat != 0 && _centerLng != 0) {
+        queryParams['lat'] = _centerLat.toString();
+        queryParams['lng'] = _centerLng.toString();
+      }
+      
+      final uri = Uri.parse('${ApiConstants.baseUrl}/search/paginated')
+          .replace(queryParameters: queryParams);
+
+      // Include auth header for relevance sorting
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      
+      final response = await http.get(uri, headers: headers);
+      
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true && body['data'] != null) {
+          final results = body['data']['results'] as List;
+          final pagination = body['data']['pagination'];
+          
+          final newResults = results.map<PropertyResult>((item) {
+            return _mapApiItemToPropertyResult(item);
+          }).toList();
+          
+          // Track new IDs
+          for (final r in newResults) {
+            _fetchedIds.add(r.id);
+          }
+          
+          setState(() {
+            _searchResults.addAll(newResults);
+            _currentPage++;
+            _hasMore = pagination['hasMore'] ?? false;
+            _isLoadingMore = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading more: $e');
+    }
+    
+    if (mounted) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
   
+  /// Convert API response item to PropertyResult
+  PropertyResult _mapApiItemToPropertyResult(Map<String, dynamic> item) {
+    final String id = item['id']?.toString() ?? item['_id']?.toString() ?? '';
+    final String title = item['title']?.toString() ?? 'Untitled';
+    final String itemType = item['itemType']?.toString() ?? 'property';
+    final bool isVehicle = itemType == 'vehicle';
+    
+    // Extract price
+    double price = 0;
+    final priceRaw = item['price'];
+    if (priceRaw is num) {
+      price = priceRaw.toDouble();
+    } else if (priceRaw is Map) {
+      price = (priceRaw['perMonth'] ?? priceRaw['perDay'] ?? 0).toDouble();
+    }
+    
+    // Extract rating
+    double rating = 0;
+    final ratingRaw = item['rating'];
+    if (ratingRaw is num) {
+      rating = ratingRaw.toDouble();
+    } else if (ratingRaw is Map) {
+      rating = (ratingRaw['avg'] ?? 0).toDouble();
+    }
+    
+    // Extract imageUrl with fallback placeholder
+    String imageUrl = '';
+    if (item['imageUrl'] != null && item['imageUrl'].toString().isNotEmpty) {
+      imageUrl = item['imageUrl'].toString();
+    } else if (item['images'] is List && (item['images'] as List).isNotEmpty) {
+      imageUrl = (item['images'] as List).first.toString();
+    }
+    // Use placeholder if empty
+    if (imageUrl.isEmpty) {
+      imageUrl = isVehicle 
+          ? 'https://via.placeholder.com/400x300?text=Vehicle'
+          : 'https://via.placeholder.com/400x300?text=Property';
+    }
+    final String location = item['location']?.toString() ?? 
+        '${item['city'] ?? ''}, ${item['state'] ?? ''}'.trim();
+    
+    return PropertyResult(
+      id: id,
+      title: title,
+      price: price,
+      rating: rating,
+      imageUrl: imageUrl,
+      location: location,
+      type: isVehicle ? 'vehicle' : (item['category']?.toString() ?? 'property'),
+      bedrooms: (item['bedrooms'] is num) ? (item['bedrooms'] as num).toInt() : 0,
+      bathrooms: (item['bathrooms'] is num) ? (item['bathrooms'] as num).toInt() : 0,
+      isVerified: item['isVerified'] == true,
+      instantBooking: item['instantBooking'] == true,
+      latitude: _centerLat,
+      longitude: _centerLng,
+      vehicleCategory: item['category']?.toString() ?? '',
+      vehicleFuel: item['fuel']?.toString() ?? '',
+      vehicleTransmission: item['transmission']?.toString() ?? '',
+      seats: (item['seats'] is num) ? (item['seats'] as num).toInt() : 0,
+    );
+  }
+  
+  /// Apply client-side filters to results
+  List<PropertyResult> _applyClientSideFilters(List<PropertyResult> results) {
+    return results.where((r) {
+      // Price filter
+      final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
+      
+      // Verified filter
+      final bool verifiedOk = !_verifiedOnly || r.isVerified;
+      
+      // Instant booking filter
+      final bool instantOk = !_instantBooking || r.instantBooking;
+      
+      if (_isVehicleMode) {
+        // Vehicle-specific filters
+        bool categoryOk = true;
+        if (_vehicleCategory != 'all' && r.vehicleCategory.isNotEmpty) {
+          categoryOk = r.vehicleCategory.toLowerCase().contains(_vehicleCategory.toLowerCase());
+        }
+        
+        bool fuelOk = true;
+        if (_vehicleFuel != 'any') {
+          fuelOk = r.vehicleFuel.toLowerCase() == _vehicleFuel.toLowerCase();
+        }
+        
+        bool transOk = true;
+        if (_vehicleTransmission != 'any') {
+          transOk = r.vehicleTransmission.toLowerCase() == _vehicleTransmission.toLowerCase();
+        }
+        
+        bool seatsOk = true;
+        if (_vehicleSeats > 0) {
+          seatsOk = r.seats >= _vehicleSeats;
+        }
+        
+        return priceOk && verifiedOk && instantOk && categoryOk && fuelOk && transOk && seatsOk;
+      } else {
+        // Property-specific filters
+        final bool bedsOk = _bedrooms == 0 || r.bedrooms >= _bedrooms;
+        final bool bathsOk = _bathrooms == 0 || r.bathrooms >= _bathrooms;
+        
+        return priceOk && verifiedOk && instantOk && bedsOk && bathsOk;
+      }
+    }).toList();
+  }
+  
+  /// Apply sorting to results
+  List<PropertyResult> _applySorting(List<PropertyResult> results) {
+    switch (_sortOption) {
+      case 'price_asc':
+        results.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'price_desc':
+        results.sort((a, b) => b.price.compareTo(a.price));
+        break;
+      case 'rating_desc':
+        results.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case 'distance_asc':
+        results.sort((a, b) {
+          final da = _distanceKm(_centerLat, _centerLng, a.latitude, a.longitude);
+          final db = _distanceKm(_centerLat, _centerLng, b.latitude, b.longitude);
+          return da.compareTo(db);
+        });
+        break;
+      case 'relevance':
+      default:
+        // Keep API ordering (featured first)
+        break;
+    }
+    return results;
+  }
   
   Future<void> _performSearch() async {
     setState(() {
       _searchQuery = _searchController.text;
       _isSearching = true;
+      _currentPage = 1;
+      _hasMore = true;
+      _fetchedIds.clear();
+      _searchResults.clear();
     });
 
-    // Fetch base results from RealApiService so IDs match what
-    // ModularListingDetailScreen expects, falling back to local
-    // mock generators if anything goes wrong.
+    try {
+      final type = _isVehicleMode ? 'vehicle' : 'property';
+      
+      // Map frontend sort option to backend sort parameter
+      String backendSort;
+      switch (_sortOption) {
+        case 'price_asc':
+          backendSort = 'price_asc';
+          break;
+        case 'price_desc':
+          backendSort = 'price_desc';
+          break;
+        case 'rating_desc':
+          backendSort = 'rating';
+          break;
+        case 'distance_asc':
+          backendSort = 'nearest';
+          break;
+        case 'relevance':
+        default:
+          backendSort = 'relevance';
+          break;
+      }
+      
+      // Get JWT token for relevance sorting (optional)
+      final token = await TokenStorageService.getToken();
+      
+      // Build query parameters
+      final queryParams = <String, String>{
+        'type': type,
+        'page': '1',
+        'limit': _initialLimit.toString(),
+        'query': _searchQuery,
+        'sort': backendSort,
+      };
+      
+      // Add coordinates for nearest sorting
+      if (_centerLat != 0 && _centerLng != 0) {
+        queryParams['lat'] = _centerLat.toString();
+        queryParams['lng'] = _centerLng.toString();
+      }
+      
+      final uri = Uri.parse('${ApiConstants.baseUrl}/search/paginated')
+          .replace(queryParameters: queryParams);
+
+      debugPrint('🔍 [Search] Fetching: $uri');
+      
+      // Include auth header for relevance sorting
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      
+      final response = await http.get(uri, headers: headers);
+      debugPrint('🔍 [Search] Response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        debugPrint('🔍 [Search] Body success: ${body['success']}, data: ${body['data'] != null}');
+        if (body['success'] == true && body['data'] != null) {
+          final results = body['data']['results'] as List;
+          final pagination = body['data']['pagination'];
+          debugPrint('🔍 [Search] Got ${results.length} results from API');
+          
+          List<PropertyResult> apiResults = results.map<PropertyResult>((item) {
+            return _mapApiItemToPropertyResult(item);
+          }).toList();
+          debugPrint('🔍 [Search] Mapped ${apiResults.length} PropertyResult items');
+          
+          // Track fetched IDs
+          for (final r in apiResults) {
+            _fetchedIds.add(r.id);
+          }
+          
+          // Apply client-side filters (price range, verified, etc.)
+          apiResults = _applyClientSideFilters(apiResults);
+          debugPrint('🔍 [Search] After filters: ${apiResults.length} items');
+          
+          // Note: Sorting is handled by backend, no client-side sorting needed
+          
+          debugPrint('🔍 [Search] Final results: ${apiResults.length} items, setting state...');
+          if (mounted) {
+            setState(() {
+              _searchResults = apiResults;
+              _hasMore = pagination['hasMore'] ?? false;
+              _isSearching = false;
+            });
+          }
+          debugPrint('🔍 [Search] State updated, _searchResults.length: ${_searchResults.length}');
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching from API: $e');
+    }
+
+    // Fallback: Use featured properties/vehicles API which works on web
+    debugPrint('🔍 [Search] Using featured fallback...');
     List<PropertyResult> baseResults;
     try {
       final api = RealApiService();
       if (_isVehicleMode) {
-        final vehicles = await api.getVehicles();
+        // Use getFeaturedVehicles which calls the real backend
+        final vehicles = await api.getFeaturedVehicles(limit: _initialLimit);
+        debugPrint('🔍 [Search] Fetched ${vehicles.length} featured vehicles');
         baseResults = vehicles.map<PropertyResult>((v) {
-          final id = (v['id'] ?? '').toString();
-          final title = (v['title'] ?? '').toString();
-          final price = (v['price'] is num) ? (v['price'] as num).toDouble() : 0.0;
-          final rating = (v['rating'] is num) ? (v['rating'] as num).toDouble() : 0.0;
-          final imageUrl = (v['imageUrl'] ?? '').toString();
-          final location = (v['location'] ?? '').toString();
-          final seats = (v['seats'] is num) ? (v['seats'] as num).toInt() : 0;
+          final id = (v['_id'] ?? v['id'] ?? '').toString();
+          final title = (v['name'] ?? v['title'] ?? '').toString();
+          // Handle nested price structure
+          double price = 0;
+          if (v['price'] is num) {
+            price = (v['price'] as num).toDouble();
+          } else if (v['price'] is Map) {
+            price = (v['price']['perDay'] ?? v['price']['perMonth'] ?? 0).toDouble();
+          }
+          // Handle nested rating structure
+          double rating = 0;
+          if (v['rating'] is num) {
+            rating = (v['rating'] as num).toDouble();
+          } else if (v['rating'] is Map) {
+            rating = (v['rating']['avg'] ?? 0).toDouble();
+          }
+          // Handle images array
+          String imageUrl = '';
+          if (v['images'] is List && (v['images'] as List).isNotEmpty) {
+            imageUrl = (v['images'] as List).first.toString();
+          } else if (v['imageUrl'] != null && v['imageUrl'].toString().isNotEmpty) {
+            imageUrl = v['imageUrl'].toString();
+          }
+          // Use placeholder if empty
+          if (imageUrl.isEmpty) {
+            imageUrl = 'https://via.placeholder.com/400x300?text=Vehicle';
+          }
+          // Handle location from city/state
+          String location = '';
+          if (v['city'] != null) {
+            location = '${v['city']}, ${v['state'] ?? ''}'.trim();
+          } else if (v['location'] != null) {
+            location = v['location'].toString();
+          }
+          final seats = (v['seatCapacity'] ?? v['seats']) is num ? ((v['seatCapacity'] ?? v['seats']) as num).toInt() : 0;
           final rawCategory = (v['category'] ?? '').toString().toLowerCase();
           final rawTrans = (v['transmission'] ?? '').toString().toLowerCase();
           final rawFuel = (v['fuel'] ?? '').toString().toLowerCase();
@@ -314,15 +695,45 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           );
         }).toList();
       } else {
-        final properties = await api.getProperties();
+        // Use getFeaturedProperties which calls the real backend
+        final properties = await api.getFeaturedProperties(limit: _initialLimit);
+        debugPrint('🔍 [Search] Fetched ${properties.length} featured properties');
         baseResults = properties.map<PropertyResult>((p) {
-          final id = (p['id'] ?? '').toString();
+          final id = (p['_id'] ?? p['id'] ?? '').toString();
           final title = (p['title'] ?? '').toString();
-          final price = (p['price'] is num) ? (p['price'] as num).toDouble() : 0.0;
-          final rating = (p['rating'] is num) ? (p['rating'] as num).toDouble() : 0.0;
-          final imageUrl = (p['imageUrl'] ?? '').toString();
-          final location = (p['location'] ?? '').toString();
-          final type = (p['type'] ?? 'apartment').toString();
+          // Handle nested price structure
+          double price = 0;
+          if (p['price'] is num) {
+            price = (p['price'] as num).toDouble();
+          } else if (p['price'] is Map) {
+            price = (p['price']['perMonth'] ?? p['price']['perDay'] ?? 0).toDouble();
+          }
+          // Handle nested rating structure
+          double rating = 0;
+          if (p['rating'] is num) {
+            rating = (p['rating'] as num).toDouble();
+          } else if (p['rating'] is Map) {
+            rating = (p['rating']['avg'] ?? 0).toDouble();
+          }
+          // Handle images array
+          String imageUrl = '';
+          if (p['images'] is List && (p['images'] as List).isNotEmpty) {
+            imageUrl = (p['images'] as List).first.toString();
+          } else if (p['imageUrl'] != null && p['imageUrl'].toString().isNotEmpty) {
+            imageUrl = p['imageUrl'].toString();
+          }
+          // Use placeholder if empty
+          if (imageUrl.isEmpty) {
+            imageUrl = 'https://via.placeholder.com/400x300?text=Property';
+          }
+          // Handle location from city/state
+          String location = '';
+          if (p['city'] != null) {
+            location = '${p['city']}, ${p['state'] ?? ''}'.trim();
+          } else if (p['location'] != null) {
+            location = p['location'].toString();
+          }
+          final type = (p['category'] ?? p['type'] ?? 'apartment').toString();
           final lat = (p['latitude'] is num) ? (p['latitude'] as num).toDouble() : _centerLat;
           final lng = (p['longitude'] is num) ? (p['longitude'] as num).toDouble() : _centerLng;
           return PropertyResult(
@@ -333,10 +744,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             imageUrl: imageUrl,
             location: location,
             type: type,
-            bedrooms: 0,
-            bathrooms: 0,
-            isVerified: false,
-            instantBooking: false,
+            bedrooms: (p['bedrooms'] is num) ? (p['bedrooms'] as num).toInt() : 0,
+            bathrooms: (p['bathrooms'] is num) ? (p['bathrooms'] as num).toInt() : 0,
+            isVerified: p['isVerified'] == true,
+            instantBooking: p['instantBooking'] == true,
             latitude: lat,
             longitude: lng,
           );
@@ -3460,7 +3871,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                         ? GridView.builder(
                             controller: _scrollController,
                             padding: EdgeInsets.fromLTRB(horizontalPaddingLocal, 12, horizontalPaddingLocal, bottomPad),
-                            itemCount: _searchResults.length,
+                            // Add 1 extra for loading indicator when loading more
+                            itemCount: _searchResults.length + (_isLoadingMore ? 1 : 0),
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: crossAxisCountLocal,
                               mainAxisSpacing: spacingLocal,
@@ -3468,6 +3880,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               childAspectRatio: computedChildAspectRatioLocal,
                             ),
                             itemBuilder: (context, index) {
+                              // Show loading shimmer for last item when loading more
+                              if (_isLoadingMore && index >= _searchResults.length) {
+                                return LoadingStates.propertyCardShimmer(context);
+                              }
                               final p = _searchResults[index];
                               final bool isVehicle = p.type.toLowerCase() == 'vehicle';
                               // Resolve unit via ListingService if available, else fallback by type

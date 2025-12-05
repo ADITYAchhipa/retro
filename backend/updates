@@ -36,3 +36,40 @@ create achivements section in data base
 switch db url before push
 
 todays work done from my side
+
+
+
+5-12-25
+
+highest priority task do them as fast as you can 
+
+in the owner section
+
+remove start kyc button and integrate the kyc section in the kyc requirew section
+
+solve the size issue of card in manage list section
+
+
+if the owner refresh the page he will be redirected to the user 
+
+
+
+
+
+in the user section
+
+
+solve switch from all to cars
+
+remove clear all from wishlist
+
+remove the filters in serach
+    VIEW ONLY EITH IMAGE
+    BATHROOM
+    BUILT UP AREA
+    REMOVE VECHILE FROM CATEGORY
+    CHANGE NAME OF PREFERED TENANT
+    CHANGE NAME OF ASSENTIAN A
+improve its ui and also on sligtly pull it refresh
+
+in the edit profile section ther is a id varification section  remove that there is no need of it 

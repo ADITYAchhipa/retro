@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import '../core/constants/api_constants.dart';
+import '../core/models/booking.dart' as core_booking;
+import 'token_storage_service.dart';
 
 // Booking model
 class Booking {
@@ -205,31 +209,142 @@ class BookingService extends StateNotifier<BookingState> {
     }
   }
 
-  // Fetch bookings (simulate API call)
+  // Fetch bookings from backend API
   Future<void> _fetchBookings() async {
     try {
-      // Simulate API delay
-      await Future.delayed(const Duration(seconds: 1));
+      final bookings = await fetchUserBookingsFromApi();
       
-      // Generate mock bookings if none exist
-      if (state.userBookings.isEmpty && state.ownerBookings.isEmpty) {
-        final mockBookings = _generateMockBookings();
+      if (bookings != null) {
         state = state.copyWith(
-          userBookings: mockBookings['user']!,
-          ownerBookings: mockBookings['owner']!,
+          userBookings: bookings,
           isLoading: false,
           lastUpdated: DateTime.now(),
         );
         await _cacheBookings();
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          lastUpdated: DateTime.now(),
-        );
+        // Fallback to mock data if API fails
+        if (state.userBookings.isEmpty && state.ownerBookings.isEmpty) {
+          final mockBookings = _generateMockBookings();
+          state = state.copyWith(
+            userBookings: mockBookings['user']!,
+            ownerBookings: mockBookings['owner']!,
+            isLoading: false,
+            lastUpdated: DateTime.now(),
+          );
+          await _cacheBookings();
+        } else {
+          state = state.copyWith(
+            isLoading: false,
+            lastUpdated: DateTime.now(),
+          );
+        }
       }
     } catch (e) {
       state = state.copyWith(error: 'Failed to fetch bookings: $e', isLoading: false);
     }
+  }
+
+  // Fetch user bookings from API
+  Future<List<Booking>?> fetchUserBookingsFromApi() async {
+    try {
+      final token = await TokenStorageService.getToken();
+      
+      if (token == null) {
+        print('No auth token found');
+        return null;
+      }
+
+      final url = Uri.parse('${ApiConstants.baseUrl}/user/bookings');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        if (data['success'] == true && data['bookings'] != null) {
+          final bookingsData = data['bookings'];
+          final List<Booking> allBookings = [];
+
+          // Parse confirmed bookings
+          if (bookingsData['confirmed'] != null) {
+            for (var item in bookingsData['confirmed']) {
+              allBookings.add(_parseBookingFromApi(item));
+            }
+          }
+
+          // Parse completed bookings
+          if (bookingsData['completed'] != null) {
+            for (var item in bookingsData['completed']) {
+              allBookings.add(_parseBookingFromApi(item));
+            }
+          }
+
+          // Parse cancelled bookings
+          if (bookingsData['cancelled'] != null) {
+            for (var item in bookingsData['cancelled']) {
+              allBookings.add(_parseBookingFromApi(item));
+            }
+          }
+
+          return allBookings;
+        }
+      } else {
+        print('Failed to fetch bookings: ${response.statusCode}');
+      }
+      
+      return null;
+    } catch (e) {
+      print('Error fetching bookings from API: $e');
+      return null;
+    }
+  }
+
+  // Parse booking from API response
+  Booking _parseBookingFromApi(Map<String, dynamic> data) {
+    // Determine if it's a property or vehicle booking
+    final isProperty = data['type'] == 'property';
+    final itemData = isProperty ? data['property'] : data['vehicle'];
+
+    // Map backend status to frontend BookingStatus
+    BookingStatus status;
+    switch (data['status']) {
+      case 'confirmed':
+        status = BookingStatus.confirmed;
+        break;
+      case 'completed':
+        status = BookingStatus.completed;
+        break;
+      case 'cancelled':
+        status = BookingStatus.cancelled;
+        break;
+      default:
+        status = BookingStatus.pending;
+    }
+
+    return Booking(
+      id: data['id'],
+      listingId: itemData['id'] ?? '',
+      userId: data['userId'] ?? '',
+      ownerId: '', // Not provided by backend
+      checkIn: DateTime.parse(data['startDate']),
+      checkOut: DateTime.parse(data['endDate']),
+      totalPrice: (data['totalPrice'] ?? 0).toDouble(),
+      status: status,
+      specialRequests: null,
+      createdAt: DateTime.parse(data['createdAt']),
+      updatedAt: DateTime.parse(data['updatedAt']),
+      paymentInfo: PaymentInfo(
+        method: data['paymentStatus'] == 'paid' ? 'Paid' : 'Pending',
+        transactionId: null,
+        isPaid: data['paymentStatus'] == 'paid',
+        paidAt: data['paymentStatus'] == 'paid' ? DateTime.now() : null,
+      ),
+    );
   }
 
   // Cache bookings locally

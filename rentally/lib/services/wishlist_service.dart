@@ -248,8 +248,29 @@ class WishlistService {
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         if (body['success'] == true && body['data'] != null) {
-          final data = body['data'] as Map<String, dynamic>;
-          final results = (data['results'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          // Backend returns: { success: true, data: { results: [...], type, sort, total } }
+          final dataObj = body['data'];
+          final resultsList = dataObj['results'];
+          
+          debugPrint('🔍 [Wishlist] Raw results type: ${resultsList.runtimeType}');
+          
+          if (resultsList is! List) {
+            debugPrint('❌ [Wishlist] Expected List but got ${resultsList.runtimeType}');
+            return [];
+          }
+          
+          final results = <Map<String, dynamic>>[];
+          for (int i = 0; i < resultsList.length; i++) {
+            final item = resultsList[i];
+            if (item is Map<String, dynamic>) {
+              results.add(item);
+            } else if (item is Map) {
+              // Convert to Map<String, dynamic>
+              results.add(Map<String, dynamic>.from(item));
+            } else {
+              debugPrint('⚠️ [Wishlist] Skipping item $i - unexpected type: ${item.runtimeType}');
+            }
+          }
           
           debugPrint('✅ [Wishlist] Loaded ${results.length} sorted favourites');
           return results;

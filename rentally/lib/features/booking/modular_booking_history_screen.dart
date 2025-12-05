@@ -9,6 +9,7 @@ import '../../core/widgets/tab_back_handler.dart';
 import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
+import '../../services/booking_service.dart' as booking_service;
 
 /// **ModularBookingHistoryScreen**
 /// 
@@ -128,41 +129,55 @@ class _ModularBookingHistoryScreenState extends ConsumerState<ModularBookingHist
     });
 
     try {
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(seconds: 1));
+      // Fetch bookings from API via booking service
+      await ref.read(booking_service.bookingProvider.notifier).refreshBookings();
       
-      _bookings = [
-        Booking(
-          id: 'bk001',
-          propertyId: 'prop001',
-          propertyName: 'Cozy Downtown Apartment',
+      // Get bookings from provider
+      final bookingState = ref.read(booking_service.bookingProvider);
+      
+      // Convert booking service bookings to UI bookings
+      _bookings = bookingState.userBookings.map((svcBooking) {
+        // Convert booking service status to UI status
+        BookingStatus uiStatus;
+        switch (svcBooking.status.name) {
+          case 'confirmed':
+            uiStatus = BookingStatus.confirmed;
+            break;
+          case 'completed':
+            uiStatus = BookingStatus.completed;
+            break;
+          case 'cancelled':
+            uiStatus = BookingStatus.cancelled;
+            break;
+          case 'pending':
+            uiStatus = BookingStatus.pending;
+            break;
+          case 'checkedIn':
+            uiStatus = BookingStatus.checkedIn;
+            break;
+          case 'checkedOut':
+            uiStatus = BookingStatus.checkedOut;
+            break;
+          default:
+            uiStatus = BookingStatus.pending;
+        }
+        
+        return Booking(
+          id: svcBooking.id,
+          propertyId: svcBooking.listingId,
+          propertyName: 'Property ${svcBooking.listingId}',
           propertyImage: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400',
-          userId: 'user001',
-          userName: 'John Doe',
-          checkInDate: DateTime.now().add(const Duration(days: 5)),
-          checkOutDate: DateTime.now().add(const Duration(days: 8)),
-          createdAt: DateTime.now().subtract(const Duration(days: 2)),
-          totalAmount: 450.0,
+          userId: svcBooking.userId,
+          userName: 'User',
+          checkInDate: svcBooking.checkIn,
+          checkOutDate: svcBooking.checkOut,
+          createdAt: svcBooking.createdAt,
+          totalAmount: svcBooking.totalPrice,
           currency: 'USD',
-          status: BookingStatus.confirmed,
+          status: uiStatus,
           guests: 2,
-        ),
-        Booking(
-          id: 'bk002',
-          propertyId: 'prop002',
-          propertyName: 'Luxury Villa with Pool',
-          propertyImage: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400',
-          userId: 'user001',
-          userName: 'John Doe',
-          checkInDate: DateTime.now().subtract(const Duration(days: 10)),
-          checkOutDate: DateTime.now().subtract(const Duration(days: 7)),
-          createdAt: DateTime.now().subtract(const Duration(days: 15)),
-          totalAmount: 1200.0,
-          currency: 'USD',
-          status: BookingStatus.completed,
-          guests: 4,
-        ),
-      ];
+        );
+      }).toList();
       
       if (mounted) {
         setState(() {
