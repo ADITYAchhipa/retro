@@ -406,10 +406,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(error: null);
   }
 
-  void switchRole(UserRole newRole) {
+  Future<void> switchRole(UserRole newRole) async {
     if (state.user != null) {
       final updatedUser = state.user!.copyWith(role: newRole);
       state = state.copyWith(user: updatedUser);
+      // Persist the role change so it survives page refresh
+      await _persistSession();
+      debugPrint('✅ Role switched to ${newRole.name} and persisted');
     }
   }
 

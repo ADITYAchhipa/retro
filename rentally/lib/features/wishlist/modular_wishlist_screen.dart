@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../app/auth_router.dart';
 import '../../core/widgets/loading_states.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../services/wishlist_service.dart';
@@ -547,14 +548,6 @@ class _ModularWishlistScreenState
                   ),
                   const SizedBox(width: 8),
                   _buildSortButton(theme, isDark),
-                  const SizedBox(width: 8),
-                  if (wishlistCount > 0)
-                    IconButton(
-                      tooltip: AppLocalizations.of(context)!.clearAll,
-                      icon: const Icon(Icons.delete_sweep_outlined, size: 22),
-                      onPressed: _clearAll,
-                      color: isDark ? Colors.white70 : theme.primaryColor,
-                    ),
                 ],
               ),
             ],
@@ -1209,7 +1202,8 @@ class _ModularWishlistScreenState
   }
 
   void _navigateToDetail(String itemId) {
-    context.push('/listing/$itemId');
+    if (itemId.isEmpty) return;
+    context.push('${Routes.listing}/$itemId');
   }
 
   
@@ -1320,110 +1314,6 @@ class _ModularWishlistScreenState
             ),
             icon: const Icon(Icons.delete_sweep_rounded, size: 20),
             label: const Text('Remove', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      ),
-    );
-  }
-
-  void _clearAll() {
-    final currentIds = ref.read(wishlistProvider).wishlistIds;
-    if (currentIds.isEmpty) return;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 28),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                AppLocalizations.of(context)!.clearWishlist,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.heart_broken_rounded,
-              size: 60,
-              color: Colors.red.withValues(alpha: 0.3),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.clearWishlistConfirm,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: isDark ? Colors.white70 : Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'This action cannot be undone.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.red.withValues(alpha: 0.8),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(wishlistProvider.notifier).clearWishlist();
-              _selectedItems.clear();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)!.wishlistCleared),
-                    ],
-                  ),
-                  backgroundColor: Colors.green,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 0,
-            ),
-            icon: const Icon(Icons.delete_forever_rounded, size: 20),
-            label: Text(AppLocalizations.of(context)!.clear, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),

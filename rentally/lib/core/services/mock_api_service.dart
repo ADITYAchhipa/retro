@@ -243,11 +243,23 @@ class MockApiService {
   }
   
   Future<Map<String, dynamic>> getPropertyById(String id) async {
-    final properties = await getProperties();
-    return {
-      'success': true,
-      'data': properties.firstWhere((p) => p['id'] == id, orElse: () => properties.first),
-    };
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/property/$id');
+      debugPrint('🏠 Fetching property by ID: $uri');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['property'] != null) {
+          debugPrint('✅ Property fetched successfully');
+          return {'success': true, 'data': data['property']};
+        }
+      }
+      debugPrint('❌ Property not found: ${response.statusCode}');
+      return {'success': false, 'message': 'Property not found'};
+    } catch (e) {
+      debugPrint('❌ Error fetching property by ID: $e');
+      return {'success': false, 'message': e.toString()};
+    }
   }
 
   // Vehicles (mock-first)
@@ -460,11 +472,23 @@ class MockApiService {
   }
 
   Future<Map<String, dynamic>> getVehicleById(String id) async {
-    final vehicles = await getVehicles();
-    return {
-      'success': true,
-      'data': vehicles.firstWhere((v) => v['id'] == id, orElse: () => vehicles.first),
-    };
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/vehicle/$id');
+      debugPrint('🚗 Fetching vehicle by ID: $uri');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['vehicle'] != null) {
+          debugPrint('✅ Vehicle fetched successfully');
+          return {'success': true, 'data': data['vehicle']};
+        }
+      }
+      debugPrint('❌ Vehicle not found: ${response.statusCode}');
+      return {'success': false, 'message': 'Vehicle not found'};
+    } catch (e) {
+      debugPrint('❌ Error fetching vehicle by ID: $e');
+      return {'success': false, 'message': e.toString()};
+    }
   }
 
   /// Get user's visited properties from backend

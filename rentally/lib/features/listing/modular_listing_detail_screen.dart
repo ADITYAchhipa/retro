@@ -803,47 +803,39 @@ class _ModularListingDetailScreenState
         return;
       }
 
-      // Fetch properties and vehicles from repository
-      final properties = await _listingRepo.getProperties();
-      final vehicles = await _listingRepo.getVehicles();
+      // Fetch property directly by ID from backend
+      final property = await _listingRepo.getPropertyById(widget.listingId);
 
-      PropertyModel? property;
-      VehicleModel? vehicle;
-
-      try {
-        property = properties.firstWhere((p) => p.id == widget.listingId);
-      } catch (_) {
-        property = null;
-      }
-
-      if (property == null) {
-        try {
-          vehicle = vehicles.firstWhere((v) => v.id == widget.listingId);
-        } catch (_) {
-          vehicle = null;
-        }
-      }
-
-      if (!mounted) return;
-
-      if (property == null && vehicle == null) {
+      if (property != null) {
+        if (!mounted) return;
+        final listing = _buildListingFromProperty(property);
         setState(() {
-          _error = 'Listing not found';
+          _property = property;
+          _vehicle = null;
+          _listing = listing;
           _isLoading = false;
         });
-        return;
+      } else {
+        // If not a property, try fetching as vehicle
+        final vehicle = await _listingRepo.getVehicleById(widget.listingId);
+        if (!mounted) return;
+
+        if (vehicle != null) {
+          final listing = _buildListingFromVehicle(vehicle);
+          setState(() {
+            _property = null;
+            _vehicle = vehicle;
+            _listing = listing;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _error = 'Listing not found';
+            _isLoading = false;
+          });
+          return;
+        }
       }
-
-      final listing = property != null
-          ? _buildListingFromProperty(property)
-          : _buildListingFromVehicle(vehicle!);
-
-      setState(() {
-        _property = property;
-        _vehicle = vehicle;
-        _listing = listing;
-        _isLoading = false;
-      });
 
       // Merge availability from service into local unavailable dates
       try {

@@ -1995,67 +1995,119 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  // Drag handle
+                  // Modern drag handle with glow
                   Container(
-                    width: 40,
-                    height: 4,
+                    width: 48,
+                    height: 5,
                     decoration: BoxDecoration(
-                      color: theme.dividerColor.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(2),
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.primaryColor.withValues(alpha: 0.3),
+                          theme.primaryColor.withValues(alpha: 0.5),
+                          theme.primaryColor.withValues(alpha: 0.3),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Modern Header
+                  const SizedBox(height: 18),
+                  // Modern Glassmorphism Header
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 22, 16, 22),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
                           theme.primaryColor,
                           theme.primaryColor.withValues(alpha: 0.85),
+                          theme.colorScheme.secondary.withValues(alpha: 0.7),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.primaryColor.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          color: theme.primaryColor.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
+                        // Animated icon container
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.8, end: 1.0),
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.elasticOut,
+                          builder: (context, scale, child) => Transform.scale(
+                            scale: scale,
+                            child: child,
                           ),
-                          child: const Icon(
-                            Icons.tune_rounded,
-                            color: Colors.white,
-                            size: 24,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.tune_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Search Filters',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Filter Properties',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  // Active filter count badge
+                                  TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: 0.0, end: 1.0),
+                                    duration: const Duration(milliseconds: 400),
+                                    curve: Curves.bounceOut,
+                                    builder: (context, scale, child) => Transform.scale(
+                                      scale: scale,
+                                      child: child,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        '${_countActiveFilters()} active',
+                                        style: TextStyle(
+                                          color: theme.primaryColor,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 3),
                               Text(
-                                'Refine your search results',
+                                'Find your perfect space',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 12,
@@ -2064,205 +2116,143 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             ],
                           ),
                         ),
-                        IconButton(
-                          tooltip: 'Close',
-                          onPressed: () => Navigator.of(sheetContext).pop(),
-                          icon: const Icon(Icons.close_rounded, color: Colors.white),
+                        // Close button with ripple
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.of(sheetContext).pop(),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  // To Rent segment in card
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.brightness == Brightness.dark
-                          ? theme.colorScheme.surface.withValues(alpha: 0.3)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.dividerColor.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (theme.brightness == Brightness.dark
-                                  ? EnterpriseDarkTheme.primaryAccent
-                                  : EnterpriseLightTheme.primaryAccent)
-                              .withValues(alpha: theme.brightness == Brightness.dark ? 0.18 : 0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.home_work_outlined, size: 18, color: theme.primaryColor),
-                            const SizedBox(width: 8),
-                            Text('Category', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            ChoiceChip(
-                              showCheckmark: false,
-                              label: Text('Residential', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: localToRent == 'residential' ? Colors.white : theme.colorScheme.onSurface)),
-                              selected: localToRent == 'residential',
-                              selectedColor: theme.colorScheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              onSelected: (v) => setLocal(() => localToRent = 'residential'),
-                            ),
-                            ChoiceChip(
-                              showCheckmark: false,
-                              label: Text('Commercial', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: localToRent == 'commercial' ? Colors.white : theme.colorScheme.onSurface)),
-                              selected: localToRent == 'commercial',
-                              selectedColor: theme.colorScheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              onSelected: (v) => setLocal(() {
-                                localToRent = 'commercial';
-                                localBhk = 0;
-                                localTenant = 'any';
-                                localBaths = 0;
-                              }),
-                            ),
-                            ChoiceChip(
-                              showCheckmark: false,
-                              label: Text('Venue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: localToRent == 'venue' ? Colors.white : theme.colorScheme.onSurface)),
-                              selected: localToRent == 'venue',
-                              selectedColor: theme.colorScheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              onSelected: (v) => setLocal(() {
-                                localToRent = 'venue';
-                                localBhk = 0;
-                                localTenant = 'any';
-                                localBaths = 0;
-                                localPropertyType = 'all';
-                              }),
-                            ),
-                            // Plots category removed from filters
-                            ChoiceChip(
-                              showCheckmark: false,
-                              label: Text('Vehicles', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface)),
-                              selected: false,
-                              selectedColor: theme.colorScheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              onSelected: (v) {
-                                setState(() { _isVehicleMode = true; _propertyType = 'vehicle'; });
-                                _performSearch();
-                                Navigator.of(sheetContext).pop();
-                                Future.delayed(const Duration(milliseconds: 120), _toggleFilters);
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 18),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Property Type chips
-                          Text('Property Type', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: types.map((t) {
-                              final sel = localPropertyType == t;
-                              return ChoiceChip(
-                                showCheckmark: false,
-                                selected: sel,
-                                selectedColor: theme.colorScheme.primary,
-                                shape: const StadiumBorder(),
-                                label: Text(
-                                  typeLabel(t),
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface),
+                          // Category Card - now scrollable with other sections
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: theme.brightness == Brightness.dark
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : theme.primaryColor.withValues(alpha: 0.08),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.brightness == Brightness.dark
+                                      ? Colors.black.withValues(alpha: 0.2)
+                                      : theme.primaryColor.withValues(alpha: 0.08),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
                                 ),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                                onSelected: (_) => setLocal(() => localPropertyType = t),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 12),
-                          // Budget
-                          Text('Budget', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    dropdownLabel('Min'),
-                                    DropdownButtonFormField<double>(
-                                      initialValue: floorBudget(localMinBudget),
-                                      style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                      items: budgetOptions.map((v) => DropdownMenuItem<double>(
-                                        value: v,
-                                        child: Text(CurrencyFormatter.formatPrice(v), style: const TextStyle(fontSize: 12)),
-                                      )).toList(),
-                                      onChanged: (v) {
-                                        if (v == null) return;
-                                        setLocal(() => localMinBudget = v);
-                                      },
-                                      decoration: ddDecoration(),
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            theme.primaryColor.withValues(alpha: 0.15),
+                                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: theme.primaryColor.withValues(alpha: 0.15),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Icon(Icons.home_work_outlined, size: 20, color: theme.primaryColor),
                                     ),
+                                    const SizedBox(width: 12),
+                                    Text('Category', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: 16, letterSpacing: -0.2)),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    dropdownLabel('Max'),
-                                    DropdownButtonFormField<double>(
-                                      initialValue: ceilBudget(localMaxBudget),
-                                      style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                      items: budgetOptions.map((v) => DropdownMenuItem<double>(
-                                        value: v,
-                                        child: Text(CurrencyFormatter.formatPrice(v), style: const TextStyle(fontSize: 12)),
-                                      )).toList(),
-                                      onChanged: (v) {
-                                        if (v == null) return;
-                                        setLocal(() => localMaxBudget = v);
-                                      },
-                                      decoration: ddDecoration(),
-                                    ),
-                                  ],
+                                const SizedBox(height: 16),
+                                // Category chips inside the card
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                                  child: Row(
+                                    children: [
+                                      _buildCategoryChip('Residential', Icons.home_rounded, localToRent == 'residential', theme, () => setLocal(() => localToRent = 'residential')),
+                                      const SizedBox(width: 10),
+                                      _buildCategoryChip('Commercial', Icons.business_rounded, localToRent == 'commercial', theme, () => setLocal(() {
+                                        localToRent = 'commercial';
+                                        localBhk = 0;
+                                        localTenant = 'any';
+                                        localBaths = 0;
+                                      })),
+                                      const SizedBox(width: 10),
+                                      _buildCategoryChip('Venue', Icons.celebration_rounded, localToRent == 'venue', theme, () => setLocal(() {
+                                        localToRent = 'venue';
+                                        localBhk = 0;
+                                        localTenant = 'any';
+                                        localBaths = 0;
+                                        localPropertyType = 'all';
+                                      })),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          if (localToRent != 'venue') ...[
-                            // Built-up area
-                            Text('Built up area', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
+                          // Property Type section
+                          _buildPropertyFilterSection(
+                            'Property Type',
+                            Icons.apartment_rounded,
+                            theme,
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: types.asMap().entries.map((entry) {
+                                  final t = entry.value;
+                                  final sel = localPropertyType == t;
+                                  return Padding(
+                                    padding: EdgeInsets.only(right: entry.key < types.length - 1 ? 8 : 0),
+                                    child: _buildPropertyChip(typeLabel(t), sel, theme, () => setLocal(() => localPropertyType = t)),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          // Budget section
+                          _buildPropertyFilterSection(
+                            'Budget',
+                            Icons.currency_rupee_rounded,
+                            theme,
                             Row(
                               children: [
                                 Expanded(
@@ -2270,33 +2260,39 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       dropdownLabel('Min'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: builtUpOptions.contains(localBuiltMin) ? localBuiltMin : 0,
+                                      DropdownButtonFormField<double>(
+                                        initialValue: floorBudget(localMinBudget),
                                         style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: builtUpOptions.map((v) => DropdownMenuItem<int>(
+                                        items: budgetOptions.map((v) => DropdownMenuItem<double>(
                                           value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                          child: Text(CurrencyFormatter.formatPrice(v), style: const TextStyle(fontSize: 12)),
                                         )).toList(),
-                                        onChanged: (v) => setLocal(() => localBuiltMin = v ?? 0),
+                                        onChanged: (v) {
+                                          if (v == null) return;
+                                          setLocal(() => localMinBudget = v);
+                                        },
                                         decoration: ddDecoration(),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       dropdownLabel('Max'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: builtUpOptions.contains(localBuiltMax) ? localBuiltMax : 0,
+                                      DropdownButtonFormField<double>(
+                                        initialValue: ceilBudget(localMaxBudget),
                                         style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: builtUpOptions.map((v) => DropdownMenuItem<int>(
+                                        items: budgetOptions.map((v) => DropdownMenuItem<double>(
                                           value: v,
-                                          child: Text(v == 0 ? 'Any' : (v == 4000 ? '4000+ sq ft' : '$v sq ft'), style: const TextStyle(fontSize: 12)),
+                                          child: Text(CurrencyFormatter.formatPrice(v), style: const TextStyle(fontSize: 12)),
                                         )).toList(),
-                                        onChanged: (v) => setLocal(() => localBuiltMax = v ?? 0),
+                                        onChanged: (v) {
+                                          if (v == null) return;
+                                          setLocal(() => localMaxBudget = v);
+                                        },
                                         decoration: ddDecoration(),
                                       ),
                                     ],
@@ -2304,405 +2300,442 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                          ),
+                          if (localToRent != 'venue') ...[ 
+                            // Built-up area section
+                            _buildPropertyFilterSection(
+                              'Built-up Area',
+                              Icons.square_foot_rounded,
+                              theme,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Min'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: builtUpOptions.contains(localBuiltMin) ? localBuiltMin : 0,
+                                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                          items: builtUpOptions.map((v) => DropdownMenuItem<int>(
+                                            value: v,
+                                            child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                          )).toList(),
+                                          onChanged: (v) => setLocal(() => localBuiltMin = v ?? 0),
+                                          decoration: ddDecoration(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Max'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: builtUpOptions.contains(localBuiltMax) ? localBuiltMax : 0,
+                                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                          items: builtUpOptions.map((v) => DropdownMenuItem<int>(
+                                            value: v,
+                                            child: Text(v == 0 ? 'Any' : (v == 4000 ? '4000+ sq ft' : '$v sq ft'), style: const TextStyle(fontSize: 12)),
+                                          )).toList(),
+                                          onChanged: (v) => setLocal(() => localBuiltMax = v ?? 0),
+                                          decoration: ddDecoration(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                           if (localToRent == 'venue') ...[
-                            Text('Event Types', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: venueEventTypeLabels.entries.map((entry) {
-                                final slug = entry.key;
-                                final sel = localVenueEventTypes.contains(slug);
-                                return FilterChip(
-                                  showCheckmark: false,
-                                  selected: sel,
-                                  selectedColor: theme.colorScheme.primary,
-                                  label: Text(entry.value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  onSelected: (_) => setLocal(() {
-                                    if (sel) {
-                                      localVenueEventTypes.remove(slug);
-                                    } else {
-                                      localVenueEventTypes.add(slug);
+                            // Event Types section
+                            _buildPropertyFilterSection(
+                              'Event Types',
+                              Icons.celebration_rounded,
+                              theme,
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: venueEventTypeLabels.entries.toList().asMap().entries.map((outerEntry) {
+                                    final entry = outerEntry.value;
+                                    final slug = entry.key;
+                                    final sel = localVenueEventTypes.contains(slug);
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: outerEntry.key < venueEventTypeLabels.length - 1 ? 8 : 0),
+                                      child: _buildPropertyChip(entry.value, sel, theme, () => setLocal(() {
+                                        if (sel) {
+                                          localVenueEventTypes.remove(slug);
+                                        } else {
+                                          localVenueEventTypes.add(slug);
+                                        }
+                                      })),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                            // Availability section
+                            _buildPropertyFilterSection(
+                              'Availability',
+                              Icons.event_available_rounded,
+                              theme,
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: ['any','full_venue','partial_areas','rooms_+_venue'].asMap().entries.map((entry) {
+                                    final v = entry.value;
+                                    final sel = localVenueAvailability == v;
+                                    String label;
+                                    switch (v) {
+                                      case 'full_venue': label = 'Full Venue'; break;
+                                      case 'partial_areas': label = 'Partial Areas'; break;
+                                      case 'rooms_+_venue': label = 'Rooms + Venue'; break;
+                                      default: label = 'Any';
                                     }
-                                  }),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 16),
-                            Text('Availability', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: ['any','full_venue','partial_areas','rooms_+_venue'].map((v) {
-                                final sel = localVenueAvailability == v;
-                                String label;
-                                switch (v) {
-                                  case 'full_venue': label = 'Full venue'; break;
-                                  case 'partial_areas': label = 'Partial areas'; break;
-                                  case 'rooms_+_venue': label = 'Rooms + venue'; break;
-                                  default: label = 'Any';
-                                }
-                                return ChoiceChip(
-                                  showCheckmark: false,
-                                  selected: sel,
-                                  selectedColor: theme.colorScheme.primary,
-                                  shape: const StadiumBorder(),
-                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  onSelected: (_) => setLocal(() => localVenueAvailability = v),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 16),
-                            Text('Capacity', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Min seating'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: venueCapacityOptions.contains(localVenueMinSeating) ? localVenueMinSeating : 0,
-                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: venueCapacityOptions.map((v) => DropdownMenuItem<int>(
-                                          value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v+', style: const TextStyle(fontSize: 12)),
-                                        )).toList(),
-                                        onChanged: (v) => setLocal(() => localVenueMinSeating = v ?? 0),
-                                        decoration: ddDecoration(),
-                                      ),
-                                    ],
-                                  ),
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: entry.key < 3 ? 8 : 0),
+                                      child: _buildPropertyChip(label, sel, theme, () => setLocal(() => localVenueAvailability = v)),
+                                    );
+                                  }).toList(),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Min floating'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: venueCapacityOptions.contains(localVenueMinFloating) ? localVenueMinFloating : 0,
-                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: venueCapacityOptions.map((v) => DropdownMenuItem<int>(
-                                          value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v+', style: const TextStyle(fontSize: 12)),
-                                        )).toList(),
-                                        onChanged: (v) => setLocal(() => localVenueMinFloating = v ?? 0),
-                                        decoration: ddDecoration(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                            const SizedBox(height: 16),
-                            Text('Indoor / Outdoor area', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Indoor min'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: venueAreaOptions.contains(localVenueMinIndoor) ? localVenueMinIndoor : 0,
-                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: venueAreaOptions.map((v) => DropdownMenuItem<int>(
-                                          value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
-                                        )).toList(),
-                                        onChanged: (v) => setLocal(() => localVenueMinIndoor = v ?? 0),
-                                        decoration: ddDecoration(),
-                                      ),
-                                    ],
+                            // Capacity section
+                            _buildPropertyFilterSection(
+                              'Capacity',
+                              Icons.people_rounded,
+                              theme,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Min seating'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: venueCapacityOptions.contains(localVenueMinSeating) ? localVenueMinSeating : 0,
+                                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                          items: venueCapacityOptions.map((v) => DropdownMenuItem<int>(
+                                            value: v,
+                                            child: Text(v == 0 ? 'Any' : '$v+', style: const TextStyle(fontSize: 12)),
+                                          )).toList(),
+                                          onChanged: (v) => setLocal(() => localVenueMinSeating = v ?? 0),
+                                          decoration: ddDecoration(),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Outdoor min'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: venueAreaOptions.contains(localVenueMinOutdoor) ? localVenueMinOutdoor : 0,
-                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                        items: venueAreaOptions.map((v) => DropdownMenuItem<int>(
-                                          value: v,
-                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
-                                        )).toList(),
-                                        onChanged: (v) => setLocal(() => localVenueMinOutdoor = v ?? 0),
-                                        decoration: ddDecoration(),
-                                      ),
-                                    ],
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Min floating'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: venueCapacityOptions.contains(localVenueMinFloating) ? localVenueMinFloating : 0,
+                                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                          items: venueCapacityOptions.map((v) => DropdownMenuItem<int>(
+                                            value: v,
+                                            child: Text(v == 0 ? 'Any' : '$v+', style: const TextStyle(fontSize: 12)),
+                                          )).toList(),
+                                          onChanged: (v) => setLocal(() => localVenueMinFloating = v ?? 0),
+                                          decoration: ddDecoration(),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                ],
+                              ),
+                            ),
+                            // Indoor / Outdoor area section
+                            _buildPropertyFilterSection(
+                              'Indoor / Outdoor Area',
+                              Icons.home_rounded,
+                              theme,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Indoor min'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: venueAreaOptions.contains(localVenueMinIndoor) ? localVenueMinIndoor : 0,
+                                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                          items: venueAreaOptions.map((v) => DropdownMenuItem<int>(
+                                            value: v,
+                                            child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                          )).toList(),
+                                          onChanged: (v) => setLocal(() => localVenueMinIndoor = v ?? 0),
+                                          decoration: ddDecoration(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Outdoor min'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: venueAreaOptions.contains(localVenueMinOutdoor) ? localVenueMinOutdoor : 0,
+                                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                          items: venueAreaOptions.map((v) => DropdownMenuItem<int>(
+                                            value: v,
+                                            child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                          )).toList(),
+                                          onChanged: (v) => setLocal(() => localVenueMinOutdoor = v ?? 0),
+                                          decoration: ddDecoration(),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Parking capacity section
+                            _buildPropertyFilterSection(
+                              'Parking Capacity',
+                              Icons.local_parking_rounded,
+                              theme,
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: ['any','0-10','10-50','50-100','100+'].asMap().entries.map((entry) {
+                                    final v = entry.value;
+                                    final sel = localVenueParkingRange == v;
+                                    String label;
+                                    switch (v) {
+                                      case '0-10': label = '0-10'; break;
+                                      case '10-50': label = '10-50'; break;
+                                      case '50-100': label = '50-100'; break;
+                                      case '100+': label = '100+'; break;
+                                      default: label = 'Any';
+                                    }
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: entry.key < 4 ? 8 : 0),
+                                      child: _buildPropertyChip(label, sel, theme, () => setLocal(() => localVenueParkingRange = v)),
+                                    );
+                                  }).toList(),
                                 ),
-                              ],
+                              ),
                             ),
-                            const SizedBox(height: 16),
-                            Text('Parking capacity', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: ['any','0-10','10-50','50-100','100+'].map((v) {
-                                final sel = localVenueParkingRange == v;
-                                String label;
-                                switch (v) {
-                                  case '0-10': label = '0-10'; break;
-                                  case '10-50': label = '10-50'; break;
-                                  case '50-100': label = '50-100'; break;
-                                  case '100+': label = '100+'; break;
-                                  default: label = 'Any';
-                                }
-                                return ChoiceChip(
-                                  showCheckmark: false,
-                                  selected: sel,
-                                  selectedColor: theme.colorScheme.primary,
-                                  shape: const StadiumBorder(),
-                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  onSelected: (_) => setLocal(() => localVenueParkingRange = v),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 16),
                           ],
                           if (localToRent == 'residential') ...[
-                            // Preferred Tenant
-                            Text('Preferred Tenant', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: ['any','family','bachelors','students','male','female','others'].map((t) {
-                                final sel = localTenant == t;
-                                String label;
-                                switch (t) {
-                                  case 'family': label = 'Family'; break;
-                                  case 'bachelors': label = 'Bachelors'; break;
-                                  case 'students': label = 'Students'; break;
-                                  case 'male': label = 'Male'; break;
-                                  case 'female': label = 'Female'; break;
-                                  case 'others': label = 'Others'; break;
-                                  default: label = 'Any';
-                                }
-                                return ChoiceChip(
-                                  showCheckmark: false,
-                                  selected: sel,
-                                  selectedColor: theme.colorScheme.primary,
-                                  shape: const StadiumBorder(),
-                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  onSelected: (_) => setLocal(() => localTenant = t),
-                                );
-                              }).toList(),
+                            // Preferred Tenant section
+                            _buildPropertyFilterSection(
+                              'Preferred Tenant',
+                              Icons.people_outline_rounded,
+                              theme,
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: ['any','family','bachelors','students','male','female','others'].asMap().entries.map((entry) {
+                                    final t = entry.value;
+                                    final sel = localTenant == t;
+                                    String label;
+                                    switch (t) {
+                                      case 'family': label = 'Family'; break;
+                                      case 'bachelors': label = 'Bachelors'; break;
+                                      case 'students': label = 'Students'; break;
+                                      case 'male': label = 'Male'; break;
+                                      case 'female': label = 'Female'; break;
+                                      case 'others': label = 'Others'; break;
+                                      default: label = 'Any';
+                                    }
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: entry.key < 6 ? 8 : 0),
+                                      child: _buildPropertyChip(label, sel, theme, () => setLocal(() => localTenant = t)),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
                             ),
-                            const SizedBox(height: 16),
                             if (localPropertyType == 'pg' || localPropertyType == 'hostel') ...[
-                              // PG / Hostel gender preference
-                              Text('PG Gender Preference', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: ['any','male','female','mixed'].map((g) {
-                                  final sel = localPgGender == g;
+                              // PG Gender Preference section
+                              _buildPropertyFilterSection(
+                                'PG Gender Preference',
+                                Icons.wc_rounded,
+                                theme,
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Row(
+                                    children: ['any','male','female','mixed'].asMap().entries.map((entry) {
+                                      final g = entry.value;
+                                      final sel = localPgGender == g;
+                                      String label;
+                                      switch (g) {
+                                        case 'male': label = 'Male'; break;
+                                        case 'female': label = 'Female'; break;
+                                        case 'mixed': label = 'Mixed'; break;
+                                        default: label = 'Any';
+                                      }
+                                      return Padding(
+                                        padding: EdgeInsets.only(right: entry.key < 3 ? 8 : 0),
+                                        child: _buildPropertyChip(label, sel, theme, () => setLocal(() => localPgGender = g)),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            // Bedrooms & Bathrooms section
+                            _buildPropertyFilterSection(
+                              'Bedrooms & Bathrooms',
+                              Icons.bed_rounded,
+                              theme,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Bedrooms (max)'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: [0,1,2,3,4,5].contains(localBhk) ? localBhk : 0,
+                                          isDense: true,
+                                          decoration: ddDecoration(),
+                                          items: [0,1,2,3,4,5]
+                                              .map((b) => DropdownMenuItem<int>(
+                                                value: b,
+                                                child: Text(b == 0 ? 'Any' : '$b', style: const TextStyle(fontSize: 12)),
+                                              ))
+                                              .toList(),
+                                          onChanged: (v) => setLocal(() => localBhk = v ?? 0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        dropdownLabel('Bathrooms (min)'),
+                                        DropdownButtonFormField<int>(
+                                          initialValue: [0,1,2,3,4,5].contains(localBaths) ? localBaths : 0,
+                                          isDense: true,
+                                          decoration: ddDecoration(),
+                                          items: [0,1,2,3,4,5]
+                                              .map((b) => DropdownMenuItem<int>(
+                                                value: b,
+                                                child: Text(b == 0 ? 'Any' : '$b+', style: const TextStyle(fontSize: 12)),
+                                              ))
+                                              .toList(),
+                                          onChanged: (v) => setLocal(() => localBaths = v ?? 0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (localToRent != 'venue') ...[
+                            // Furnish Type section
+                            _buildPropertyFilterSection(
+                              'Furnish Type',
+                              Icons.chair_rounded,
+                              theme,
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: ['any','full','semi','unfurnished'].asMap().entries.map((entry) {
+                                    final f = entry.value;
+                                    final sel = localFurnish == f;
+                                    String label;
+                                    switch (f) {
+                                      case 'full': label = 'Fully Furnished'; break;
+                                      case 'semi': label = 'Semi Furnished'; break;
+                                      case 'unfurnished': label = 'Unfurnished'; break;
+                                      default: label = 'Any';
+                                    }
+                                    return Padding(
+                                      padding: EdgeInsets.only(right: entry.key < 3 ? 8 : 0),
+                                      child: _buildPropertyChip(label, sel, theme, () => setLocal(() => localFurnish = f)),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                          ],
+                          // Essential Amenities / Venue features section
+                          _buildPropertyFilterSection(
+                            localToRent == 'venue' ? 'Venue Features' : 'Essential Amenities',
+                            Icons.checklist_rounded,
+                            theme,
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: amenityKeys.asMap().entries.map((entry) {
+                                  final k = entry.value;
+                                  final sel = localAmenities.contains(k);
                                   String label;
-                                  switch (g) {
-                                    case 'male': label = 'Male'; break;
-                                    case 'female': label = 'Female'; break;
-                                    case 'mixed': label = 'Mixed'; break;
-                                    default: label = 'Any';
+                                  switch (k) {
+                                    case 'wifi': label = 'WiFi'; break;
+                                    case 'parking': label = 'Parking'; break;
+                                    case 'ac': label = 'AC'; break;
+                                    case 'heating': label = 'Heating'; break;
+                                    case 'pets': label = 'Pets'; break;
+                                    case 'kitchen': label = 'Kitchen'; break;
+                                    case 'balcony': label = 'Balcony'; break;
+                                    case 'elevator': label = 'Elevator'; break;
+                                    case 'fire_safety_compliant': label = 'Fire Safety'; break;
+                                    case 'outside_catering_allowed': label = 'Catering'; break;
+                                    case 'veg_available': label = 'Veg'; break;
+                                    case 'non_veg_available': label = 'Non-Veg'; break;
+                                    case 'buffet_available': label = 'Buffet'; break;
+                                    case 'live_counters_available': label = 'Live Counters'; break;
+                                    case 'dj_allowed': label = 'DJ'; break;
+                                    case 'alcohol_service_allowed': label = 'Alcohol'; break;
+                                    default: label = k;
                                   }
-                                  return ChoiceChip(
-                                    showCheckmark: false,
-                                    selected: sel,
-                                    selectedColor: theme.colorScheme.primary,
-                                    shape: const StadiumBorder(),
-                                    label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    visualDensity: VisualDensity.compact,
-                                    onSelected: (_) => setLocal(() => localPgGender = g),
+                                  IconData icon;
+                                  switch (k) {
+                                    case 'wifi': icon = Icons.wifi; break;
+                                    case 'parking': icon = Icons.local_parking; break;
+                                    case 'ac': icon = Icons.ac_unit; break;
+                                    case 'heating': icon = Icons.whatshot; break;
+                                    case 'pets': icon = Icons.pets; break;
+                                    case 'kitchen': icon = Icons.kitchen; break;
+                                    case 'balcony': icon = Icons.deck; break;
+                                    case 'elevator': icon = Icons.elevator; break;
+                                    case 'fire_safety_compliant': icon = Icons.local_fire_department; break;
+                                    case 'outside_catering_allowed': icon = Icons.restaurant; break;
+                                    case 'veg_available': icon = Icons.eco; break;
+                                    case 'non_veg_available': icon = Icons.set_meal; break;
+                                    case 'buffet_available': icon = Icons.restaurant_menu; break;
+                                    case 'live_counters_available': icon = Icons.local_dining; break;
+                                    case 'dj_allowed': icon = Icons.music_note; break;
+                                    case 'alcohol_service_allowed': icon = Icons.wine_bar; break;
+                                    default: icon = Icons.check_box_outline_blank; break;
+                                  }
+                                  return Padding(
+                                    padding: EdgeInsets.only(right: entry.key < amenityKeys.length - 1 ? 8 : 0),
+                                    child: _buildAmenityChip(label, icon, sel, theme, () => setLocal(() {
+                                      if (sel) {
+                                        localAmenities.remove(k);
+                                      } else {
+                                        localAmenities.add(k);
+                                      }
+                                    })),
                                   );
                                 }).toList(),
                               ),
-                              const SizedBox(height: 16),
-                            ],
-                            // Bedrooms & Bathrooms
-                            Text('Bedrooms & Bathrooms', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Bedrooms (max)'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: [0,1,2,3,4,5].contains(localBhk) ? localBhk : 0,
-                                        isDense: true,
-                                        decoration: ddDecoration(),
-                                        items: [0,1,2,3,4,5]
-                                            .map((b) => DropdownMenuItem<int>(
-                                              value: b,
-                                              child: Text(b == 0 ? 'Any' : '$b', style: const TextStyle(fontSize: 12)),
-                                            ))
-                                            .toList(),
-                                        onChanged: (v) => setLocal(() => localBhk = v ?? 0),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      dropdownLabel('Bathrooms (min)'),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: [0,1,2,3,4,5].contains(localBaths) ? localBaths : 0,
-                                        isDense: true,
-                                        decoration: ddDecoration(),
-                                        items: [0,1,2,3,4,5]
-                                            .map((b) => DropdownMenuItem<int>(
-                                              value: b,
-                                              child: Text(b == 0 ? 'Any' : '$b+', style: const TextStyle(fontSize: 12)),
-                                            ))
-                                            .toList(),
-                                        onChanged: (v) => setLocal(() => localBaths = v ?? 0),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
                             ),
-                            const SizedBox(height: 16),
-                          ],
-                          if (localToRent != 'venue') ...[
-                            // Furnish Type
-                            Text('Furnish Type', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: ['any','full','semi','unfurnished'].map((f) {
-                                final sel = localFurnish == f;
-                                String label;
-                                switch (f) {
-                                  case 'full': label = 'Fully Furnished'; break;
-                                  case 'semi': label = 'Semi Furnished'; break;
-                                  case 'unfurnished': label = 'Unfurnished'; break;
-                                  default: label = 'Any';
-                                }
-                                return ChoiceChip(
-                                  showCheckmark: false,
-                                  selected: sel,
-                                  selectedColor: theme.colorScheme.primary,
-                                  shape: const StadiumBorder(),
-                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  onSelected: (_) => setLocal(() => localFurnish = f),
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                          // Essential Amenities / Venue features
-                          Text(
-                            localToRent == 'venue' ? 'Venue Features' : 'Essential Amenities',
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: amenityKeys.map((k) {
-                              final sel = localAmenities.contains(k);
-                              String label;
-                              switch (k) {
-                                case 'wifi': label = 'High-Speed WiFi'; break;
-                                case 'parking': label = 'Parking'; break;
-                                case 'ac': label = 'Air Conditioning'; break;
-                                case 'heating': label = 'Heating'; break;
-                                case 'pets': label = 'Pets Allowed'; break;
-                                case 'kitchen': label = 'Full Kitchen'; break;
-                                case 'balcony': label = 'Balcony/Patio'; break;
-                                case 'elevator': label = 'Elevator'; break;
-                                case 'fire_safety_compliant': label = 'Fire Safety Compliant'; break;
-                                case 'outside_catering_allowed': label = 'Outside Catering Allowed'; break;
-                                case 'veg_available': label = 'Veg Available'; break;
-                                case 'non_veg_available': label = 'Non-Veg Available'; break;
-                                case 'buffet_available': label = 'Buffet Available'; break;
-                                case 'live_counters_available': label = 'Live Counters'; break;
-                                case 'dj_allowed': label = 'DJ Allowed'; break;
-                                case 'alcohol_service_allowed': label = 'Alcohol Service'; break;
-                                default: label = k;
-                              }
-                              IconData icon;
-                              switch (k) {
-                                case 'wifi': icon = Icons.wifi; break;
-                                case 'parking': icon = Icons.local_parking; break;
-                                case 'ac': icon = Icons.ac_unit; break;
-                                case 'heating': icon = Icons.whatshot; break;
-                                case 'pets': icon = Icons.pets; break;
-                                case 'kitchen': icon = Icons.kitchen; break;
-                                case 'balcony': icon = Icons.deck; break;
-                                case 'elevator': icon = Icons.elevator; break;
-                                case 'fire_safety_compliant': icon = Icons.local_fire_department; break;
-                                case 'outside_catering_allowed': icon = Icons.restaurant; break;
-                                case 'veg_available': icon = Icons.eco; break;
-                                case 'non_veg_available': icon = Icons.set_meal; break;
-                                case 'buffet_available': icon = Icons.restaurant_menu; break;
-                                case 'live_counters_available': icon = Icons.local_dining; break;
-                                case 'dj_allowed': icon = Icons.music_note; break;
-                                case 'alcohol_service_allowed': icon = Icons.wine_bar; break;
-                                default: icon = Icons.check_box_outline_blank; break;
-                              }
-                              return FilterChip(
-                                showCheckmark: false,
-                                selected: sel,
-                                avatar: Icon(
-                                  icon,
-                                  size: 16,
-                                  color: sel ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.85),
-                                ),
-                                label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                selectedColor: theme.colorScheme.primary,
-                                shape: const StadiumBorder(),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                                onSelected: (v) => setLocal(() {
-                                  if (v) {
-                                    localAmenities.add(k);
-                                  } else {
-                                    localAmenities.remove(k);
-                                  }
-                                }),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 16),
-                          // Toggles
-                          SwitchListTile.adaptive(
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            visualDensity: VisualDensity.compact,
-                            title: Text('View Only Properties with Images', style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12)),
-                            value: localImagesOnly,
-                            onChanged: (v) => setLocal(() => localImagesOnly = v),
-                          ),
+
                         ],
                       ),
                     ),
@@ -2855,6 +2888,239 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   
   void _applyFilters() {
     _performSearch();
+  }
+
+  // Modern category chip builder for property filter
+  Widget _buildCategoryChip(String label, IconData icon, bool selected, ThemeData theme, VoidCallback onTap) {
+    final isDark = theme.brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: selected
+              ? LinearGradient(
+                  colors: [
+                    theme.primaryColor,
+                    theme.colorScheme.secondary.withValues(alpha: 0.9),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: selected ? null : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected
+                ? Colors.transparent
+                : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade300),
+            width: 1.5,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: theme.primaryColor.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade600),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade700),
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Modern property filter section builder
+  Widget _buildPropertyFilterSection(String title, IconData icon, ThemeData theme, Widget content) {
+    final isDark = theme.brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark 
+              ? Colors.white.withValues(alpha: 0.08)
+              : theme.primaryColor.withValues(alpha: 0.08),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark 
+                ? Colors.black.withValues(alpha: 0.15)
+                : theme.primaryColor.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.primaryColor.withValues(alpha: 0.12),
+                      theme.colorScheme.secondary.withValues(alpha: 0.08),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: theme.primaryColor),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          content,
+        ],
+      ),
+    );
+  }
+
+  // Modern property chip builder (like vehicle filter chips)
+  Widget _buildPropertyChip(String label, bool selected, ThemeData theme, VoidCallback onTap) {
+    final isDark = theme.brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: selected
+              ? LinearGradient(
+                  colors: [
+                    theme.primaryColor,
+                    theme.colorScheme.secondary.withValues(alpha: 0.85),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: selected ? null : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected 
+                ? Colors.transparent
+                : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade300),
+            width: 1.5,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: theme.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade700),
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Modern amenity chip builder with icon
+  Widget _buildAmenityChip(String label, IconData icon, bool selected, ThemeData theme, VoidCallback onTap) {
+    final isDark = theme.brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: selected
+              ? LinearGradient(
+                  colors: [
+                    theme.primaryColor,
+                    theme.colorScheme.secondary.withValues(alpha: 0.85),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: selected ? null : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected 
+                ? Colors.transparent
+                : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade300),
+            width: 1.5,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: theme.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade600),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade700),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
   
   
@@ -3177,155 +3443,278 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
 
   // ignore: unused_element
   Widget _buildModernFilterPanel(ThemeData theme, BuildContext dialogContext) {
-    return Column(
-      children: [
-        // Modern Header
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.primaryColor,
-                theme.primaryColor.withValues(alpha: 0.8),
+    final isDark = theme.brightness == Brightness.dark;
+    final activeCount = _countActiveFilters();
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          // Glassmorphism Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  theme.primaryColor,
+                  theme.primaryColor.withValues(alpha: 0.85),
+                  theme.colorScheme.secondary.withValues(alpha: 0.7),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.tune_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Filter Options',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+            child: Row(
+              children: [
+                // Animated Filter Icon Container
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.8, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.elasticOut,
+                  builder: (context, scale, child) => Transform.scale(
+                    scale: scale,
+                    child: child,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        width: 1.5,
                       ),
                     ),
-                    Text(
-                      'Customize your search preferences',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(dialogContext).pop();
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Filter Content
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: _isVehicleMode ? _buildVehicleFilterContent(theme) : _buildPropertyFilterContent(theme),
-          ),
-        ),
-        // Modern Action Buttons
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-            border: Border(
-              top: BorderSide(
-                color: theme.dividerColor.withValues(alpha: 0.1),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    _resetFilters();
-                    Navigator.of(dialogContext).pop();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    side: BorderSide(color: theme.primaryColor),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.reset,
-                    style: TextStyle(
-                      color: theme.primaryColor,
-                      fontWeight: FontWeight.w600,
+                    child: const Icon(
+                      Icons.tune_rounded,
+                      color: Colors.white,
+                      size: 26,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _applyFilters();
-                    Navigator.of(dialogContext).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.search_rounded, size: 20),
-                      const SizedBox(width: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Filter Vehicles',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          if (activeCount > 0) ...[
+                            const SizedBox(width: 10),
+                            // Active filter badge
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.bounceOut,
+                              builder: (context, scale, child) => Transform.scale(
+                                scale: scale,
+                                child: child,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '$activeCount active',
+                                  style: TextStyle(
+                                    color: theme.primaryColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context)!.applyFilters,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        'Find your perfect ride',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                // Close button with ripple
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Navigator.of(dialogContext).pop(),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          // Filter Content with subtle gradient background
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isDark 
+                      ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
+                      : [Colors.grey.shade50, Colors.white],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                physics: const BouncingScrollPhysics(),
+                child: _isVehicleMode ? _buildVehicleFilterContent(theme) : _buildPropertyFilterContent(theme),
+              ),
+            ),
+          ),
+          // Modern Action Buttons
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Reset button
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        _resetFilters();
+                        Navigator.of(dialogContext).pop();
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: theme.primaryColor.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.refresh_rounded, size: 18, color: theme.primaryColor),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppLocalizations.of(context)!.reset,
+                              style: TextStyle(
+                                color: theme.primaryColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                // Apply button with gradient
+                Expanded(
+                  flex: 2,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        _applyFilters();
+                        Navigator.of(dialogContext).pop();
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              theme.primaryColor,
+                              theme.colorScheme.secondary,
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.primaryColor.withValues(alpha: 0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.search_rounded, size: 20, color: Colors.white),
+                            const SizedBox(width: 10),
+                            Text(
+                              AppLocalizations.of(context)!.applyFilters,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -3550,43 +3939,69 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   }
 
   Widget _buildModernFilterSection(String title, IconData icon, ThemeData theme, Widget content) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.1),
+          color: isDark 
+              ? Colors.white.withValues(alpha: 0.08)
+              : theme.primaryColor.withValues(alpha: 0.08),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark 
+                ? Colors.black.withValues(alpha: 0.2)
+                : theme.primaryColor.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              // Gradient icon container
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.primaryColor.withValues(alpha: 0.15),
+                      theme.colorScheme.secondary.withValues(alpha: 0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.primaryColor.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   icon,
                   color: theme.primaryColor,
-                  size: 20,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Text(
                 title,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  letterSpacing: -0.2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           content,
         ],
       ),
@@ -3594,25 +4009,57 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   }
 
   Widget _buildModernChoiceChip(String label, bool selected, VoidCallback onTap, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? theme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? theme.primaryColor : theme.dividerColor.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 1.0, end: selected ? 1.0 : 1.0),
+        duration: const Duration(milliseconds: 150),
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: child,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : theme.textTheme.bodyMedium?.color,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? LinearGradient(
+                    colors: [
+                      theme.primaryColor,
+                      theme.colorScheme.secondary.withValues(alpha: 0.9),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: selected ? null : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50),
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(
+              color: selected 
+                  ? Colors.transparent
+                  : (isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey.shade300),
+              width: 1.5,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: theme.primaryColor.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : (isDark ? Colors.white70 : Colors.grey.shade700),
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 13,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
       ),
@@ -3657,60 +4104,123 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   }
 
   Widget _buildModernNumberSelector(int value, ValueChanged<int> onChanged, ThemeData theme, {int min = 0, int max = 10}) {
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.2),
+          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200,
           width: 1,
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            onPressed: value > min ? () => onChanged(value - 1) : null,
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: value > min ? theme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                Icons.remove_rounded,
-                color: value > min ? theme.primaryColor : theme.disabledColor,
-                size: 18,
+          // Minus button with gradient
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: value > min ? () => onChanged(value - 1) : null,
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: value > min
+                      ? LinearGradient(
+                          colors: [
+                            theme.primaryColor.withValues(alpha: 0.15),
+                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: value > min ? null : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: value > min 
+                        ? theme.primaryColor.withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.remove_rounded,
+                  color: value > min ? theme.primaryColor : theme.disabledColor,
+                  size: 20,
+                ),
               ),
             ),
           ),
+          // Value display
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
             decoration: BoxDecoration(
-              color: theme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  theme.primaryColor,
+                  theme.colorScheme.secondary,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Text(
-              value.toString(),
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: theme.primaryColor,
+              value == 0 ? 'Any' : value.toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: Colors.white,
               ),
             ),
           ),
-          IconButton(
-            onPressed: value < max ? () => onChanged(value + 1) : null,
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: value < max ? theme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                Icons.add_rounded,
-                color: value < max ? theme.primaryColor : theme.disabledColor,
-                size: 18,
+          // Plus button with gradient
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: value < max ? () => onChanged(value + 1) : null,
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: value < max
+                      ? LinearGradient(
+                          colors: [
+                            theme.primaryColor.withValues(alpha: 0.15),
+                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: value < max ? null : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: value < max 
+                        ? theme.primaryColor.withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: value < max ? theme.primaryColor : theme.disabledColor,
+                  size: 20,
+                ),
               ),
             ),
           ),

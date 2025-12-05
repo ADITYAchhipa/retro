@@ -244,6 +244,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   Widget _buildBasicsStep() {
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
+    final isDark = theme.brightness == Brightness.dark;
     final allowedTypes = _getTypesForCategory();
     final currentType = allowedTypes.contains(_selectedPropertyType)
         ? _selectedPropertyType
@@ -255,70 +256,197 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Basic Information',
-            style: TextStyle(
-              fontSize: isPhone ? 15 : 16,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-              letterSpacing: -0.2,
+          // Section Card: Basic Info
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.grey.shade100,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Provide essential details about your property',
-            style: TextStyle(
-              fontSize: isPhone ? 12 : 13,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              height: 1.3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Section header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withValues(alpha: 0.15),
+                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.edit_note_rounded, size: 20, color: theme.colorScheme.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Basic Information', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                          Text('Title and description', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Title Field
+                _buildModernTextField(
+                  controller: _titleController,
+                  label: 'Property Title',
+                  hint: 'e.g., Spacious 2BHK Apartment...',
+                  prefixIcon: Icons.title_rounded,
+                  validator: (value) => value?.isEmpty ?? true ? 'Title is required' : null,
+                ),
+                const SizedBox(height: 12),
+                
+                // Description Field
+                _buildModernTextField(
+                  controller: _descriptionController,
+                  label: 'Description',
+                  hint: 'Describe features, amenities...',
+                  prefixIcon: Icons.description_outlined,
+                  maxLines: 3,
+                  validator: (value) => value?.isEmpty ?? true ? 'Description is required' : null,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
           
-          // Title Field
-          _buildModernTextField(
-            controller: _titleController,
-            label: 'Property Title',
-            hint: 'e.g., Spacious 2BHK Apartment in Prime Location',
-            prefixIcon: Icons.title_rounded,
-            validator: (value) => value?.isEmpty ?? true ? 'Title is required' : null,
-          ),
-          const SizedBox(height: 12),
-          
-          // Description Field
-          _buildModernTextField(
-            controller: _descriptionController,
-            label: 'Description',
-            hint: 'Describe key features, nearby amenities, and unique selling points',
-            prefixIcon: Icons.description_outlined,
-            maxLines: 4,
-            validator: (value) => value?.isEmpty ?? true ? 'Description is required' : null,
-          ),
-          const SizedBox(height: 12),
-          
-          // Property Type Dropdown
-          _buildModernDropdown<String>(
-            value: currentType,
-            label: 'Property Type',
-            prefixIcon: Icons.home_work_outlined,
-            items: allowedTypes.map((type) {
-              return DropdownMenuItem(
-                value: type,
-                child: Text(
-                  _formatPropertyType(type),
-                  style: TextStyle(
-                    fontSize: isPhone ? 13 : 15,
-                    color: theme.colorScheme.onSurface,
+          // Section Card: Property Type
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.grey.shade100,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withValues(alpha: 0.15),
+                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.home_work_rounded, size: 20, color: theme.colorScheme.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Property Type', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                          Text('Select the type of property', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Property Type Chips
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: allowedTypes.asMap().entries.map((entry) {
+                      final type = entry.value;
+                      final isSelected = type == currentType;
+                      final typeIcons = {
+                        'apartment': Icons.apartment_rounded,
+                        'house': Icons.home_rounded,
+                        'villa': Icons.villa_rounded,
+                        'studio': Icons.weekend_rounded,
+                        'townhouse': Icons.holiday_village_rounded,
+                        'condo': Icons.domain_rounded,
+                        'room': Icons.single_bed_rounded,
+                        'pg': Icons.groups_rounded,
+                        'hostel': Icons.hotel_rounded,
+                        'duplex': Icons.stairs_rounded,
+                        'penthouse': Icons.roofing_rounded,
+                        'bungalow': Icons.cottage_rounded,
+                      };
+                      
+                      return Padding(
+                        padding: EdgeInsets.only(right: entry.key < allowedTypes.length - 1 ? 10 : 0),
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _selectedPropertyType = type;
+                            final allowed = _getAvailableAmenities();
+                            _selectedAmenities.removeWhere((a) => !allowed.contains(a));
+                            _scheduleDraftSave();
+                          }),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary])
+                                  : null,
+                              color: isSelected ? null : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: isSelected
+                                  ? [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(typeIcons[type] ?? Icons.home_rounded, size: 18, color: isSelected ? Colors.white : Colors.grey.shade600),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatPropertyType(type),
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
-              );
-            }).toList(),
-            onChanged: (value) => setState(() {
-              _selectedPropertyType = value!;
-              final allowed = _getAvailableAmenities();
-              _selectedAmenities.removeWhere((a) => !allowed.contains(a));
-              _scheduleDraftSave();
-            }),
+              ],
+            ),
           ),
           
           const SizedBox(height: 24),
@@ -330,38 +458,36 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                 child: OutlinedButton.icon(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: Text(
-                    'Back',
-                    style: TextStyle(fontSize: isPhone ? 11 : 12),
-                  ),
+                  label: Text('Cancel', style: TextStyle(fontSize: isPhone ? 12 : 13)),
                   style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: isPhone ? 12 : 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    side: BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.8),
-                    ),
+                    padding: EdgeInsets.symmetric(vertical: isPhone ? 14 : 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
                   ),
                 ),
               ),
-              const SizedBox(width: 19),
+              const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _tabController.animateTo(1),
-                  label: Text(
-                    'Continue',
-                    style: TextStyle(fontSize: isPhone ? 12 : 13),
+                flex: 2,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary]),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                    ],
                   ),
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: EdgeInsets.symmetric(vertical: isPhone ? 13 : 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _tabController.animateTo(1),
+                    label: Text('Continue', style: TextStyle(fontSize: isPhone ? 13 : 14, fontWeight: FontWeight.w600)),
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: isPhone ? 14 : 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    elevation: 0,
                   ),
                 ),
               ),
@@ -577,6 +703,75 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
         .where((w) => w.isNotEmpty)
         .map((word) => word[0].toUpperCase() + word.substring(1))
         .join(' ');
+  }
+
+  // Helper: Modern step navigation buttons
+  Widget _buildStepNavigation({
+    required int backStep,
+    required int nextStep,
+    required String nextLabel,
+    bool isLast = false,
+    VoidCallback? onNext,
+  }) {
+    final theme = Theme.of(context);
+    final isPhone = MediaQuery.sizeOf(context).width < 600;
+    
+    return Container(
+      padding: EdgeInsets.all(isPhone ? 12 : 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => _tabController.animateTo(backStep),
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: Text('Back', style: TextStyle(fontSize: isPhone ? 12 : 13)),
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: isPhone ? 14 : 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isLast 
+                      ? [Colors.green.shade600, Colors.green.shade400]
+                      : [theme.colorScheme.primary, theme.colorScheme.secondary],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isLast ? Colors.green : theme.colorScheme.primary).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: onNext ?? () => _tabController.animateTo(nextStep),
+                label: Text(nextLabel, style: TextStyle(fontSize: isPhone ? 13 : 14, fontWeight: FontWeight.w600)),
+                icon: Icon(isLast ? Icons.check_rounded : Icons.arrow_forward_rounded, size: 18),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: isPhone ? 14 : 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Returns base amenities plus type-specific extras without duplicates
@@ -1670,129 +1865,107 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       ),
       body: Column(
         children: [
-          // Ultra-minimal Progress Bar
+          // Modern Animated Step Progress
           Container(
-            height: 1,
+            padding: EdgeInsets.symmetric(vertical: isPhone ? 12 : 16, horizontal: 16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+              color: theme.colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: theme.shadowColor.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: LinearProgressIndicator(
-              value: (_tabController.index + 1) / 6,
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary.withValues(alpha: 0.8),
-              ),
-              minHeight: 1,
-            ),
-          ),
-          // Modern Tab Navigation
-          Container(
-            color: theme.colorScheme.surface,
             child: Column(
               children: [
-                // Ultra-compact Step indicator  
-                Container(
-                  padding: EdgeInsets.zero,
-                  child: const SizedBox.shrink(),
-                ),
-                // Tab bar with modern design
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: theme.colorScheme.outline.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    indicatorColor: theme.colorScheme.primary,
-                    indicatorWeight: 2.5,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    labelColor: theme.colorScheme.primary,
-                    unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    labelStyle: TextStyle(
-                      fontSize: isPhone ? 8 : 9,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.1,
-                    ),
-                    unselectedLabelStyle: TextStyle(
-                      fontSize: isPhone ? 8 : 9,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.1,
-                    ),
-                    labelPadding: EdgeInsets.symmetric(
-                      horizontal: isPhone ? 6 : 8,
-                    ),
-                    tabs: [
-                      Tab(
+                // Step circles
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (int i = 0; i < 6; i++) ...[
+                      // Step Icon & Label
+                      GestureDetector(
+                        onTap: () => _tabController.animateTo(i),
+                        behavior: HitTestBehavior.opaque,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.home_outlined, size: isPhone ? 14 : 16),
-                            SizedBox(height: isPhone ? 2 : 3),
-                            const Text('Basics'),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: i == _tabController.index ? 42 : 34,
+                              height: i == _tabController.index ? 42 : 34,
+                              decoration: BoxDecoration(
+                                gradient: (i <= _tabController.index)
+                                    ? LinearGradient(
+                                        colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                color: (i <= _tabController.index) ? null : Colors.grey.shade200,
+                                shape: BoxShape.circle,
+                                boxShadow: i == _tabController.index
+                                    ? [
+                                        BoxShadow(
+                                          color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: Icon(
+                                i < _tabController.index ? Icons.check_rounded : [
+                                  Icons.home_rounded,
+                                  Icons.apartment_rounded,
+                                  Icons.star_rounded,
+                                  Icons.payments_rounded,
+                                  Icons.photo_camera_rounded,
+                                  Icons.contact_phone_rounded,
+                                ][i],
+                                size: i == _tabController.index ? 20 : 16,
+                                color: (i <= _tabController.index) ? Colors.white : Colors.grey.shade500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              ['Basics', 'Details', 'Amenities', 'Pricing', 'Media', 'Contact'][i],
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: i == _tabController.index ? FontWeight.bold : FontWeight.w500,
+                                color: i == _tabController.index
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      Tab(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.info_outline, size: isPhone ? 14 : 16),
-                            SizedBox(height: isPhone ? 2 : 3),
-                            const Text('Property Details'),
-                          ],
+                      
+                      // Divider Line (only between steps)
+                      if (i < 5)
+                        Expanded(
+                          child: Container(
+                            height: 3,
+                            margin: const EdgeInsets.only(top: 19.5, left: 4, right: 4), 
+                            decoration: BoxDecoration(
+                              gradient: (i + 1 <= _tabController.index)
+                                  ? LinearGradient(colors: [theme.colorScheme.primary, theme.colorScheme.secondary])
+                                  : null,
+                              color: (i + 1 <= _tabController.index) ? null : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                         ),
-                      ),
-                      Tab(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.star_outline, size: isPhone ? 14 : 16),
-                            SizedBox(height: isPhone ? 2 : 3),
-                            const Text('Amenities'),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.payments_outlined, size: isPhone ? 14 : 16),
-                            SizedBox(height: isPhone ? 2 : 3),
-                            const Text('Pricing'),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.photo_camera_outlined, size: isPhone ? 14 : 16),
-                            SizedBox(height: isPhone ? 2 : 3),
-                            const Text('Media'),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.contact_phone_outlined, size: isPhone ? 14 : 16),
-                            SizedBox(height: isPhone ? 2 : 3),
-                            const Text('Contact'),
-                          ],
-                        ),
-                      ),
                     ],
-                  ),
+                  ],
                 ),
               ],
             ),
           ),
+
           // Form Content
           Expanded(
             child: Container(
@@ -2850,65 +3023,68 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
           const SizedBox(height: 12),
           SafeArea(
             top: false,
-            child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 3,
-                  offset: const Offset(0, -2),
+            child: _buildStepNavigation(backStep: 0, nextStep: 2, nextLabel: 'Amenities'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper: Modern Section Card
+  Widget _buildModernSectionCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required Widget child,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.grey.shade100,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: gradientColors.map((c) => c.withValues(alpha: 0.15)).toList()),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _tabController.animateTo(0),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    side: BorderSide(color: theme.colorScheme.outline),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back, size: 18),
-                      SizedBox(width: 8),
-                      Text('Back', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
+                child: Icon(icon, size: 20, color: gradientColors.first),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                    if (subtitle.isNotEmpty)
+                      Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600, fontSize: 11)),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: () => _tabController.animateTo(2),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Next: Amenities', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 20),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          )),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
         ],
       ),
     );
@@ -2919,250 +3095,217 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final amenities = _getAvailableAmenities();
     final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + 12.0;
+    
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 2, 16, bottomPad),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Amenities & Features',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            'Select all amenities that apply to your property. This helps tenants find what they\'re looking for.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
-          ),
-          const SizedBox(height: 15),
-          Text('Property Amenities', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: amenities.map((amenity) {
-              final isSelected = _selectedAmenities.contains(amenity);
-              return FilterChip(
-                label: Text(amenity),
-                selected: isSelected,
-                showCheckmark: false,
-                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                shape: StadiumBorder(
-                  side: BorderSide(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                        : theme.colorScheme.outline.withValues(alpha: 0.4),
-                  ),
-                ),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedAmenities.add(amenity);
-                    } else {
-                      _selectedAmenities.remove(amenity);
-                    }
-                  });
-                  _scheduleDraftSave();
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 15),
-          Text('Nearby Facilities', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _nearbyFacilities.map((facility) {
-              final isSelected = _selectedNearbyFacilities.contains(facility);
-              return FilterChip(
-                label: Text(facility),
-                selected: isSelected,
-                showCheckmark: false,
-                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                shape: StadiumBorder(
-                  side: BorderSide(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                        : theme.colorScheme.outline.withValues(alpha: 0.4),
-                  ),
-                ),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedNearbyFacilities.add(facility);
-                    } else {
-                      _selectedNearbyFacilities.remove(facility);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 15),
-          Text('Other Amenities', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          _buildCompactTextField(
-            controller: _otherAmenitiesController,
-            label: 'Additional Features (optional)',
-            hint: 'Any other amenities or special features...',
-            maxLines: 3,
-          ),
-          const SizedBox(height: 12),
-          Text('Tenant Preferences', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          LayoutBuilder(builder: (context, cons) {
-            final isXS = cons.maxWidth < 360;
-            if (isXS) {
-              return Column(children: [
-                DropdownButtonFormField<String>(
-                  initialValue: _preferredTenant,
-                  decoration: InputDecoration(
-                    labelText: 'Preferred Tenants*',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  selectedItemBuilder: (context) => _tenantPreferences
-                      .map((p) => Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(p, overflow: TextOverflow.ellipsis),
-                          ))
-                      .toList(),
-                  items: _tenantPreferences.map((pref) {
-                    return DropdownMenuItem(value: pref, child: Text(pref));
-                  }).toList(),
-                  onChanged: (value) => setState(() => _preferredTenant = value!),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _foodPreference,
-                  decoration: InputDecoration(
-                    labelText: 'Food Preference',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  selectedItemBuilder: (context) => _foodPreferences
-                      .map((p) => Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(p, overflow: TextOverflow.ellipsis),
-                          ))
-                      .toList(),
-                  items: _foodPreferences.map((pref) {
-                    return DropdownMenuItem(value: pref, child: Text(pref));
-                  }).toList(),
-                  onChanged: (value) => setState(() => _foodPreference = value!),
-                ),
-              ]);
-            }
-            return Row(children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _preferredTenant,
-                  decoration: InputDecoration(
-                    labelText: 'Preferred Tenants*',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  items: _tenantPreferences.map((pref) {
-                    return DropdownMenuItem(value: pref, child: Text(pref));
-                  }).toList(),
-                  onChanged: (value) => setState(() => _preferredTenant = value!),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _foodPreference,
-                  decoration: InputDecoration(
-                    labelText: 'Food Preference',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  items: _foodPreferences.map((pref) {
-                    return DropdownMenuItem(value: pref, child: Text(pref));
-                  }).toList(),
-                  onChanged: (value) => setState(() => _foodPreference = value!),
-                ),
-              ),
-            ]);
-          }),
-          const SizedBox(height: 15),
-          SwitchListTile(
-            title: const Text('Pets Allowed'),
-            subtitle: const Text('Allow tenants to keep pets in the property'),
-            value: _petsAllowed,
-            onChanged: (value) => setState(() => _petsAllowed = value),
-          ),
-          SwitchListTile(
-            title: const Text('Require government ID to book'),
-            subtitle: const Text('Seeker must upload a government ID photo during booking'),
-            value: _requireSeekerId,
-            onChanged: (value) {
-              setState(() => _requireSeekerId = value);
-              _scheduleDraftSave();
-            },
-          ),
-          const SizedBox(height: 15),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 3,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+            style: TextStyle(
+              fontSize: isPhone ? 15 : 16,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+              letterSpacing: -0.2,
             ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Select features to attract the right tenants',
+            style: TextStyle(
+              fontSize: isPhone ? 12 : 13,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Section: Property Amenities
+          _buildModernSectionCard(
+            title: 'Property Amenities', 
+            subtitle: 'Select available facilities',
+            icon: Icons.star_rounded,
+            gradientColors: [Colors.amber.shade700, Colors.orange.shade500],
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _tabController.animateTo(1),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    side: BorderSide(color: theme.colorScheme.outline),
+              children: amenities.map((amenity) {
+                final isSelected = _selectedAmenities.contains(amenity);
+                return FilterChip(
+                  label: Text(amenity),
+                  selected: isSelected,
+                  showCheckmark: false,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back, size: 20),
-                      SizedBox(width: 8),
-                      Text('Back', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    ],
+                  selectedColor: theme.colorScheme.primary,
+                  backgroundColor: theme.colorScheme.surface,
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: isSelected
+                          ? Colors.transparent
+                          : theme.colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedAmenities.add(amenity);
+                      } else {
+                        _selectedAmenities.remove(amenity);
+                      }
+                    });
+                    _scheduleDraftSave();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Section: Nearby Facilities
+          _buildModernSectionCard(
+            title: 'Nearby Facilities', 
+            subtitle: 'Establishments within 2km',
+            icon: Icons.location_on_rounded,
+            gradientColors: [Colors.blue.shade700, Colors.cyan.shade500],
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _nearbyFacilities.map((facility) {
+                final isSelected = _selectedNearbyFacilities.contains(facility);
+                return FilterChip(
+                  label: Text(facility),
+                  selected: isSelected,
+                  showCheckmark: false,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                  selectedColor: Colors.blue.shade600,
+                  backgroundColor: theme.colorScheme.surface,
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: isSelected
+                          ? Colors.transparent
+                          : theme.colorScheme.outline.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedNearbyFacilities.add(facility);
+                      } else {
+                        _selectedNearbyFacilities.remove(facility);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Section: Preferences & Rules
+          _buildModernSectionCard(
+            title: 'Preferences & Rules', 
+            subtitle: 'Set tenant criteria and house rules',
+            icon: Icons.rule_rounded,
+            gradientColors: [Colors.purple.shade700, Colors.purpleAccent.shade400],
+            child: Column(
+              children: [
+                _buildModernTextField(
+                    controller: _otherAmenitiesController,
+                    label: 'Additional Features',
+                    hint: 'Any other special perks...',
+                    prefixIcon: Icons.add_circle_outline_rounded,
+                    maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                LayoutBuilder(builder: (context, cons) {
+                  return Column(children: [
+                    DropdownButtonFormField<String>(
+                      value: _preferredTenant,
+                      decoration: InputDecoration(
+                        labelText: 'Preferred Tenants',
+                        prefixIcon: const Icon(Icons.people_outline_rounded, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      isExpanded: true,
+                      items: _tenantPreferences.map((pref) {
+                          return DropdownMenuItem(value: pref, child: Text(pref, style: const TextStyle(fontSize: 14)));
+                      }).toList(),
+                      onChanged: (value) => setState(() => _preferredTenant = value!),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _foodPreference,
+                      decoration: InputDecoration(
+                        labelText: 'Food Preference',
+                        prefixIcon: const Icon(Icons.restaurant_menu_rounded, size: 20),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      isExpanded: true,
+                      items: _foodPreferences.map((pref) {
+                        return DropdownMenuItem(value: pref, child: Text(pref, style: const TextStyle(fontSize: 14)));
+                      }).toList(),
+                      onChanged: (value) => setState(() => _foodPreference = value!),
+                    ),
+                  ]);
+                }),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+                  ),
+                  child: SwitchListTile(
+                    title: const Text('Pets Allowed', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Small pets like cats/dogs', style: TextStyle(fontSize: 12)),
+                    secondary: Icon(Icons.pets_rounded, color: _petsAllowed ? Colors.teal : Colors.grey),
+                    value: _petsAllowed,
+                    activeColor: Colors.teal,
+                    onChanged: (value) => setState(() => _petsAllowed = value),
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () => _tabController.animateTo(3),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 2,
+                const SizedBox(height: 8),
+                Container(
+                   decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Next: Pricing', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 20),
-                    ],
+                  child: SwitchListTile(
+                    title: const Text('Require Verified ID', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    subtitle: const Text('Govt. ID required for booking', style: TextStyle(fontSize: 12)),
+                    secondary: Icon(Icons.badge_rounded, color: _requireSeekerId ? Colors.blue : Colors.grey),
+                    value: _requireSeekerId,
+                    activeColor: Colors.blue,
+                    onChanged: (value) {
+                      setState(() => _requireSeekerId = value);
+                      _scheduleDraftSave();
+                    },
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 24),
+          _buildStepNavigation(backStep: 1, nextStep: 3, nextLabel: 'Pricing'),
         ],
       ),
     );
@@ -3173,342 +3316,240 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final isPG = _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel';
     final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + 12.0;
-    final rentLabel = isPG
-        ? 'Base Rent (per room)*'
-        : 'Monthly Rent*';
+    final rentLabel = isPG ? 'Base Rent (per room)*' : 'Monthly Rent*';
+
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 2, 16, bottomPad),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Pricing & Availability',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: isPhone ? 15 : 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: _buildCompactTextField(
-                controller: _monthlyRentController,
-                label: rentLabel,
-                prefixIcon: Icons.currency_rupee,
-                hint: 'e.g., 25000',
-                helperText: 'Amount billed monthly',
-                keyboardType: TextInputType.number,
-                validator: (value) => value?.isEmpty ?? true ? 'Price is required' : null,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildCompactTextField(
-                controller: _securityDepositController,
-                label: 'Security Deposit (₹, optional)',
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return null;
-                  }
-                  final n = int.tryParse(value.trim());
-                  if (n == null || n < 0) return 'Enter a valid amount';
-                  return null;
-                },
-                showRequiredMarker: false,
-              ),
-            ),
-          ]),
-          const SizedBox(height: 12),
-          _buildCompactTextField(
-            controller: _discountPercentController,
-            label: 'Discount (%) (optional)',
-            hint: '0-90',
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value == null || value.isEmpty) return null;
-              final d = double.tryParse(value.trim());
-              if (d == null) return 'Enter a valid number';
-              if (d < 0 || d > 90) return 'Enter 0-90';
-              return null;
-            },
-            showRequiredMarker: false,
-          ),
-          if (isPG) ...[
-            const SizedBox(height: 12),
-            _buildCompactTextField(
-              controller: _pgBedRentController,
-              label: 'Rent per Bed (₹, optional)',
-              hint: 'e.g., 8000',
-              keyboardType: TextInputType.number,
-            ),
-          ],
-          const SizedBox(height: 15),
-          Text('Charges Included in Rent', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _chargesIncluded.map((charge) {
-              final isSelected = _selectedChargesIncluded.contains(charge);
-              return FilterChip(
-                label: Text(charge),
-                selected: isSelected,
-                showCheckmark: false,
-                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                shape: StadiumBorder(
-                  side: BorderSide(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                        : theme.colorScheme.outline.withValues(alpha: 0.4),
-                  ),
-                ),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedChargesIncluded.add(charge);
-                    } else {
-                      _selectedChargesIncluded.remove(charge);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 15),
-          _buildCompactTextField(
-            controller: _houseRulesController,
-            label: 'House Rules (optional)',
-            hint: 'e.g., No loud music after 10 PM; no smoking inside the flat',
-            maxLines: 3,
-          ),
-          const SizedBox(height: 15),
-          Text('Rent Type', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              {'key': 'both', 'label': 'Both (per day & per month)'},
-              {'key': 'rental', 'label': 'Per Day'},
-              {'key': 'monthly', 'label': 'Per Month'},
-            ].map((m) {
-              final String k = m['key']!;
-              final bool sel = _rentalModeListing == k;
-              return ChoiceChip(
-                showCheckmark: false,
-                selected: sel,
-                label: Text(m['label']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
-                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                shape: const StadiumBorder(),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                onSelected: (_) { setState(() { _rentalModeListing = k; }); _scheduleDraftSave(); },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          if (_rentalModeListing == 'monthly') ...[
-            const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              initialValue: _minStayMonthsMonthly,
-              decoration: InputDecoration(
-                labelText: 'Minimum Stay (months)',
-                helperText: 'Set to Any if you do not enforce a minimum',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              isExpanded: true,
-              items: <int>[0, 1, 2, 3, 6, 9, 12]
-                  .map((m) => DropdownMenuItem(value: m, child: Text(m == 0 ? 'Any' : '$m months')))
-                  .toList(),
-              onChanged: (v) => setState(() { _minStayMonthsMonthly = v ?? 0; _scheduleDraftSave(); }),
-            ),
-            const SizedBox(height: 10),
-            _buildCompactTextField(
-              controller: _noticePeriodDaysController,
-              label: 'Notice Period (days) for Cancellation',
-              hint: 'e.g., 30',
-              helperText: 'Max 90 days',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (_rentalModeListing == 'monthly') {
-                  if (value != null && value.isNotEmpty) {
-                    final n = int.tryParse(value.trim());
-                    if (n == null || n < 0) return 'Enter a valid number of days';
-                    if (n > 90) return 'Maximum allowed is 90 days';
-                  }
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: const [7, 15, 30, 45, 60, 90].map((d) {
-                return Builder(builder: (context) {
-                  final theme = Theme.of(context);
-                  final isSelected = _noticePeriodDaysController.text.trim() == d.toString();
-                  return ChoiceChip(
-                    label: Text('$d days'),
-                    selected: isSelected,
-                    showCheckmark: false,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
-                    backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                    onSelected: (_) {
-                      setState(() {
-                        _noticePeriodDaysController.text = d.toString();
-                      });
-                      _scheduleDraftSave();
-                    },
-                  );
-                });
-              }).toList(),
-            ),
-          ],
-          const SizedBox(height: 15),
-          Text('Availability', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          _buildCompactTextField(
-            controller: _availableFromController,
-            label: 'Available From (date)',
-            hint: 'e.g., 01-12-2025',
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _availabilityStatus,
-            decoration: InputDecoration(
-              labelText: 'Current Status',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              isDense: true,
-            ),
-            isExpanded: true,
-            items: const [
-              DropdownMenuItem(value: 'Vacant', child: Text('Vacant')),
-              DropdownMenuItem(value: 'Occupied', child: Text('Occupied')),
-            ],
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _availabilityStatus = v);
-              _scheduleDraftSave();
-            },
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            value: _earlyMoveInAllowed,
-            onChanged: (v) {
-              setState(() => _earlyMoveInAllowed = v);
-              _scheduleDraftSave();
-            },
-            title: const Text('Early move-in allowed'),
-            contentPadding: EdgeInsets.zero,
-          ),
-          const SizedBox(height: 8),
-          _buildCompactTextField(
-            controller: _maxOccupancyController,
-            label: 'Maximum Occupancy (people)',
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: const [1, 2, 3, 4, 5, 6].map((n) {
-              return Builder(builder: (context) {
-                final theme = Theme.of(context);
-                final isSelected = _maxOccupancyController.text.trim() == n.toString();
-                return ChoiceChip(
-                  label: Text('$n pax'),
-                  selected: isSelected,
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  onSelected: (_) {
-                    setState(() {
-                      _maxOccupancyController.text = n.toString();
-                    });
-                    _scheduleDraftSave();
-                  },
-                );
-              });
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-          _buildCompactTextField(
-            controller: _moveInRequirementsController,
-            label: 'Move-in Requirements (optional)',
-            hint: 'e.g., ID proof, salary slips, agreement signing',
-            maxLines: 3,
-          ),
-          const SizedBox(height: 15),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 3,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.spaceBetween,
+          const SizedBox(height: 16),
+
+          // Section: Pricing Details
+          _buildModernSectionCard(
+            title: 'Pricing Details',
+            subtitle: 'Set your rent and deposits',
+            icon: Icons.currency_rupee_rounded,
+            gradientColors: [Colors.green.shade700, Colors.teal.shade500],
+            child: Column(
               children: [
-                OutlinedButton(
-                  onPressed: () => _tabController.animateTo(2),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                Row(children: [
+                  Expanded(
+                    child: _buildCompactTextField(
+                      controller: _monthlyRentController,
+                      label: rentLabel,
+                      prefixIcon: Icons.currency_rupee,
+                      hint: 'e.g., 25000',
+                      keyboardType: TextInputType.number,
+                      validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
                     ),
-                    side: BorderSide(color: theme.colorScheme.outline),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_back, size: 20),
-                      SizedBox(width: 8),
-                      Text('Back', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildCompactTextField(
+                      controller: _securityDepositController,
+                      label: 'Deposit (₹)',
+                      hint: 'Optional',
+                      keyboardType: TextInputType.number,
+                      showRequiredMarker: false,
+                    ),
                   ),
+                ]),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(
+                    child: _buildCompactTextField(
+                      controller: _discountPercentController,
+                      label: 'Discount (%)',
+                      hint: '0-90',
+                      keyboardType: TextInputType.number,
+                      showRequiredMarker: false,
+                    ),
+                  ),
+                  if (isPG) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildCompactTextField(
+                        controller: _pgBedRentController,
+                        label: 'Bed Rent (₹)',
+                        hint: 'Optional',
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ] else 
+                    const Spacer(),
+                ]),
+                const SizedBox(height: 16),
+                Text('Charges Included', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _chargesIncluded.map((charge) {
+                    final isSelected = _selectedChargesIncluded.contains(charge);
+                    return FilterChip(
+                      label: Text(charge),
+                      selected: isSelected,
+                      showCheckmark: false,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      selectedColor: Colors.teal,
+                      backgroundColor: theme.colorScheme.surface,
+                      shape: StadiumBorder(side: BorderSide(color: isSelected ? Colors.transparent : theme.colorScheme.outline.withValues(alpha: 0.3))),
+                      onSelected: (selected) {
+                        setState(() {
+                          selected ? _selectedChargesIncluded.add(charge) : _selectedChargesIncluded.remove(charge);
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
-                ElevatedButton(
-                  onPressed: () => _tabController.animateTo(4),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 2,
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Section: Rental Terms
+          _buildModernSectionCard(
+            title: 'Rental Terms',
+            subtitle: 'Lease duration and rules',
+            icon: Icons.gavel_rounded,
+            gradientColors: [Colors.indigo.shade600, Colors.blue.shade500],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCompactTextField(
+                  controller: _houseRulesController,
+                  label: 'House Rules',
+                  hint: 'e.g., No loud music after 10 PM...',
+                  maxLines: 2,
+                  prefixIcon: Icons.library_books_rounded,
+                ),
+                const SizedBox(height: 16),
+                Text('Rent Duration', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    {'key': 'both', 'label': 'Daily & Monthly'},
+                    {'key': 'rental', 'label': 'Daily Only'},
+                    {'key': 'monthly', 'label': 'Monthly Only'},
+                  ].map((m) {
+                    final sel = _rentalModeListing == m['key'];
+                    return ChoiceChip(
+                      label: Text(m['label']!),
+                      selected: sel,
+                      onSelected: (_) => setState(() => _rentalModeListing = m['key']!),
+                      selectedColor: Colors.indigo,
+                      labelStyle: TextStyle(color: sel ? Colors.white : theme.colorScheme.onSurface, fontSize: 12),
+                    );
+                  }).toList(),
+                ),
+                if (_rentalModeListing == 'monthly') ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _minStayMonthsMonthly,
+                    decoration: InputDecoration(
+                        labelText: 'Minimum Stay', prefixIcon: const Icon(Icons.calendar_today_rounded, size: 18), 
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
+                    items: [0, 1, 3, 6, 11, 12].map((m) => DropdownMenuItem(value: m, child: Text(m == 0 ? 'Any' : '$m Months'))).toList(),
+                    onChanged: (v) => setState(() => _minStayMonthsMonthly = v!),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Next: Photos', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 20),
-                    ],
+                  const SizedBox(height: 12),
+                   _buildCompactTextField(
+                    controller: _noticePeriodDaysController,
+                    label: 'Notice Period (Days)',
+                    hint: '30',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.notifications_active_rounded,
+                  ),
+                ]
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Section: Availability
+          _buildModernSectionCard(
+            title: 'Availability',
+            subtitle: 'Occupancy and move-in dates',
+            icon: Icons.event_available_rounded,
+            gradientColors: [Colors.orange.shade700, Colors.deepOrange.shade500],
+            child: Column(
+              children: [
+                Row(children: [
+                  Expanded(
+                    child: _buildCompactTextField(
+                      controller: _availableFromController,
+                      label: 'Available From',
+                      hint: 'DD-MM-YYYY',
+                      prefixIcon: Icons.calendar_month_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _availabilityStatus,
+                      decoration: InputDecoration(
+                        labelText: 'Status', 
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), 
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        prefixIcon: Icon(Icons.info_outline, size: 18, color: _availabilityStatus == 'Vacant' ? Colors.green : Colors.red),
+                      ),
+                      items: ['Vacant', 'Occupied'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                      onChanged: (v) => setState(() => _availabilityStatus = v!),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Early Move-in Allowed', style: TextStyle(fontSize: 14)),
+                  value: _earlyMoveInAllowed,
+                  activeColor: Colors.deepOrange,
+                  onChanged: (v) => setState(() => _earlyMoveInAllowed = v),
+                ),
+                const SizedBox(height: 12),
+                _buildCompactTextField(
+                  controller: _maxOccupancyController,
+                  label: 'Max Occupancy',
+                  hint: 'e.g., 4',
+                  keyboardType: TextInputType.number,
+                  prefixIcon: Icons.groups_rounded,
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [1, 2, 3, 4, 5, 6].map((n) {
+                      final isSelected = _maxOccupancyController.text == n.toString();
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ChoiceChip(
+                          label: Text('$n'),
+                          selected: isSelected,
+                          onSelected: (_) => setState(() => _maxOccupancyController.text = n.toString()),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
             ),
           ),
+          
+          const SizedBox(height: 24),
+          _buildStepNavigation(backStep: 2, nextStep: 4, nextLabel: 'Photos'),
         ],
       ),
     );
@@ -3526,292 +3567,105 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Property Media',
-            style: TextStyle(
-              fontSize: isPhone ? 16 : 16,
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-              letterSpacing: -0.2,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Text(
+              'Property Media',
+              style: TextStyle(fontSize: isPhone ? 16 : 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Add photos to showcase your property',
-            style: TextStyle(
-              fontSize: isPhone ? 12 : 13,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 16),
           
-          // Modern Photo Upload Card
-          Container(
-            padding: EdgeInsets.all(isPhone ? 12 : 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                width: 1.5,
-                style: BorderStyle.solid,
-              ),
-            ),
+          _buildModernSectionCard(
+            title: 'Photos',
+            subtitle: 'Add high quality images',
+            icon: Icons.photo_library_rounded,
+            gradientColors: [Colors.pink.shade600, Colors.red.shade400],
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.add_photo_alternate_rounded,
-                    size: isPhone ? 32 : 36,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Upload Property Photos',
-                  style: TextStyle(
-                    fontSize: isPhone ? 13 : 14,
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'JPEG, PNG • Max 5MB per image',
-                  style: TextStyle(
-                    fontSize: isPhone ? 11 : 12,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: _pickImages,
-                  icon: const Icon(Icons.upload_rounded, size: 18),
-                  label: Text(
-                    'Choose Photos',
-                    style: TextStyle(fontSize: isPhone ? 14 : 15),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: isPhone ? 10 : 12,
+                GestureDetector(
+                  onTap: _pickImages,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), style: BorderStyle.solid),
+                      boxShadow: [BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.05), blurRadius: 8, offset: const Offset(0, 4))],
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4,
-                  runSpacing: 2,
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: Colors.grey),
-                    Text(
-                      'Upload at least 3 photos. First photo will be used as the cover image.',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4,
-                  runSpacing: 2,
-                  children: [
-                    Icon(Icons.lightbulb_outline, size: 16, color: Colors.grey),
-                    Text(
-                      'Tip: Include photos of all rooms, kitchen, bathroom and no clutter.',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
-          // Show selected images
-          if (_selectedImages.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Selected Photos (${_selectedImages.length})',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: _selectedImages.length,
-              itemBuilder: (context, index) {
-                final isCover = index == 0;
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(_selectedImages[index].path),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                    ),
-                    if (isCover)
-                      Positioned(
-                        left: 4,
-                        top: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'COVER',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!isCover)
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              final imgToMakeCover = _selectedImages.removeAt(index);
-                              _selectedImages.insert(0, imgToMakeCover);
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'Make cover',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      top: 4,
-                      right: isCover ? 4 : 46,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedImages.removeAt(index);
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
+                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            Icons.close,
-                            color: theme.colorScheme.onPrimary,
-                            size: 16,
-                          ),
+                          child: Icon(Icons.add_photo_alternate_rounded, size: 32, color: theme.colorScheme.primary),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        const Text('Click to Upload Photos', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text('Max 5MB per image • JPEG, PNG', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                      ],
                     ),
-                  ],
-                );
-              },
-            ),
-          ],
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.spaceBetween,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _tabController.animateTo(2),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    side: BorderSide(color: theme.colorScheme.outline),
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
+                ),
+                 if (_selectedImages.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
-                      Icon(Icons.arrow_back, size: 20),
-                      SizedBox(width: 8),
-                      Text('Back', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text('Selected Photos (${_selectedImages.length})', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: () => setState(() => _selectedImages.clear()), 
+                        icon: const Icon(Icons.clear_all, size: 16),
+                        label: const Text('Clear All'),
+                        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                      )
                     ],
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () => _tabController.animateTo(4),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 2,
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: crossAxisCount, crossAxisSpacing: 8, mainAxisSpacing: 8),
+                    itemCount: _selectedImages.length,
+                    itemBuilder: (context, index) {
+                      final isCover = index == 0;
+                      return Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(File(_selectedImages[index].path), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                          ),
+                          if (isCover)
+                            Positioned(
+                              left: 6, top: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
+                                child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          Positioned(
+                            right: 4, top: 4,
+                            child: InkWell(
+                              onTap: () => setState(() => _selectedImages.removeAt(index)),
+                              child: const CircleAvatar(backgroundColor: Colors.white, radius: 10, child: Icon(Icons.close, size: 14, color: Colors.black)),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Next: Contact Info', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 20),
-                    ],
-                  ),
-                ),
+                ],
               ],
             ),
           ),
+         
+          const SizedBox(height: 24),
+          _buildStepNavigation(backStep: 3, nextStep: 5, nextLabel: 'Contact'),
         ],
       ),
     );
@@ -3821,6 +3675,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
     final bottomPad = (isPhone ? 56.0 : 72.0) + MediaQuery.of(context).padding.bottom + 12.0;
+    
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(16, 4, 16, bottomPad),
       child: Column(

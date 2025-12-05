@@ -1303,7 +1303,7 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                 case KycStatus.rejected:
                   baseColor = Colors.red; label = 'KYC Rejected'; icon = Icons.error_outline; ctaLabel = 'Fix & Resubmit'; break;
                 case KycStatus.notStarted:
-                  baseColor = Colors.orange; label = 'KYC Required'; icon = Icons.verified_user_outlined; ctaLabel = 'Start KYC'; break;
+                  baseColor = Colors.orange; label = ''; icon = Icons.verified_user_outlined; ctaLabel = 'KYC Required'; break;
               }
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -1312,27 +1312,51 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
                   runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: baseColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: baseColor.withValues(alpha: 0.2)),
+                    // Show label chip only if label is not empty (not for notStarted status)
+                    if (label.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: baseColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: baseColor.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(icon, size: 16, color: baseColor),
+                            const SizedBox(width: 6),
+                            Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon, size: 16, color: baseColor),
-                          const SizedBox(width: 6),
-                          Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
                     if (!verified && ctaLabel != null)
-                      OutlinedButton(
-                        onPressed: () => context.push('/kyc'),
-                        child: Text(ctaLabel),
-                      ),
+                      // For notStarted, use chip-style button; otherwise use OutlinedButton
+                      status == KycStatus.notStarted
+                          ? InkWell(
+                              onTap: () => context.push('/kyc'),
+                              borderRadius: BorderRadius.circular(999),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: baseColor.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: baseColor.withValues(alpha: 0.2)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(icon, size: 16, color: baseColor),
+                                    const SizedBox(width: 6),
+                                    Text(ctaLabel, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : OutlinedButton(
+                              onPressed: () => context.push('/kyc'),
+                              child: Text(ctaLabel),
+                            ),
                   ],
                 ),
               );

@@ -42,4 +42,22 @@ class ListingRepository {
     }
     return data.map((json) => VehicleModel.fromJson(json)).toList();
   }
+
+  /// Fetch a single property by ID from backend
+  Future<PropertyModel?> getPropertyById(String id) async {
+    final response = await _api.getPropertyById(id);
+    if (response['success'] == true && response['data'] != null) {
+      return PropertyModel.fromJson(response['data']);
+    }
+    return null;
+  }
+
+  /// Fetch a single vehicle by ID from backend
+  Future<VehicleModel?> getVehicleById(String id) async {
+    final response = await _api.getVehicleById(id);
+    if (response['success'] == true && response['data'] != null) {
+      return VehicleModel.fromJson(response['data']);
+    }
+    return null;
+  }
 }
