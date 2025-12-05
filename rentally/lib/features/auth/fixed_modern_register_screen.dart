@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../app/auth_router.dart';
-import '../../app/app_state.dart';
-import '../../services/error_handling_service.dart';
 import '../../services/loading_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../utils/snackbar_utils.dart';
+import '../../core/constants/api_constants.dart';
 
 class FixedModernRegisterScreen extends ConsumerStatefulWidget {
   const FixedModernRegisterScreen({super.key, this.referralCode});
@@ -101,9 +102,9 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
     }
 
     try {
-      ref.startLoading('auth', message: 'Creating account...');
+      ref.startLoading('auth', message: 'Sending verification code...');
 
-      final registrationData = {
+      final registrationData = <String, dynamic>{
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
@@ -117,41 +118,36 @@ class _FixedModernRegisterScreenState extends ConsumerState<FixedModernRegisterS
         registrationData['referralCode'] = referralCode;
       }
       
-      debugPrint('Registration payload: $registrationData');
+      debugPrint('Registration payload (pre-OTP): $registrationData');
 
-      // Call backend registration API using AuthNotifier
-      await ref.read(authProvider.notifier).signUp(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-        UserRole.seeker, // Default role, can be changed later
-        phone: _phoneController.text.trim(),
-        referralCode: referralCode,
+      // Step 1: Request OTP from backend (does not create user yet)
+      final otpUrl = Uri.parse('${ApiConstants.authBaseUrl}${ApiConstants.sendOtpEndpoint}');
+      final otpResponse = await http.post(
+        otpUrl,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': registrationData['name'],
+          'email': registrationData['email'],
+          'password': registrationData['password'],
+          'phone': registrationData['phone'],
+        }),
       );
 
-      debugPrint('🟢 signUp completed, checking auth state...');
-      // Check if registration was successful
-      final authState = ref.read(authProvider);
-      debugPrint('🟢 Auth status: ${authState.status}, hasUser: ${authState.user != null}, hasError: ${authState.error != null}');
-      
-      if (authState.status == AuthStatus.authenticated && authState.user != null) {
-        if (mounted) {
-          final code = _referralController.text.trim();
-          final msg = code.isNotEmpty
-              ? 'Account created successfully with referral code!'
-              : 'Account created successfully!';
-          context.showSuccess(msg);
-          debugPrint('🟢 Redirecting to home page');
-          // Redirect to home page after successful registration
-          context.go(Routes.home);
-        }
-      } else if (authState.error != null) {
-        debugPrint('🔴 Auth state has error: ${authState.error}');
-        throw Exception(authState.error);
-      } else {
-        debugPrint('🔴 Registration failed with unknown reason');
-        throw Exception('Registration failed. Please try again.');
+      final otpData = jsonDecode(otpResponse.body) as Map<String, dynamic>;
+      if (otpData['success'] != true) {
+        final msg = otpData['message']?.toString() ?? 'Failed to send verification code';
+        throw Exception(msg);
       }
+
+      if (!mounted) return;
+
+      // Step 2: Navigate to OTP verification screen with registration data
+      context.push(Routes.otpVerification, extra: {
+        'phoneNumber': _emailController.text.trim(), // label only; backend uses email for OTP
+        'verificationId': '',
+        'isPasswordReset': false,
+        'registrationData': registrationData,
+      });
     } catch (e) {
       debugPrint('🔴 Registration error caught: $e');
       if (mounted) {

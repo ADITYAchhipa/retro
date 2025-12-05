@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 // Modular auth widgets
 import 'widgets/auth_header.dart';
@@ -12,17 +13,22 @@ import 'widgets/auth_button.dart';
 // Services
 import '../../widgets/responsive_layout.dart';
 import '../../utils/snackbar_utils.dart';
+import '../../core/constants/api_constants.dart';
+import '../../app/app_state.dart';
+import '../../app/auth_router.dart';
 
 class ModularOtpVerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
   final String verificationId;
   final bool isPasswordReset;
+  final Map<String, dynamic>? registrationData;
 
   const ModularOtpVerificationScreen({
     super.key,
     required this.phoneNumber,
     required this.verificationId,
     this.isPasswordReset = false,
+    this.registrationData,
   });
 
   @override
@@ -91,23 +97,78 @@ class _ModularOtpVerificationScreenState extends ConsumerState<ModularOtpVerific
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Implement actual OTP verification logic with UserProvider
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
-      if (!mounted) return;
-      
-      _showSnackBar('Verification successful!');
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      if (!mounted) return;
-      
-      // Navigate based on verification type
-      if (widget.isPasswordReset) {
-        context.pushReplacement('/reset-password', extra: {'email': widget.phoneNumber});
-      } else {
-        context.go('/role-selection');
+      // 1) Verify OTP with backend
+      final url = Uri.parse('${ApiConstants.authBaseUrl}${ApiConstants.verifyOtpEndpoint}');
+      final response = await http.post(
+        url,
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({'otp': _otpCode}),
+      );
+
+      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (data['success'] != true) {
+        throw Exception(data['message'] ?? 'OTP verification failed');
       }
-      
+
+      if (!mounted) return;
+
+      // 2) If this OTP flow is for password reset, route to reset screen
+      if (widget.isPasswordReset) {
+        _showSnackBar('Verification successful!');
+        await Future.delayed(const Duration(milliseconds: 400));
+        if (!mounted) return;
+        context.pushReplacement(Routes.resetPassword, extra: {'email': widget.phoneNumber});
+        return;
+      }
+
+      // 3) Registration flow: complete sign-up after successful OTP
+      final reg = widget.registrationData;
+      if (reg == null) {
+        _showSnackBar('Registration data is missing. Please register again.', isError: true);
+        return;
+      }
+
+      final String name = (reg['name'] as String?)?.trim() ?? '';
+      final String email = (reg['email'] as String?)?.trim() ?? '';
+      final String password = (reg['password'] as String?) ?? '';
+      final String? phone = (reg['phone'] as String?)?.trim();
+      final String? referralCode = (reg['referralCode'] as String?)?.trim();
+
+      if (name.isEmpty || email.isEmpty || password.isEmpty) {
+        _showSnackBar('Registration data invalid. Please try again.', isError: true);
+        return;
+      }
+
+      try {
+        await ref.read(authProvider.notifier).signUp(
+          name,
+          email,
+          password,
+          UserRole.seeker,
+          phone: phone,
+          referralCode: referralCode,
+        );
+      } catch (e) {
+        if (!mounted) return;
+        final msg = e.toString().startsWith('Exception: ')
+            ? e.toString().substring(11)
+            : e.toString();
+        _showSnackBar('Registration failed: $msg', isError: true);
+        return;
+      }
+
+      if (!mounted) return;
+
+      final authState = ref.read(authProvider);
+      if (authState.status == AuthStatus.authenticated && authState.user != null) {
+        _showSnackBar('Verification successful!');
+        await Future.delayed(const Duration(milliseconds: 400));
+        if (!mounted) return;
+        // After verified registration, go to role selection (existing flow)
+        context.go(Routes.role);
+      } else {
+        _showSnackBar('Registration failed after verification. Please try again.', isError: true);
+      }
     } catch (e) {
       if (mounted) {
         _showSnackBar('Invalid verification code. Please try again.', isError: true);

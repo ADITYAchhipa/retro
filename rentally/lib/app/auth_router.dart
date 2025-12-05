@@ -293,10 +293,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           final phoneNumber = extra['phoneNumber'] ?? state.uri.queryParameters['phone'] ?? '';
           final verificationId = extra['verificationId'] ?? state.uri.queryParameters['verificationId'] ?? '';
           final isPasswordReset = extra['isPasswordReset'] ?? false;
+          final Map<String, dynamic>? registrationData = extra['registrationData'] as Map<String, dynamic>?;
           return _fadeSlidePage(child: ModularOtpVerificationScreen(
             phoneNumber: phoneNumber,
             verificationId: verificationId,
             isPasswordReset: isPasswordReset,
+            registrationData: registrationData,
           ));
         },
       ),

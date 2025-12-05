@@ -88,10 +88,10 @@ class _MainShellState extends ConsumerState<MainShell> {
         final bool onPrimaryTab = (currentRole == UserRole.owner)
             ? ownerTabs.contains(location)
             : seekerTabs.contains(location);
-        // On primary tab roots, always show bottom bar regardless of immersive flag.
-        // This prevents cases where an immersive route forgets to reset the flag
-        // and avoids mutating providers during build.
-        final bool effectiveImmersive = onPrimaryTab ? false : immersiveOpen;
+        // Allow immersive overlays (filters, full-screen dialogs) to hide bottom bar
+        // even on primary tabs, as long as they reset immersiveRouteOpenProvider
+        // when closed.
+        final bool effectiveImmersive = immersiveOpen;
         final bool hideBottomBar = effectiveImmersive || !onPrimaryTab;
 
         // Debug: log route and visibility (debug builds only)

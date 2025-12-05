@@ -147,11 +147,93 @@ class _ModularWishlistScreenState
   ListingViewModel _toViewModel(Map<String, dynamic> item) {
     String type = (item['type']?.toString() ?? 'property');
     String cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+    String typeChipLabel(String rawType) {
+      final lower = rawType.toLowerCase();
+      if (lower == 'vehicle') return 'Vehicle';
+      if (lower == 'property') return 'Property';
+      if (lower.startsWith('venue_')) {
+        switch (lower) {
+          case 'venue_banquet_hall': return 'Banquet Hall';
+          case 'venue_wedding_venue': return 'Wedding Venue';
+          case 'venue_party_hall': return 'Party Hall';
+          case 'venue_conference_room': return 'Conference Room';
+          case 'venue_meeting_room': return 'Meeting Room';
+          case 'venue_auditorium_theatre': return 'Auditorium / Theatre';
+          case 'venue_outdoor_lawn_garden': return 'Outdoor Lawn / Garden';
+          case 'venue_rooftop_venue': return 'Rooftop Venue';
+          case 'venue_hotel_ballroom': return 'Hotel Ballroom';
+          case 'venue_resort_venue': return 'Resort Venue';
+          case 'venue_farmhouse_villa_event_space': return 'Farmhouse / Villa Event Space';
+          case 'venue_studio_(photo_video_music)': return 'Studio (Photo / Video / Music)';
+          case 'venue_exhibition_center': return 'Exhibition Center';
+          case 'venue_club_lounge_event_space': return 'Club / Lounge Event Space';
+          case 'venue_private_dining_room': return 'Private Dining Room';
+          case 'venue_co-working_event_lounge': return 'Co-working Event Lounge';
+          case 'venue_retreat_site_campground': return 'Retreat Site / Campground';
+        }
+        final slug = lower.substring('venue_'.length);
+        final parts = slug.split('_').where((p) => p.isNotEmpty).toList();
+        if (parts.isEmpty) return 'Venue';
+        return parts.map(cap).join(' ');
+      }
+      return cap(rawType);
+    }
     final Map<String, dynamic> am = (item['amenities'] as Map<String, dynamic>? ) ?? const {};
     final metas = <ListingMetaItem>[];
-    if ((am['wifi'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.wifi, text: 'WiFi'));
-    if ((am['parking'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.local_parking, text: 'Parking'));
-    if ((am['pool'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.pool, text: 'Pool'));
+
+    // Category-aware meta items
+    final String typeLower = type.toLowerCase();
+    final bool isVehicle = (typeLower == 'vehicle');
+    final bool isVenue = typeLower.startsWith('venue_') || typeLower == 'venue';
+
+    if (isVehicle) {
+      // Seats
+      int seats = 0;
+      final seatsRaw = item['seats'] ?? item['seatCount'];
+      if (seatsRaw is num) seats = seatsRaw.toInt();
+      if (seats == 0 && am['seats'] is num) seats = (am['seats'] as num).toInt();
+      if (seats > 0) {
+        metas.add(ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '$seats'));
+      }
+      // Transmission
+      final transRaw = (item['transmission'] ?? am['transmission'] ?? '').toString().toLowerCase();
+      final String transLabel = transRaw.isEmpty
+          ? ''
+          : (transRaw[0].toUpperCase() + transRaw.substring(1));
+      if (transLabel.isNotEmpty) {
+        metas.add(ListingMetaItem(icon: Icons.settings, text: transLabel));
+      }
+      // Fuel
+      final fuelRaw = (item['fuel'] ?? item['fuelType'] ?? am['fuel'] ?? am['fuel_type'] ?? '').toString().toLowerCase();
+      final String fuelLabel = fuelRaw.isEmpty
+          ? ''
+          : (fuelRaw[0].toUpperCase() + fuelRaw.substring(1));
+      if (fuelLabel.isNotEmpty) {
+        final fuelIcon = fuelRaw == 'electric' ? Icons.electric_bolt : Icons.local_gas_station;
+        metas.add(ListingMetaItem(icon: fuelIcon, text: fuelLabel));
+      }
+    } else if (isVenue) {
+      // Venue seating / guests from amenities map when available
+      int seating = 0;
+      int maxGuests = 0;
+      final s1 = am['seating_capacity'];
+      final s2 = am['venue_seated_capacity'];
+      final mg = am['max_guests'];
+      if (s1 is num) seating = s1.toInt();
+      if (seating == 0 && s2 is num) seating = s2.toInt();
+      if (mg is num) maxGuests = mg.toInt();
+      if (seating > 0) {
+        metas.add(ListingMetaItem(icon: Icons.event_seat, text: '$seating seating'));
+      }
+      if (maxGuests > 0) {
+        metas.add(ListingMetaItem(icon: Icons.groups, text: '$maxGuests guests'));
+      }
+    } else {
+      // Generic property meta based on common amenities
+      if ((am['wifi'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.wifi, text: 'WiFi'));
+      if ((am['parking'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.local_parking, text: 'Parking'));
+      if ((am['pool'] ?? false) == true) metas.add(const ListingMetaItem(icon: Icons.pool, text: 'Pool'));
+    }
 
     // Pick a primary image from supported keys
     String? pickImage(Map<String, dynamic> it) {
@@ -199,7 +281,6 @@ class _ModularWishlistScreenState
     }
 
     // Determine proper unit based on owner-selected unit (from ListingService.Listing)
-    final bool isVehicle = (type == 'vehicle');
     final String ru = (item['rentalUnit']?.toString().toLowerCase() ?? '').trim();
     final String unit = isVehicle ? (ru.isNotEmpty ? ru : 'day') : (ru.isNotEmpty ? ru : 'month');
     final double amount = (item['price'] is num) ? (item['price'] as num).toDouble() : 0.0;
@@ -214,7 +295,7 @@ class _ModularWishlistScreenState
       imageUrl: pickImage(item),
       rating: (item['rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (item['reviews'] ?? item['reviewCount']) as int?,
-      chips: [cap(type)],
+      chips: [typeChipLabel(type)],
       metaItems: metas,
       fallbackIcon: isVehicle ? Icons.directions_car : Icons.home,
       isVehicle: isVehicle,

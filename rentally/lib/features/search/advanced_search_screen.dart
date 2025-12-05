@@ -19,6 +19,7 @@ import '../../core/neo/neo.dart';
 import '../../core/theme/enterprise_dark_theme.dart';
 import '../../core/theme/enterprise_light_theme.dart';
 import '../../core/services/mock_api_service.dart' show RealApiService;
+import '../../core/providers/ui_visibility_provider.dart';
 
 /// Quick filter model for search screen
 class QuickFilter {
@@ -49,6 +50,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   
   // Controllers
   final _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final _scrollController = ScrollController();
   double _lastScrollOffset = 0;
   // Filters open in a centered dialog; no inline animations
@@ -82,10 +84,19 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   bool _imagesOnly = false;
   int _builtUpMinSqFt = 0; // 0 = Any
   int _builtUpMaxSqFt = 0; // 0 = Any / 4000+ etc.
-  String _toRentCategory = 'residential'; // residential | commercial (UI only)
+  String _toRentCategory = 'residential'; // residential | commercial | venue (UI only)
   String _furnishType = 'any'; // any | full | semi | unfurnished
   String _preferredTenant = 'any'; // any | family | bachelors | students | male | female | others
-  Set<String> _amenities = <String>{}; // wifi, parking, ac, heating, pets, kitchen, balcony, elevator
+  String _pgGender = 'any'; // any | male | female | mixed
+  // Venue-specific filters (only applied when _toRentCategory == 'venue')
+  Set<String> _venueEventTypes = <String>{}; // slugs like wedding, birthday_party, workshop_training
+  String _venueAvailability = 'any'; // any | full_venue | partial_areas | rooms_+_venue
+  int _venueMinSeating = 0; // 0 = Any
+  int _venueMinFloating = 0; // 0 = Any
+  int _venueMinIndoorArea = 0; // 0 = Any
+  int _venueMinOutdoorArea = 0; // 0 = Any
+  String _venueParkingRange = 'any'; // any | 0-10 | 10-50 | 50-100 | 100+
+  Set<String> _amenities = <String>{}; // wifi, parking, ac, heating, pets, kitchen, balcony, elevator, venue features
   // Location radius filter (km) and reference center (placeholder)
   double _radiusKm = 0; // 0 = Any
   final double _centerLat = 37.4219999;
@@ -93,9 +104,30 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   
   // Available options
   final List<String> _propertyTypes = [
-    'all', 'apartment', 'house', 'villa', 'studio', 'room',
-    // commercial basics for mock typing
-    'office', 'retail', 'showroom', 'warehouse',
+    'all',
+    // Residential types (from fixed_add_listing_screen)
+    'apartment', 'house', 'villa', 'studio', 'townhouse', 'condo', 'room',
+    'pg', 'hostel', 'duplex', 'penthouse', 'bungalow',
+    // Commercial basics (actual types from fixed_add_commercial_listing_screen)
+    'office', 'shop', 'warehouse', 'coworking', 'showroom', 'clinic', 'restaurant', 'industrial',
+    // Venue types (from VenueListingFormScreen)
+    'venue_banquet_hall',
+    'venue_wedding_venue',
+    'venue_party_hall',
+    'venue_conference_room',
+    'venue_meeting_room',
+    'venue_auditorium_theatre',
+    'venue_outdoor_lawn_garden',
+    'venue_rooftop_venue',
+    'venue_hotel_ballroom',
+    'venue_resort_venue',
+    'venue_farmhouse_villa_event_space',
+    'venue_studio_(photo_video_music)',
+    'venue_exhibition_center',
+    'venue_club_lounge_event_space',
+    'venue_private_dining_room',
+    'venue_co-working_event_lounge',
+    'venue_retreat_site_campground',
     // vehicles
     'vehicle'
   ];
@@ -107,6 +139,9 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     // Setup listeners
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScroll);
+    _searchFocusNode.addListener(() {
+      if (mounted) setState(() {}); // rebuild to update active border state
+    });
 
     // Seed filters from initial route params
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,6 +166,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _scrollController.dispose();
     // No inline filter animation to dispose
     super.dispose();
@@ -213,6 +249,48 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           final imageUrl = (v['imageUrl'] ?? '').toString();
           final location = (v['location'] ?? '').toString();
           final seats = (v['seats'] is num) ? (v['seats'] as num).toInt() : 0;
+          final rawCategory = (v['category'] ?? '').toString().toLowerCase();
+          final rawTrans = (v['transmission'] ?? '').toString().toLowerCase();
+          final rawFuel = (v['fuel'] ?? '').toString().toLowerCase();
+
+          // Normalize category/fuel/transmission to match filter values
+          String normCategory;
+          if (rawCategory.contains('suv')) {
+            normCategory = 'suv';
+          } else if (rawCategory.contains('sedan')) {
+            normCategory = 'sedan';
+          } else if (rawCategory.contains('hatch')) {
+            normCategory = 'hatchback';
+          } else if (rawCategory.contains('bike') || rawCategory.contains('motor')) {
+            normCategory = 'bikes';
+          } else if (rawCategory.contains('van')) {
+            normCategory = 'vans';
+          } else if (rawCategory.contains('electric') || rawCategory.contains('ev') || rawCategory.contains('tesla')) {
+            normCategory = 'electric';
+          } else {
+            normCategory = 'all';
+          }
+
+          String normTrans;
+          if (rawTrans.contains('auto')) {
+            normTrans = 'automatic';
+          } else if (rawTrans.contains('manual')) {
+            normTrans = 'manual';
+          } else {
+            normTrans = 'any';
+          }
+
+          String normFuel;
+          if (rawFuel.contains('electric')) {
+            normFuel = 'electric';
+          } else if (rawFuel.contains('diesel')) {
+            normFuel = 'diesel';
+          } else if (rawFuel.contains('petrol') || rawFuel.contains('gasoline')) {
+            normFuel = 'petrol';
+          } else {
+            normFuel = 'any';
+          }
+
           final lat = (v['latitude'] is num) ? (v['latitude'] as num).toDouble() : _centerLat;
           final lng = (v['longitude'] is num) ? (v['longitude'] as num).toDouble() : _centerLng;
           return PropertyResult(
@@ -229,6 +307,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             instantBooking: false,
             latitude: lat,
             longitude: lng,
+            vehicleCategory: normCategory,
+            vehicleFuel: normFuel,
+            vehicleTransmission: normTrans,
+            seats: seats,
           );
         }).toList();
       } else {
@@ -265,6 +347,67 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       baseResults = _isVehicleMode ? _generateVehicleResults() : _generateMockResults();
     }
 
+    // Merge owner-created listings (userListings) for properties/venues/commercial
+    if (!_isVehicleMode) {
+      try {
+        final listingsState = ref.read(ls.listingProvider);
+        final ownerListings = listingsState.userListings.where((l) => l.isActive).toList();
+        final existingIds = baseResults.map((r) => r.id).toSet();
+
+        final ownerResults = ownerListings
+            .where((l) => !existingIds.contains(l.id))
+            .map<PropertyResult>((l) {
+          final rating = l.rating ?? 0.0;
+          final imageUrl = l.images.isNotEmpty ? l.images.first : '';
+          final locCity = l.city.trim();
+          final locState = l.state.trim();
+          String location;
+          if (locCity.isNotEmpty && locState.isNotEmpty) {
+            location = '$locCity, $locState';
+          } else if (locCity.isNotEmpty) {
+            location = locCity;
+          } else if (locState.isNotEmpty) {
+            location = locState;
+          } else {
+            location = l.address;
+          }
+
+          // Use the owner listing type as-is (lowercased). Venue listings use
+          // values like 'venue_banquet_hall', which we treat as commercial
+          // when applying top-level filters.
+          final type = l.type.toLowerCase();
+
+          // Map boolean amenities (e.g., wifi, parking, ac) into simple keys
+          // so existing amenity filters work.
+          final amenityKeys = <String>{};
+          l.amenities.forEach((key, value) {
+            if (value == true) {
+              amenityKeys.add(key.toString());
+            }
+          });
+
+          return PropertyResult(
+            id: l.id,
+            title: l.title,
+            price: l.price,
+            rating: rating,
+            imageUrl: imageUrl,
+            location: location,
+            type: type,
+            bedrooms: 0,
+            bathrooms: 0,
+            isVerified: false,
+            instantBooking: false,
+            latitude: _centerLat,
+            longitude: _centerLng,
+            amenities: amenityKeys,
+          );
+        }).toList();
+
+        baseResults = [...baseResults, ...ownerResults];
+      } catch (_) {}
+    }
+
     if (!mounted) return;
 
     setState(() {
@@ -281,34 +424,202 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                 r.location.toLowerCase().contains(_searchQuery.toLowerCase()))
             .toList();
       }
-      // Apply top-level category filter (Residential / Commercial)
+
+      // Preload owner listings into a map for fast amenity lookups (PG, venue filters, etc.)
+      Map<String, ls.Listing> listingMap = {};
+      try {
+        final listingsState = ref.read(ls.listingProvider);
+        final allListings = [...listingsState.listings, ...listingsState.userListings];
+        listingMap = {for (final l in allListings) l.id: l};
+      } catch (_) {}
+
+      // Apply top-level category filter (Residential / Commercial / Venue)
       if (!_isVehicleMode) {
-        const residentialTypes = {'apartment', 'house', 'villa', 'studio', 'room'};
-        const commercialTypes = {'office', 'retail', 'showroom', 'warehouse'};
-        if (_toRentCategory == 'residential') {
-          results = results.where((r) => residentialTypes.contains(r.type.toLowerCase())).toList();
-        } else if (_toRentCategory == 'commercial') {
-          results = results.where((r) => commercialTypes.contains(r.type.toLowerCase())).toList();
+        const residentialTypes = {
+          'apartment', 'house', 'villa', 'studio', 'room',
+          // extended residential types from fixed_add_listing_screen
+          'townhouse', 'condo', 'pg', 'hostel', 'duplex', 'penthouse', 'bungalow',
+        };
+        const commercialBaseTypes = {
+          'office', 'shop', 'warehouse', 'coworking', 'showroom', 'clinic', 'restaurant', 'industrial',
+        };
+
+        bool isResidentialType(String t) => residentialTypes.contains(t);
+
+        bool isCommercialType(String t) {
+          if (commercialBaseTypes.contains(t)) return true;
+          // Fallback heuristics for other commercial-like types
+          if (t.contains('office') ||
+              t.contains('shop') ||
+              t.contains('clinic') ||
+              t.contains('restaurant') ||
+              t.contains('cowork') ||
+              t.contains('industrial')) {
+            return true;
+          }
+          return false;
+        }
+
+        bool isVenueType(String t) {
+          // All dedicated venue types are modeled as 'venue_*' or 'venue'
+          if (t.startsWith('venue_') || t == 'venue') return true;
+          return false;
+        }
+
+        final category = _toRentCategory.toLowerCase();
+        if (category == 'residential') {
+          results = results.where((r) => isResidentialType(r.type.toLowerCase())).toList();
+        } else if (category == 'commercial') {
+          results = results.where((r) => isCommercialType(r.type.toLowerCase())).toList();
+        } else if (category == 'venue') {
+          results = results.where((r) => isVenueType(r.type.toLowerCase())).toList();
         }
       }
+
       // Apply property-specific filters from the filter sheet
       if (!_isVehicleMode) {
         results = results.where((r) {
           final bool isResidential = _toRentCategory == 'residential';
+          final bool isVenue = _toRentCategory == 'venue';
           final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
           final bool bedsOk = !isResidential || _bedrooms == 0 || r.bedrooms >= _bedrooms;
           final bool bathsOk = !isResidential || _bathrooms == 0 || r.bathrooms >= _bathrooms;
           final bool instantOk = !_instantBooking || r.instantBooking;
           final bool verifiedOk = !_verifiedOnly || r.isVerified;
           final bool imagesOk = !_imagesOnly || (r.imageUrl.trim().isNotEmpty);
-          final bool builtMinOk = _builtUpMinSqFt == 0 || r.builtUpArea >= _builtUpMinSqFt;
-          final bool builtMaxOk = (_builtUpMaxSqFt == 0 || _builtUpMaxSqFt == 4000)
-              ? true
-              : r.builtUpArea <= _builtUpMaxSqFt;
+          bool builtMinOk = true;
+          bool builtMaxOk = true;
+          if (!isVenue) {
+            builtMinOk = _builtUpMinSqFt == 0 || r.builtUpArea >= _builtUpMinSqFt;
+            builtMaxOk = (_builtUpMaxSqFt == 0 || _builtUpMaxSqFt == 4000)
+                ? true
+                : r.builtUpArea <= _builtUpMaxSqFt;
+          }
           final bool furnishOk = _furnishType == 'any' || r.furnishType == _furnishType;
           final bool tenantOk = !isResidential || _preferredTenant == 'any' || r.preferredTenant == _preferredTenant;
           final bool amenityOk = _amenities.isEmpty || _amenities.every((a) => r.amenities.contains(a));
-          return priceOk && bedsOk && bathsOk && instantOk && verifiedOk && imagesOk && builtMinOk && builtMaxOk && furnishOk && tenantOk && amenityOk;
+
+          // Pull backing Listing for PG/venue filters when needed
+          ls.Listing? backing;
+          final bool needsPg = isResidential && _pgGender != 'any';
+          final bool needsVenue = isVenue && (
+            _venueEventTypes.isNotEmpty ||
+            _venueAvailability != 'any' ||
+            _venueMinSeating > 0 ||
+            _venueMinFloating > 0 ||
+            _venueMinIndoorArea > 0 ||
+            _venueMinOutdoorArea > 0 ||
+            _venueParkingRange != 'any'
+          );
+          if ((needsPg || needsVenue) && listingMap.isNotEmpty) {
+            backing = listingMap[r.id];
+          }
+
+          // PG / Hostel gender filter (amenities['pg_gender'])
+          bool pgGenderOk = true;
+          if (needsPg && backing != null) {
+            final pgG = backing.amenities['pg_gender'];
+            String? pgGenderValue;
+            if (pgG is String && pgG.trim().isNotEmpty) {
+              pgGenderValue = pgG.toLowerCase();
+            }
+            if (pgGenderValue != null) {
+              if (_pgGender == 'mixed') {
+                pgGenderOk = true; // any non-empty value allowed
+              } else {
+                pgGenderOk = pgGenderValue == _pgGender;
+              }
+            }
+          }
+
+          // Venue-specific filters
+          bool venueEventsOk = true;
+          bool venueAvailabilityOk = true;
+          bool venueCapacityOk = true;
+          bool venueAreaOk = true;
+          bool venueParkingOk = true;
+
+          if (isVenue && needsVenue && backing != null) {
+            final amenities = backing.amenities;
+
+            // Event types: intersection with amenities['event_types_allowed'] (slugified list)
+            if (_venueEventTypes.isNotEmpty) {
+              final rawEvents = amenities['event_types_allowed'];
+              Set<String> stored = {};
+              if (rawEvents is List) {
+                stored = rawEvents.map((e) => e.toString()).toSet();
+              }
+              venueEventsOk = stored.isNotEmpty && _venueEventTypes.any(stored.contains);
+            }
+
+            // Availability type: amenities['availability_type'] is slugified
+            if (_venueAvailability != 'any') {
+              final availRaw = amenities['availability_type'];
+              if (availRaw is String && availRaw.trim().isNotEmpty) {
+                final availSlug = availRaw.toLowerCase();
+                venueAvailabilityOk = availSlug == _venueAvailability;
+              } else {
+                venueAvailabilityOk = false;
+              }
+            }
+
+            // Capacities
+            if (_venueMinSeating > 0) {
+              final s1 = amenities['seating_capacity'];
+              final s2 = amenities['venue_seated_capacity'];
+              final val = s1 is num
+                  ? s1.toInt()
+                  : (s2 is num ? s2.toInt() : null);
+              if (val != null) {
+                venueCapacityOk = venueCapacityOk && val >= _venueMinSeating;
+              } else {
+                venueCapacityOk = false;
+              }
+            }
+            if (_venueMinFloating > 0) {
+              final f = amenities['floating_capacity'];
+              final val = f is num ? f.toInt() : null;
+              if (val != null) {
+                venueCapacityOk = venueCapacityOk && val >= _venueMinFloating;
+              } else {
+                venueCapacityOk = false;
+              }
+            }
+
+            // Areas
+            if (_venueMinIndoorArea > 0) {
+              final a = amenities['indoor_area_sqft'];
+              final val = a is num ? a.toInt() : null;
+              if (val != null) {
+                venueAreaOk = venueAreaOk && val >= _venueMinIndoorArea;
+              } else {
+                venueAreaOk = false;
+              }
+            }
+            if (_venueMinOutdoorArea > 0) {
+              final a = amenities['outdoor_area_sqft'];
+              final val = a is num ? a.toInt() : null;
+              if (val != null) {
+                venueAreaOk = venueAreaOk && val >= _venueMinOutdoorArea;
+              } else {
+                venueAreaOk = false;
+              }
+            }
+
+            // Parking range: exact match on stored string
+            if (_venueParkingRange != 'any') {
+              final p = amenities['parking_range'];
+              if (p is String && p.trim().isNotEmpty) {
+                venueParkingOk = p == _venueParkingRange;
+              } else {
+                venueParkingOk = false;
+              }
+            }
+          }
+
+          return priceOk && bedsOk && bathsOk && instantOk && verifiedOk && imagesOk && builtMinOk && builtMaxOk &&
+              furnishOk && tenantOk && amenityOk && pgGenderOk &&
+              venueEventsOk && venueAvailabilityOk && venueCapacityOk && venueAreaOk && venueParkingOk;
         }).toList();
       } else {
         // Apply vehicle-specific filters
@@ -316,7 +627,46 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           final bool priceOk = r.price >= _priceRange.start && r.price <= _priceRange.end;
           final bool instantOk = !_instantBooking || r.instantBooking;
           final bool verifiedOk = !_verifiedOnly || r.isVerified;
-          return priceOk && instantOk && verifiedOk;
+
+          // Category (SUV/Sedan/Hatchback/Bikes/Vans/Electric)
+          bool categoryOk = true;
+          if (_vehicleCategory != 'all' && r.vehicleCategory.isNotEmpty) {
+            final cat = r.vehicleCategory.toLowerCase();
+            if (_vehicleCategory == 'electric') {
+              categoryOk = cat.contains('electric');
+            } else if (_vehicleCategory == 'bikes') {
+              categoryOk = cat.contains('bike') || cat.contains('motor');
+            } else if (_vehicleCategory == 'vans') {
+              categoryOk = cat.contains('van');
+            } else if (_vehicleCategory == 'hatchback') {
+              categoryOk = cat.contains('hatch');
+            } else if (_vehicleCategory == 'suv') {
+              categoryOk = cat.contains('suv');
+            } else if (_vehicleCategory == 'sedan') {
+              categoryOk = cat.contains('sedan');
+            }
+          }
+
+          // Fuel
+          bool fuelOk = true;
+          if (_vehicleFuel != 'any') {
+            fuelOk = r.vehicleFuel == _vehicleFuel;
+          }
+
+          // Transmission
+          bool transOk = true;
+          if (_vehicleTransmission != 'any') {
+            transOk = r.vehicleTransmission == _vehicleTransmission;
+          }
+
+          // Seats (min)
+          bool seatsOk = true;
+          if (_vehicleSeats > 0) {
+            final seatCount = r.seats > 0 ? r.seats : r.bedrooms;
+            seatsOk = seatCount >= _vehicleSeats;
+          }
+
+          return priceOk && instantOk && verifiedOk && categoryOk && fuelOk && transOk && seatsOk;
         }).toList();
       }
       // Apply radius filter (if any)
@@ -515,6 +865,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       return count;
     } else {
       final bool isResidential = _toRentCategory == 'residential';
+      final bool isVenue = _toRentCategory == 'venue';
+
       if (_propertyType != 'all') count++;
       if (_priceRange.start > 0 || _priceRange.end < 5000) count++;
       if (isResidential && _bedrooms > 0) count++;
@@ -522,9 +874,15 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       if (_instantBooking) count++;
       if (_verifiedOnly) count++;
       if (_imagesOnly) count++;
-      if (_builtUpMinSqFt > 0 || _builtUpMaxSqFt > 0) count++;
-      if (_furnishType != 'any') count++;
+      if (!isVenue && (_builtUpMinSqFt > 0 || _builtUpMaxSqFt > 0)) count++;
+      if (!isVenue && _furnishType != 'any') count++;
       if (isResidential && _preferredTenant != 'any') count++;
+      if (isResidential && _pgGender != 'any') count++;
+      if (isVenue && _venueEventTypes.isNotEmpty) count++;
+      if (isVenue && _venueAvailability != 'any') count++;
+      if (isVenue && (_venueMinSeating > 0 || _venueMinFloating > 0)) count++;
+      if (isVenue && (_venueMinIndoorArea > 0 || _venueMinOutdoorArea > 0)) count++;
+      if (isVenue && _venueParkingRange != 'any') count++;
       if (_amenities.isNotEmpty) count++;
       if (_radiusKm > 0) count++;
       return count;
@@ -1035,6 +1393,34 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   void _toggleFilters() {
     final theme = Theme.of(context);
     setState(() => _showFilters = true);
+    // Hide bottom navigation bar while filters are open
+    ref.read(immersiveRouteOpenProvider.notifier).state = true;
+    // For vehicles, use the modern filter panel which already exposes
+    // category, fuel, transmission and seat count filters.
+    if (_isVehicleMode) {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: SizedBox(
+              width: double.infinity,
+              height: MediaQuery.of(dialogContext).size.height * 0.8,
+              child: _buildModernFilterPanel(theme, dialogContext),
+            ),
+          );
+        },
+      ).whenComplete(() {
+        if (!mounted) return;
+        setState(() => _showFilters = false);
+        ref.read(immersiveRouteOpenProvider.notifier).state = false;
+      });
+      return;
+    }
+
+    // Properties & commercial listings keep the tailored bottom sheet UX
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -1056,13 +1442,50 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         String localTenant = _preferredTenant; // any|family|male|female|others
         int localBhk = _bedrooms; // 0 for Any, else 1..5
         int localBaths = _bathrooms; // 0 = Any
+        String localPgGender = _pgGender; // any|male|female|mixed
+        Set<String> localVenueEventTypes = {..._venueEventTypes};
+        String localVenueAvailability = _venueAvailability; // any or slugified
+        int localVenueMinSeating = _venueMinSeating;
+        int localVenueMinFloating = _venueMinFloating;
+        int localVenueMinIndoor = _venueMinIndoorArea;
+        int localVenueMinOutdoor = _venueMinOutdoorArea;
+        String localVenueParkingRange = _venueParkingRange;
         final Set<String> localAmenities = {..._amenities};
         // Plot-specific locals removed; Plots is no longer a top-level category
 
-        const List<String> propertyTypesResidential = ['all','apartment','house','villa','studio','room'];
-        const List<String> propertyTypesCommercial = ['all','office','retail','showroom','warehouse'];
+        const List<String> propertyTypesResidential = [
+          'all',
+          'apartment', 'house', 'villa', 'studio', 'townhouse', 'condo', 'room',
+          'pg', 'hostel', 'duplex', 'penthouse', 'bungalow',
+        ];
+        const List<String> propertyTypesCommercial = [
+          'all',
+          'office', 'shop', 'warehouse', 'coworking', 'showroom', 'clinic', 'restaurant', 'industrial',
+        ];
+        const List<String> propertyTypesVenue = [
+          'all',
+          'venue_banquet_hall',
+          'venue_wedding_venue',
+          'venue_party_hall',
+          'venue_conference_room',
+          'venue_meeting_room',
+          'venue_auditorium_theatre',
+          'venue_outdoor_lawn_garden',
+          'venue_rooftop_venue',
+          'venue_hotel_ballroom',
+          'venue_resort_venue',
+          'venue_farmhouse_villa_event_space',
+          'venue_studio_(photo_video_music)',
+          'venue_exhibition_center',
+          'venue_club_lounge_event_space',
+          'venue_private_dining_room',
+          'venue_co-working_event_lounge',
+          'venue_retreat_site_campground',
+        ];
         final List<double> budgetOptions = [0, 100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000];
         final List<int> builtUpOptions = [0, 100, 200, 400, 600, 800, 1000, 1500, 2000, 3000, 4000];
+        final List<int> venueCapacityOptions = [0, 50, 100, 200, 300, 500, 1000];
+        final List<int> venueAreaOptions = [0, 500, 1000, 2000, 5000, 10000];
 
         String typeLabel(String t) {
           switch (t) {
@@ -1071,10 +1494,38 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
             case 'villa': return 'Independent Villa';
             case 'studio': return '1RK/Studio House';
             case 'room': return 'Room';
-            case 'office': return 'Ready to use Office Space';
-            case 'retail': return 'Retail Shop';
+            case 'townhouse': return 'Townhouse';
+            case 'condo': return 'Condo';
+            case 'pg': return 'PG / Co-living';
+            case 'hostel': return 'Hostel';
+            case 'duplex': return 'Duplex';
+            case 'penthouse': return 'Penthouse';
+            case 'bungalow': return 'Bungalow';
+            case 'office': return 'Office';
+            case 'shop': return 'Shop';
             case 'showroom': return 'Showroom';
             case 'warehouse': return 'Warehouse';
+            case 'coworking': return 'Co-working Space';
+            case 'clinic': return 'Clinic / Healthcare';
+            case 'restaurant': return 'Restaurant / Café';
+            case 'industrial': return 'Industrial / Factory';
+            case 'venue_banquet_hall': return 'Banquet Hall';
+            case 'venue_wedding_venue': return 'Wedding Venue';
+            case 'venue_party_hall': return 'Party Hall';
+            case 'venue_conference_room': return 'Conference Room';
+            case 'venue_meeting_room': return 'Meeting Room';
+            case 'venue_auditorium_theatre': return 'Auditorium / Theatre';
+            case 'venue_outdoor_lawn_garden': return 'Outdoor Lawn / Garden';
+            case 'venue_rooftop_venue': return 'Rooftop Venue';
+            case 'venue_hotel_ballroom': return 'Hotel Ballroom';
+            case 'venue_resort_venue': return 'Resort Venue';
+            case 'venue_farmhouse_villa_event_space': return 'Farmhouse / Villa Event Space';
+            case 'venue_studio_(photo_video_music)': return 'Studio (Photo / Video / Music)';
+            case 'venue_exhibition_center': return 'Exhibition Center';
+            case 'venue_club_lounge_event_space': return 'Club / Lounge Event Space';
+            case 'venue_private_dining_room': return 'Private Dining Room';
+            case 'venue_co-working_event_lounge': return 'Co-working Event Lounge';
+            case 'venue_retreat_site_campground': return 'Retreat Site / Campground';
             case 'all':
             default: return 'All';
           }
@@ -1098,7 +1549,34 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           builder: (context, setLocal) {
             final types = localToRent == 'commercial'
                 ? propertyTypesCommercial
-                : propertyTypesResidential;
+                : (localToRent == 'venue' ? propertyTypesVenue : propertyTypesResidential);
+            final List<String> propertyAmenityKeys = ['wifi','parking','ac','heating','pets','kitchen','balcony','elevator'];
+            final List<String> venueAmenityKeys = [
+              'fire_safety_compliant',
+              'outside_catering_allowed',
+              'veg_available',
+              'non_veg_available',
+              'buffet_available',
+              'live_counters_available',
+              'dj_allowed',
+              'alcohol_service_allowed',
+            ];
+            final List<String> amenityKeys = localToRent == 'venue' ? venueAmenityKeys : propertyAmenityKeys;
+            final Map<String, String> venueEventTypeLabels = {
+              'wedding': 'Wedding',
+              'reception': 'Reception',
+              'birthday_party': 'Birthday Party',
+              'corporate_event': 'Corporate Event',
+              'workshop_training': 'Workshop / Training',
+              'concert_performance': 'Concert / Performance',
+              'exhibition': 'Exhibition',
+              'photoshoot_filming': 'Photoshoot / Filming',
+              'private_dinner': 'Private Dinner',
+              'religious_event': 'Religious Event',
+              'festival_event': 'Festival Event',
+              'engagement_anniversary': 'Engagement / Anniversary',
+              'others': 'Others',
+            };
             double floorBudget(double t) { double sel = budgetOptions.first; for (final v in budgetOptions) { if (v <= t) sel = v; } return sel; }
             double ceilBudget(double t) { double sel = budgetOptions.last; for (final v in budgetOptions) { if (v >= t) { sel = v; break; } } return sel; }
             return SizedBox(
@@ -1250,6 +1728,23 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 localBaths = 0;
                               }),
                             ),
+                            ChoiceChip(
+                              showCheckmark: false,
+                              label: Text('Venue', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: localToRent == 'venue' ? Colors.white : theme.colorScheme.onSurface)),
+                              selected: localToRent == 'venue',
+                              selectedColor: theme.colorScheme.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              onSelected: (v) => setLocal(() {
+                                localToRent = 'venue';
+                                localBhk = 0;
+                                localTenant = 'any';
+                                localBaths = 0;
+                                localPropertyType = 'all';
+                              }),
+                            ),
                             // Plots category removed from filters
                             ChoiceChip(
                               showCheckmark: false,
@@ -1353,51 +1848,224 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Built-up area
-                          Text('Built up area', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    dropdownLabel('Min'),
-                                    DropdownButtonFormField<int>(
-                                      initialValue: builtUpOptions.contains(localBuiltMin) ? localBuiltMin : 0,
-                                      style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                      items: builtUpOptions.map((v) => DropdownMenuItem<int>(
-                                        value: v,
-                                        child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
-                                      )).toList(),
-                                      onChanged: (v) => setLocal(() => localBuiltMin = v ?? 0),
-                                      decoration: ddDecoration(),
-                                    ),
-                                  ],
+                          if (localToRent != 'venue') ...[
+                            // Built-up area
+                            Text('Built up area', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      dropdownLabel('Min'),
+                                      DropdownButtonFormField<int>(
+                                        initialValue: builtUpOptions.contains(localBuiltMin) ? localBuiltMin : 0,
+                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                        items: builtUpOptions.map((v) => DropdownMenuItem<int>(
+                                          value: v,
+                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                        )).toList(),
+                                        onChanged: (v) => setLocal(() => localBuiltMin = v ?? 0),
+                                        decoration: ddDecoration(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    dropdownLabel('Max'),
-                                    DropdownButtonFormField<int>(
-                                      initialValue: builtUpOptions.contains(localBuiltMax) ? localBuiltMax : 0,
-                                      style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
-                                      items: builtUpOptions.map((v) => DropdownMenuItem<int>(
-                                        value: v,
-                                        child: Text(v == 0 ? 'Any' : (v == 4000 ? '4000+ sq ft' : '$v sq ft'), style: const TextStyle(fontSize: 12)),
-                                      )).toList(),
-                                      onChanged: (v) => setLocal(() => localBuiltMax = v ?? 0),
-                                      decoration: ddDecoration(),
-                                    ),
-                                  ],
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      dropdownLabel('Max'),
+                                      DropdownButtonFormField<int>(
+                                        initialValue: builtUpOptions.contains(localBuiltMax) ? localBuiltMax : 0,
+                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                        items: builtUpOptions.map((v) => DropdownMenuItem<int>(
+                                          value: v,
+                                          child: Text(v == 0 ? 'Any' : (v == 4000 ? '4000+ sq ft' : '$v sq ft'), style: const TextStyle(fontSize: 12)),
+                                        )).toList(),
+                                        onChanged: (v) => setLocal(() => localBuiltMax = v ?? 0),
+                                        decoration: ddDecoration(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          if (localToRent == 'venue') ...[
+                            Text('Event Types', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: venueEventTypeLabels.entries.map((entry) {
+                                final slug = entry.key;
+                                final sel = localVenueEventTypes.contains(slug);
+                                return FilterChip(
+                                  showCheckmark: false,
+                                  selected: sel,
+                                  selectedColor: theme.colorScheme.primary,
+                                  label: Text(entry.value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setLocal(() {
+                                    if (sel) {
+                                      localVenueEventTypes.remove(slug);
+                                    } else {
+                                      localVenueEventTypes.add(slug);
+                                    }
+                                  }),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Availability', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: ['any','full_venue','partial_areas','rooms_+_venue'].map((v) {
+                                final sel = localVenueAvailability == v;
+                                String label;
+                                switch (v) {
+                                  case 'full_venue': label = 'Full venue'; break;
+                                  case 'partial_areas': label = 'Partial areas'; break;
+                                  case 'rooms_+_venue': label = 'Rooms + venue'; break;
+                                  default: label = 'Any';
+                                }
+                                return ChoiceChip(
+                                  showCheckmark: false,
+                                  selected: sel,
+                                  selectedColor: theme.colorScheme.primary,
+                                  shape: const StadiumBorder(),
+                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setLocal(() => localVenueAvailability = v),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Capacity', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      dropdownLabel('Min seating'),
+                                      DropdownButtonFormField<int>(
+                                        initialValue: venueCapacityOptions.contains(localVenueMinSeating) ? localVenueMinSeating : 0,
+                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                        items: venueCapacityOptions.map((v) => DropdownMenuItem<int>(
+                                          value: v,
+                                          child: Text(v == 0 ? 'Any' : '$v+', style: const TextStyle(fontSize: 12)),
+                                        )).toList(),
+                                        onChanged: (v) => setLocal(() => localVenueMinSeating = v ?? 0),
+                                        decoration: ddDecoration(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      dropdownLabel('Min floating'),
+                                      DropdownButtonFormField<int>(
+                                        initialValue: venueCapacityOptions.contains(localVenueMinFloating) ? localVenueMinFloating : 0,
+                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                        items: venueCapacityOptions.map((v) => DropdownMenuItem<int>(
+                                          value: v,
+                                          child: Text(v == 0 ? 'Any' : '$v+', style: const TextStyle(fontSize: 12)),
+                                        )).toList(),
+                                        onChanged: (v) => setLocal(() => localVenueMinFloating = v ?? 0),
+                                        decoration: ddDecoration(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Indoor / Outdoor area', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      dropdownLabel('Indoor min'),
+                                      DropdownButtonFormField<int>(
+                                        initialValue: venueAreaOptions.contains(localVenueMinIndoor) ? localVenueMinIndoor : 0,
+                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                        items: venueAreaOptions.map((v) => DropdownMenuItem<int>(
+                                          value: v,
+                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                        )).toList(),
+                                        onChanged: (v) => setLocal(() => localVenueMinIndoor = v ?? 0),
+                                        decoration: ddDecoration(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      dropdownLabel('Outdoor min'),
+                                      DropdownButtonFormField<int>(
+                                        initialValue: venueAreaOptions.contains(localVenueMinOutdoor) ? localVenueMinOutdoor : 0,
+                                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),
+                                        items: venueAreaOptions.map((v) => DropdownMenuItem<int>(
+                                          value: v,
+                                          child: Text(v == 0 ? 'Any' : '$v sq ft', style: const TextStyle(fontSize: 12)),
+                                        )).toList(),
+                                        onChanged: (v) => setLocal(() => localVenueMinOutdoor = v ?? 0),
+                                        decoration: ddDecoration(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Parking capacity', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: ['any','0-10','10-50','50-100','100+'].map((v) {
+                                final sel = localVenueParkingRange == v;
+                                String label;
+                                switch (v) {
+                                  case '0-10': label = '0-10'; break;
+                                  case '10-50': label = '10-50'; break;
+                                  case '50-100': label = '50-100'; break;
+                                  case '100+': label = '100+'; break;
+                                  default: label = 'Any';
+                                }
+                                return ChoiceChip(
+                                  showCheckmark: false,
+                                  selected: sel,
+                                  selectedColor: theme.colorScheme.primary,
+                                  shape: const StadiumBorder(),
+                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setLocal(() => localVenueParkingRange = v),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                           if (localToRent == 'residential') ...[
                             // Preferred Tenant
                             Text('Preferred Tenant', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
@@ -1430,6 +2098,36 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               }).toList(),
                             ),
                             const SizedBox(height: 16),
+                            if (localPropertyType == 'pg' || localPropertyType == 'hostel') ...[
+                              // PG / Hostel gender preference
+                              Text('PG Gender Preference', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: ['any','male','female','mixed'].map((g) {
+                                  final sel = localPgGender == g;
+                                  String label;
+                                  switch (g) {
+                                    case 'male': label = 'Male'; break;
+                                    case 'female': label = 'Female'; break;
+                                    case 'mixed': label = 'Mixed'; break;
+                                    default: label = 'Any';
+                                  }
+                                  return ChoiceChip(
+                                    showCheckmark: false,
+                                    selected: sel,
+                                    selectedColor: theme.colorScheme.primary,
+                                    shape: const StadiumBorder(),
+                                    label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                    onSelected: (_) => setLocal(() => localPgGender = g),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                             // Bedrooms & Bathrooms
                             Text('Bedrooms & Bathrooms', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                             const SizedBox(height: 8),
@@ -1480,41 +2178,46 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             ),
                             const SizedBox(height: 16),
                           ],
-                          // Furnish Type
-                          Text('Furnish Type', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: ['any','full','semi','unfurnished'].map((f) {
-                              final sel = localFurnish == f;
-                              String label;
-                              switch (f) {
-                                case 'full': label = 'Fully Furnished'; break;
-                                case 'semi': label = 'Semi Furnished'; break;
-                                case 'unfurnished': label = 'Unfurnished'; break;
-                                default: label = 'Any';
-                              }
-                              return ChoiceChip(
-                                showCheckmark: false,
-                                selected: sel,
-                                selectedColor: theme.colorScheme.primary,
-                                shape: const StadiumBorder(),
-                                label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                visualDensity: VisualDensity.compact,
-                                onSelected: (_) => setLocal(() => localFurnish = f),
-                              );
-                            }).toList(),
+                          if (localToRent != 'venue') ...[
+                            // Furnish Type
+                            Text('Furnish Type', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: ['any','full','semi','unfurnished'].map((f) {
+                                final sel = localFurnish == f;
+                                String label;
+                                switch (f) {
+                                  case 'full': label = 'Fully Furnished'; break;
+                                  case 'semi': label = 'Semi Furnished'; break;
+                                  case 'unfurnished': label = 'Unfurnished'; break;
+                                  default: label = 'Any';
+                                }
+                                return ChoiceChip(
+                                  showCheckmark: false,
+                                  selected: sel,
+                                  selectedColor: theme.colorScheme.primary,
+                                  shape: const StadiumBorder(),
+                                  label: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? Colors.white : theme.colorScheme.onSurface)),
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setLocal(() => localFurnish = f),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          // Essential Amenities / Venue features
+                          Text(
+                            localToRent == 'venue' ? 'Venue Features' : 'Essential Amenities',
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                          const SizedBox(height: 16),
-                          // Essential Amenities
-                          Text('Essential Amenities', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 6,
                             runSpacing: 6,
-                            children: ['wifi','parking','ac','heating','pets','kitchen','balcony','elevator'].map((k) {
+                            children: amenityKeys.map((k) {
                               final sel = localAmenities.contains(k);
                               String label;
                               switch (k) {
@@ -1526,25 +2229,41 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 case 'kitchen': label = 'Full Kitchen'; break;
                                 case 'balcony': label = 'Balcony/Patio'; break;
                                 case 'elevator': label = 'Elevator'; break;
+                                case 'fire_safety_compliant': label = 'Fire Safety Compliant'; break;
+                                case 'outside_catering_allowed': label = 'Outside Catering Allowed'; break;
+                                case 'veg_available': label = 'Veg Available'; break;
+                                case 'non_veg_available': label = 'Non-Veg Available'; break;
+                                case 'buffet_available': label = 'Buffet Available'; break;
+                                case 'live_counters_available': label = 'Live Counters'; break;
+                                case 'dj_allowed': label = 'DJ Allowed'; break;
+                                case 'alcohol_service_allowed': label = 'Alcohol Service'; break;
                                 default: label = k;
+                              }
+                              IconData icon;
+                              switch (k) {
+                                case 'wifi': icon = Icons.wifi; break;
+                                case 'parking': icon = Icons.local_parking; break;
+                                case 'ac': icon = Icons.ac_unit; break;
+                                case 'heating': icon = Icons.whatshot; break;
+                                case 'pets': icon = Icons.pets; break;
+                                case 'kitchen': icon = Icons.kitchen; break;
+                                case 'balcony': icon = Icons.deck; break;
+                                case 'elevator': icon = Icons.elevator; break;
+                                case 'fire_safety_compliant': icon = Icons.local_fire_department; break;
+                                case 'outside_catering_allowed': icon = Icons.restaurant; break;
+                                case 'veg_available': icon = Icons.eco; break;
+                                case 'non_veg_available': icon = Icons.set_meal; break;
+                                case 'buffet_available': icon = Icons.restaurant_menu; break;
+                                case 'live_counters_available': icon = Icons.local_dining; break;
+                                case 'dj_allowed': icon = Icons.music_note; break;
+                                case 'alcohol_service_allowed': icon = Icons.wine_bar; break;
+                                default: icon = Icons.check_box_outline_blank; break;
                               }
                               return FilterChip(
                                 showCheckmark: false,
                                 selected: sel,
                                 avatar: Icon(
-                                  () {
-                                    switch (k) {
-                                      case 'wifi': return Icons.wifi;
-                                      case 'parking': return Icons.local_parking;
-                                      case 'ac': return Icons.ac_unit;
-                                      case 'heating': return Icons.whatshot;
-                                      case 'pets': return Icons.pets;
-                                      case 'kitchen': return Icons.kitchen;
-                                      case 'balcony': return Icons.deck;
-                                      case 'elevator': return Icons.elevator;
-                                      default: return Icons.check_box_outline_blank;
-                                    }
-                                  }(),
+                                  icon,
                                   size: 16,
                                   color: sel ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.85),
                                 ),
@@ -1621,6 +2340,14 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 _toRentCategory = 'residential';
                                 _furnishType = 'any';
                                 _preferredTenant = 'any';
+                                _pgGender = 'any';
+                                _venueEventTypes = <String>{};
+                                _venueAvailability = 'any';
+                                _venueMinSeating = 0;
+                                _venueMinFloating = 0;
+                                _venueMinIndoorArea = 0;
+                                _venueMinOutdoorArea = 0;
+                                _venueParkingRange = 'any';
                                 _amenities = <String>{};
                               });
                               _performSearch();
@@ -1648,6 +2375,14 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 _preferredTenant = localTenant;
                                 _bedrooms = localBhk;
                                 _bathrooms = localBaths;
+                                _pgGender = localPgGender;
+                                _venueEventTypes = {...localVenueEventTypes};
+                                _venueAvailability = localVenueAvailability;
+                                _venueMinSeating = localVenueMinSeating;
+                                _venueMinFloating = localVenueMinFloating;
+                                _venueMinIndoorArea = localVenueMinIndoor;
+                                _venueMinOutdoorArea = localVenueMinOutdoor;
+                                _venueParkingRange = localVenueParkingRange;
                                 _amenities = {...localAmenities};
                               });
                               _applyFilters();
@@ -1682,7 +2417,9 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         );
       },
     ).whenComplete(() {
-      if (mounted) setState(() => _showFilters = false);
+      if (!mounted) return;
+      setState(() => _showFilters = false);
+      ref.read(immersiveRouteOpenProvider.notifier).state = false;
     });
   }
   
@@ -1748,211 +2485,245 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   }
   
   Widget _buildSearchHeader(ThemeData theme, bool isDark) {
-    return NeoGlass(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-      margin: EdgeInsets.zero,
-      borderRadius: BorderRadius.zero,
-      backgroundColor: isDark
-          ? Colors.white.withValues(alpha: 0.08)
-          : Colors.white, // distinct from results background (0xFFF3F4F6)
-      borderColor: Colors.transparent,
-      borderWidth: 0,
-      blur: isDark ? 12 : 0,
-      boxShadow: isDark
-          ? [
-              ...NeoDecoration.shadows(
-                context,
-                distance: 5,
-                blur: 14,
-                spread: 0.2,
-              ),
-              BoxShadow(
-                color: (isDark
-                        ? EnterpriseDarkTheme.primaryAccent
-                        : EnterpriseLightTheme.primaryAccent)
-                    .withValues(alpha: isDark ? 0.16 : 0.10),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-                spreadRadius: 0.1,
-              ),
-            ]
-          : const [],
+    final borderRadius = BorderRadius.circular(24);
+    final bool isActive = _searchFocusNode.hasFocus;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+      color: Colors.transparent,
       child: Column(
         children: [
           Row(
             children: [
-              const SizedBox(width: 12),
               Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: isDark ? EnterpriseDarkTheme.primaryBackground : Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
+                child: ClipRRect(
+                  borderRadius: borderRadius,
+                  child: Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      // Match filter button fill: solid white in light mode
+                      // and slightly elevated surface in dark mode
                       color: isDark
-                          ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.35)
-                          : EnterpriseLightTheme.secondaryBorder,
-                      width: 1.1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-                        blurRadius: 10,
-                        offset: const Offset(-5, -5),
-                        spreadRadius: 0,
+                          ? theme.colorScheme.surface.withValues(alpha: 0.08)
+                          : Colors.white,
+                      borderRadius: borderRadius,
+                      border: Border.all(
+                        color: isActive
+                            ? theme.colorScheme.primary
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.grey[300]!),
+                        width: isActive ? 1.6 : 1.2,
                       ),
-                      BoxShadow(
-                        color: (isDark
-                                ? EnterpriseDarkTheme.primaryAccent
-                                : EnterpriseLightTheme.primaryAccent)
-                            .withValues(alpha: isDark ? 0.18 : 0.12),
-                        blurRadius: 10,
-                        offset: const Offset(5, 5),
-                        spreadRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)!.searchHint,
-                      hintStyle: TextStyle(
-                        fontSize: 14,
-                        color: isDark
-                            ? EnterpriseDarkTheme.tertiaryText
-                            : EnterpriseLightTheme.tertiaryText,
-                      ),
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.only(left: 14, right: 10),
-                        child: Icon(
-                          Icons.search,
-                          size: 18,
+                      // Reuse the same dual-shadow style as the filter button
+                      boxShadow: [
+                        BoxShadow(
                           color: isDark
-                              ? EnterpriseDarkTheme.primaryAccent
-                              : EnterpriseLightTheme.secondaryText,
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : Colors.white,
+                          blurRadius: 10,
+                          offset: const Offset(-5, -5),
+                          spreadRadius: 0,
                         ),
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child:
-                              IconButton(
+                        BoxShadow(
+                          color: (isDark
+                                  ? EnterpriseDarkTheme.primaryAccent
+                                  : EnterpriseLightTheme.primaryAccent)
+                              .withValues(alpha: isDark ? 0.18 : 0.12),
+                          blurRadius: 10,
+                          offset: const Offset(5, 5),
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16, right: 8),
+                          child: Icon(
+                            Icons.search_rounded,
+                            size: 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        Expanded(
+                          child: Theme(
+                            data: theme.copyWith(
+                              textSelectionTheme: theme.textSelectionTheme.copyWith(
+                                selectionColor: Colors.transparent,
+                              ),
+                            ),
+                            child: TextField(
+                              controller: _searchController,
+                              focusNode: _searchFocusNode,
+                              cursorColor: isDark
+                                  ? EnterpriseDarkTheme.primaryAccent
+                                  : theme.primaryColor,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white : Colors.grey[900],
+                              ),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context)!.searchHint,
+                                hintStyle: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.5)
+                                      : Colors.grey[500],
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                focusedErrorBorder: InputBorder.none,
+                                filled: true,
+                                fillColor: Colors.transparent,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_searchController.text.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: isDark ? 0.2 : 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
                                 icon: Icon(
-                                  Icons.clear_rounded,
+                                  Icons.close_rounded,
                                   size: 18,
-                                  color: isDark ? Colors.white60 : Colors.grey[600],
+                                  color: theme.colorScheme.primary,
                                 ),
                                 onPressed: () {
                                   _searchController.clear();
                                   _performSearch();
                                 },
-                                splashRadius: 15,
+                                tooltip: 'Clear search',
                                 padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                splashRadius: 18,
                               ),
-                            )
-                          : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 0,
-                      vertical: 10,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _toggleFilters,
-              child: AnimatedScale(
-                scale: _showFilters ? 1.03 : 1.0,
-                duration: const Duration(milliseconds: 140),
-                curve: Curves.easeOut,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: _showFilters
-                            ? theme.primaryColor
-                            : (isDark ? theme.colorScheme.surface.withValues(alpha: 0.08) : Colors.white),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _toggleFilters,
+                child: AnimatedScale(
+                  scale: _showFilters ? 1.03 : 1.0,
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOut,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
                           color: _showFilters
                               ? theme.primaryColor
                               : (isDark
-                                  ? EnterpriseDarkTheme.primaryBorder.withValues(alpha: 0.5)
-                                  : theme.colorScheme.outline.withValues(alpha: 0.2)),
-                          width: 1,
+                                  ? theme.colorScheme.surface
+                                      .withValues(alpha: 0.08)
+                                  : Colors.white),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _showFilters
+                                ? theme.primaryColor
+                                : (isDark
+                                    ? EnterpriseDarkTheme.primaryBorder
+                                        .withValues(alpha: 0.5)
+                                    : theme.colorScheme.outline
+                                        .withValues(alpha: 0.2)),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.white,
+                              blurRadius: 10,
+                              offset: const Offset(-5, -5),
+                              spreadRadius: 0,
+                            ),
+                            BoxShadow(
+                              color: (isDark
+                                      ? EnterpriseDarkTheme.primaryAccent
+                                      : EnterpriseLightTheme.primaryAccent)
+                                  .withValues(alpha: isDark ? 0.18 : 0.12),
+                              blurRadius: 10,
+                              offset: const Offset(5, 5),
+                              spreadRadius: 0,
+                            ),
+                          ],
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-                            blurRadius: 10,
-                            offset: const Offset(-5, -5),
-                            spreadRadius: 0,
-                          ),
-                          BoxShadow(
-                            color: (isDark
-                                    ? EnterpriseDarkTheme.primaryAccent
-                                    : EnterpriseLightTheme.primaryAccent)
-                                .withValues(alpha: isDark ? 0.18 : 0.12),
-                            blurRadius: 10,
-                            offset: const Offset(5, 5),
-                            spreadRadius: 0,
-                          ),
-                        ],
+                        child: Icon(
+                          Icons.tune_rounded,
+                          color: _showFilters
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : theme.primaryColor),
+                          size: 22,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.tune_rounded,
-                        color: _showFilters
-                            ? Colors.white
-                            : (isDark ? Colors.white70 : theme.primaryColor),
-                        size: 22,
-                      ),
-                    ),
-                    if (_countActiveFilters() > 0)
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: Container(
-                          constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.white, width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                      if (_countActiveFilters() > 0)
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            constraints: const BoxConstraints(
+                                minWidth: 18, minHeight: 18),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(10),
+                              border:
+                                  Border.all(color: Colors.white, width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              _countActiveFilters() > 9
+                                  ? '9+'
+                                  : '${_countActiveFilters()}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            _countActiveFilters() > 9 ? '9+' : '${_countActiveFilters()}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-          ],
+            ],
           ),
+          const SizedBox(height: 8),
           ClipRect(
             child: AnimatedSize(
               duration: const Duration(milliseconds: 450),
@@ -1961,7 +2732,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               child: AnimatedSlide(
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeOutCubic,
-                offset: _showQuickControls ? Offset.zero : const Offset(0, -0.2),
+                offset:
+                    _showQuickControls ? Offset.zero : const Offset(0, -0.2),
                 child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.easeInOutCubic,
@@ -2700,6 +3472,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               final bool isVehicle = p.type.toLowerCase() == 'vehicle';
                               // Resolve unit via ListingService if available, else fallback by type
                               String unit = isVehicle ? 'hour' : 'month';
+                              ls.Listing? backing;
                               try {
                                 final listingsState = ref.read(ls.listingProvider);
                                 final allListings = [...listingsState.listings, ...listingsState.userListings];
@@ -2707,16 +3480,71 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 if (found?.rentalUnit != null && (found!.rentalUnit!.trim().isNotEmpty)) {
                                   unit = found.rentalUnit!.trim().toLowerCase();
                                 }
+                                backing = found;
                               } catch (_) {}
                               // Derive Category tag and mode badge for clarity
+                              final String typeLower = p.type.toLowerCase();
+                              final bool isVenueType = typeLower.startsWith('venue_') || typeLower == 'venue';
                               final String categoryTag = isVehicle
                                   ? 'Vehicle'
-                                  : (({
+                                  : (isVenueType
+                                      ? 'Venue'
+                                      : (({
                                             'office', 'retail', 'showroom', 'warehouse'
-                                          }.contains(p.type.toLowerCase()))
+                                          }.contains(typeLower))
                                       ? 'Commercial'
-                                      : (p.type.toLowerCase() == 'plot' ? 'Plot' : 'Residential'));
+                                      : (typeLower == 'plot' ? 'Plot' : 'Residential')));
                               const String modeBadge = 'Rent';
+
+                              // Build category-specific meta items
+                              List<ListingMetaItem> metaItems;
+                              if (isVehicle) {
+                                final int seats = p.seats > 0 ? p.seats : (p.bedrooms > 0 ? p.bedrooms : 0);
+                                final String trans = (p.vehicleTransmission).toLowerCase();
+                                final String fuel = (p.vehicleFuel).toLowerCase();
+                                final String transLabel = trans.isEmpty || trans == 'any'
+                                    ? ''
+                                    : (trans[0].toUpperCase() + trans.substring(1));
+                                final String fuelLabel = fuel.isEmpty || fuel == 'any'
+                                    ? ''
+                                    : (fuel[0].toUpperCase() + fuel.substring(1));
+                                metaItems = [];
+                                if (seats > 0) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '$seats'));
+                                }
+                                if (transLabel.isNotEmpty) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.settings, text: transLabel));
+                                }
+                                if (fuelLabel.isNotEmpty) {
+                                  final fuelIcon = fuel == 'electric' ? Icons.electric_bolt : Icons.local_gas_station;
+                                  metaItems.add(ListingMetaItem(icon: fuelIcon, text: fuelLabel));
+                                }
+                              } else if (isVenueType) {
+                                int seating = 0;
+                                int maxGuests = 0;
+                                if (backing != null) {
+                                  final am = backing.amenities;
+                                  final s1 = am['seating_capacity'];
+                                  final s2 = am['venue_seated_capacity'];
+                                  final mg = am['max_guests'];
+                                  if (s1 is num) seating = s1.toInt();
+                                  if (seating == 0 && s2 is num) seating = s2.toInt();
+                                  if (mg is num) maxGuests = mg.toInt();
+                                }
+                                metaItems = [];
+                                if (seating > 0) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.event_seat, text: '$seating seating'));
+                                }
+                                if (maxGuests > 0) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.groups, text: '$maxGuests guests'));
+                                }
+                              } else {
+                                // Residential & Commercial: keep classic beds/baths
+                                metaItems = [
+                                  ListingMetaItem(icon: Icons.bed, text: '${p.bedrooms} bd'),
+                                  ListingMetaItem(icon: Icons.bathtub, text: '${p.bathrooms} ba'),
+                                ];
+                              }
 
                               final vm = ListingViewModelFactory.fromRaw(
                                 ref,
@@ -2729,14 +3557,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 rating: p.rating,
                                 reviewCount: null,
                                 chips: [categoryTag, modeBadge],
-                                metaItems: isVehicle
-                                    ? [
-                                        ListingMetaItem(icon: Icons.event_seat, text: '${p.bedrooms} seats'),
-                                      ]
-                                    : [
-                                        ListingMetaItem(icon: Icons.bed, text: '${p.bedrooms} bd'),
-                                        ListingMetaItem(icon: Icons.bathtub, text: '${p.bathrooms} ba'),
-                                      ],
+                                metaItems: metaItems,
                                 fallbackIcon: isVehicle ? Icons.directions_car_rounded : Icons.home,
                                 isVehicle: isVehicle,
                                 badges: p.isVerified ? const [ListingBadgeType.verified] : const [],
@@ -2762,6 +3583,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               final p = _searchResults[index];
                               final bool isVehicle = p.type.toLowerCase() == 'vehicle';
                               String unit = isVehicle ? 'day' : 'month';
+                              ls.Listing? backing;
                               try {
                                 final listingsState = ref.read(ls.listingProvider);
                                 final allListings = [...listingsState.listings, ...listingsState.userListings];
@@ -2769,16 +3591,70 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 if (found?.rentalUnit != null && (found!.rentalUnit!.trim().isNotEmpty)) {
                                   unit = found.rentalUnit!.trim().toLowerCase();
                                 }
+                                backing = found;
                               } catch (_) {}
                               // Derive Category tag and mode badge (same as grid)
+                              final String typeLower = p.type.toLowerCase();
+                              final bool isVenueType = typeLower.startsWith('venue_') || typeLower == 'venue';
                               final String categoryTag = isVehicle
                                   ? 'Vehicle'
-                                  : (({
+                                  : (isVenueType
+                                      ? 'Venue'
+                                      : (({
                                         'office', 'retail', 'showroom', 'warehouse'
-                                      }.contains(p.type.toLowerCase()))
+                                      }.contains(typeLower))
                                       ? 'Commercial'
-                                      : (p.type.toLowerCase() == 'plot' ? 'Plot' : 'Residential'));
+                                      : (typeLower == 'plot' ? 'Plot' : 'Residential')));
                               const String modeBadge = 'Rent';
+
+                              // Build category-specific meta items (same logic as grid)
+                              List<ListingMetaItem> metaItems;
+                              if (isVehicle) {
+                                final int seats = p.seats > 0 ? p.seats : (p.bedrooms > 0 ? p.bedrooms : 0);
+                                final String trans = (p.vehicleTransmission).toLowerCase();
+                                final String fuel = (p.vehicleFuel).toLowerCase();
+                                final String transLabel = trans.isEmpty || trans == 'any'
+                                    ? ''
+                                    : (trans[0].toUpperCase() + trans.substring(1));
+                                final String fuelLabel = fuel.isEmpty || fuel == 'any'
+                                    ? ''
+                                    : (fuel[0].toUpperCase() + fuel.substring(1));
+                                metaItems = [];
+                                if (seats > 0) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.airline_seat_recline_normal, text: '$seats'));
+                                }
+                                if (transLabel.isNotEmpty) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.settings, text: transLabel));
+                                }
+                                if (fuelLabel.isNotEmpty) {
+                                  final fuelIcon = fuel == 'electric' ? Icons.electric_bolt : Icons.local_gas_station;
+                                  metaItems.add(ListingMetaItem(icon: fuelIcon, text: fuelLabel));
+                                }
+                              } else if (isVenueType) {
+                                int seating = 0;
+                                int maxGuests = 0;
+                                if (backing != null) {
+                                  final am = backing.amenities;
+                                  final s1 = am['seating_capacity'];
+                                  final s2 = am['venue_seated_capacity'];
+                                  final mg = am['max_guests'];
+                                  if (s1 is num) seating = s1.toInt();
+                                  if (seating == 0 && s2 is num) seating = s2.toInt();
+                                  if (mg is num) maxGuests = mg.toInt();
+                                }
+                                metaItems = [];
+                                if (seating > 0) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.event_seat, text: '$seating seating'));
+                                }
+                                if (maxGuests > 0) {
+                                  metaItems.add(ListingMetaItem(icon: Icons.groups, text: '$maxGuests guests'));
+                                }
+                              } else {
+                                metaItems = [
+                                  ListingMetaItem(icon: Icons.bed, text: '${p.bedrooms} bd'),
+                                  ListingMetaItem(icon: Icons.bathtub, text: '${p.bathrooms} ba'),
+                                ];
+                              }
 
                               final vm = ListingViewModelFactory.fromRaw(
                                 ref,
@@ -2791,14 +3667,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                                 rating: p.rating,
                                 reviewCount: null,
                                 chips: [categoryTag, modeBadge],
-                                metaItems: isVehicle
-                                    ? [
-                                        ListingMetaItem(icon: Icons.event_seat, text: '${p.bedrooms} seats'),
-                                      ]
-                                    : [
-                                        ListingMetaItem(icon: Icons.bed, text: '${p.bedrooms} bd'),
-                                        ListingMetaItem(icon: Icons.bathtub, text: '${p.bathrooms} ba'),
-                                      ],
+                                metaItems: metaItems,
                                 fallbackIcon: isVehicle ? Icons.directions_car_rounded : Icons.home,
                                 isVehicle: isVehicle,
                                 badges: p.isVerified ? const [ListingBadgeType.verified] : const [],
@@ -2849,6 +3718,11 @@ class PropertyResult {
   // Plot-specific attributes
   final int plotSize; // sq ft
   final String plotUsage; // any | agriculture | commercial | events | construction
+  // Vehicle-specific attributes
+  final String vehicleCategory; // suv | sedan | hatchback | bikes | vans | electric | all
+  final String vehicleFuel; // any | electric | petrol | diesel
+  final String vehicleTransmission; // any | automatic | manual
+  final int seats; // dedicated seat count (fallback to bedrooms when 0)
   
   PropertyResult({
     required this.id,
@@ -2870,5 +3744,9 @@ class PropertyResult {
     this.amenities = const <String>{},
     this.plotSize = 0,
     this.plotUsage = 'any',
+    this.vehicleCategory = '',
+    this.vehicleFuel = 'any',
+    this.vehicleTransmission = 'any',
+    this.seats = 0,
   });
 }

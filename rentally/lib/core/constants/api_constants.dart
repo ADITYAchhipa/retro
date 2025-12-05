@@ -38,6 +38,8 @@ class ApiConstants {
   static const String registerEndpoint = '/register';     // POST: user data
   static const String refreshTokenEndpoint = '/refresh';  // POST: refresh token
   static const String logoutEndpoint = '/logout';         // POST: logout user
+  static const String sendOtpEndpoint = '/otp';           // POST: name, email, password (and optionally phone)
+  static const String verifyOtpEndpoint = '/verify';      // POST: otp
   
   // Property endpoints - implement these in your backend
   static const String propertiesEndpoint = '/properties';                    // GET: ?page=1&limit=10
