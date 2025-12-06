@@ -1,14 +1,18 @@
 import mongoose from "mongoose";
 import Property from "./models/property.js";
+import dotenv from "dotenv";
 
-// === MongoDB Connection ===
-const DB_NAME = "rentaly"; // change to "rentaly" if you prefer
-// const MONGO_URI = `mongodb://localhost:27017/${DB_NAME}`;
-const MONGO_URI = "mongodb+srv://aditychhipa55:ADITYAchhipa@cluster0.lwaidgw.mongodb.net"
+// Load environment variables from .env
+dotenv.config();
+
+// === MongoDB Connection - uses same URI as the main server ===
+const MONGO_URI = process.env.MONGODB_URI;
+
+console.log("Using MONGODB_URI from .env file");
 
 try {
   await mongoose.connect(MONGO_URI);
-  console.log(`✅ Connected to MongoDB database: ${DB_NAME}`);
+  console.log(`✅ Connected to MongoDB`);
 } catch (err) {
   console.error("❌ MongoDB Connection Error:", err);
   process.exit(1);
@@ -30,7 +34,7 @@ const randomAmenities = () => amenitiesList.sort(() => 0.5 - Math.random()).slic
 const fakeOwnerId = new mongoose.Types.ObjectId(); // replace with a real user ID if needed
 
 // === Generate 100 Fake Properties ===
-const properties = Array.from({ length: 1 }).map((_, i) => {
+const properties = Array.from({ length: 100 }).map((_, i) => {
   const category = randomItem(categories);
   const city = randomItem(cities);
   const lat = 24 + Math.random();

@@ -1279,85 +1279,67 @@ class _CleanOwnerDashboardScreenState extends ConsumerState<CleanOwnerDashboardS
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FutureBuilder<KycProfile>(
-            future: KycService.instance.getProfile(),
-            builder: (context, snapshot) {
+          // KYC Status Display - uses backend user.kycStatus
+          Builder(
+            builder: (context) {
               final auth = ref.watch(authProvider);
-              final isVerifiedAuth = auth.user?.isKycVerified == true;
-              if (!snapshot.hasData && !isVerifiedAuth) {
-                return const SizedBox.shrink();
-              }
-              final status = snapshot.data?.status ?? KycStatus.notStarted;
-              final verified = isVerifiedAuth || status == KycStatus.verified;
+              final user = auth.user;
+              if (user == null) return const SizedBox.shrink();
+              
+              // Treat null as 'UnCompleted'
+              final kycStatus = user.kycStatus ?? 'UnCompleted';
               Color baseColor;
               String label;
               IconData icon;
-              String? ctaLabel;
-              switch (verified ? KycStatus.verified : status) {
-                case KycStatus.verified:
-                  baseColor = Colors.green; label = 'KYC Verified'; icon = Icons.verified; ctaLabel = null; break;
-                case KycStatus.submitted:
-                  baseColor = Colors.amber; label = 'KYC Submitted'; icon = Icons.hourglass_bottom; ctaLabel = 'View Status'; break;
-                case KycStatus.inProgress:
-                  baseColor = Colors.blue; label = 'KYC In Progress'; icon = Icons.pending_actions; ctaLabel = 'Resume KYC'; break;
-                case KycStatus.rejected:
-                  baseColor = Colors.red; label = 'KYC Rejected'; icon = Icons.error_outline; ctaLabel = 'Fix & Resubmit'; break;
-                case KycStatus.notStarted:
-                  baseColor = Colors.orange; label = ''; icon = Icons.verified_user_outlined; ctaLabel = 'KYC Required'; break;
+              bool canNavigate;
+              
+              switch (kycStatus) {
+                case 'completed':
+                  baseColor = Colors.green;
+                  label = 'KYC Verified';
+                  icon = Icons.verified;
+                  canNavigate = false;
+                  break;
+                case 'pending':
+                  baseColor = Colors.amber;
+                  label = 'Under Review';
+                  icon = Icons.hourglass_bottom;
+                  canNavigate = false; // No navigation for pending
+                  break;
+                case 'UnCompleted':
+                default:
+                  baseColor = Colors.orange;
+                  label = 'KYC Required';
+                  icon = Icons.verified_user_outlined;
+                  canNavigate = true; // Opens KYC screen
+                  break;
               }
+              
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    // Show label chip only if label is not empty (not for notStarted status)
-                    if (label.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: baseColor.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: baseColor.withValues(alpha: 0.2)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(icon, size: 16, color: baseColor),
-                            const SizedBox(width: 6),
-                            Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                          ],
-                        ),
-                      ),
-                    if (!verified && ctaLabel != null)
-                      // For notStarted, use chip-style button; otherwise use OutlinedButton
-                      status == KycStatus.notStarted
-                          ? InkWell(
-                              onTap: () => context.push('/kyc'),
-                              borderRadius: BorderRadius.circular(999),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: baseColor.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: baseColor.withValues(alpha: 0.2)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(icon, size: 16, color: baseColor),
-                                    const SizedBox(width: 6),
-                                    Text(ctaLabel, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : OutlinedButton(
-                              onPressed: () => context.push('/kyc'),
-                              child: Text(ctaLabel),
-                            ),
-                  ],
+                child: InkWell(
+                  onTap: canNavigate ? () => context.push('/kyc') : null,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: baseColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: baseColor.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 16, color: baseColor),
+                        const SizedBox(width: 6),
+                        Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                        if (canNavigate) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right, size: 16, color: baseColor),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               );
             },

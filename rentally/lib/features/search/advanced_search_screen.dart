@@ -1584,45 +1584,51 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
         label: 'Instant Book',
         icon: Icons.flash_on,
         isSelected: () => _instantBooking,
-        onTap: () => setState(() => _instantBooking = !_instantBooking),
+        onTap: () { setState(() => _instantBooking = !_instantBooking); _performSearch(); },
       ),
       QuickFilter(
         label: 'Verified',
         icon: Icons.verified,
         isSelected: () => _verifiedOnly,
-        onTap: () => setState(() => _verifiedOnly = !_verifiedOnly),
+        onTap: () { setState(() => _verifiedOnly = !_verifiedOnly); _performSearch(); },
       ),
       QuickFilter(
-        label: 'Under £100',
+        label: 'Under ₹100',
         isSelected: () => _priceRange.end <= 100,
-        onTap: () => setState(() {
-          if (_priceRange.start == 0 && _priceRange.end == 100) {
-            _priceRange = const RangeValues(0, 5000);
-          } else {
-            _priceRange = const RangeValues(0, 100);
-          }
-        }),
+        onTap: () {
+          setState(() {
+            if (_priceRange.start == 0 && _priceRange.end == 100) {
+              _priceRange = const RangeValues(0, 100000);
+            } else {
+              _priceRange = const RangeValues(0, 100);
+            }
+          });
+          _performSearch();
+        },
       ),
       QuickFilter(
-        label: '£100-£200',
-        isSelected: () => _priceRange.start >= 100 && _priceRange.end <= 200,
-        onTap: () => setState(() {
-          if (_priceRange.start == 100 && _priceRange.end == 200) {
-            _priceRange = const RangeValues(0, 5000);
-          } else {
-            _priceRange = const RangeValues(100, 200);
-          }
-        }),
+        label: '₹100-₹500',
+        isSelected: () => _priceRange.start >= 100 && _priceRange.end <= 500,
+        onTap: () {
+          setState(() {
+            if (_priceRange.start == 100 && _priceRange.end == 500) {
+              _priceRange = const RangeValues(0, 100000);
+            } else {
+              _priceRange = const RangeValues(100, 500);
+            }
+          });
+          _performSearch();
+        },
       ),
       QuickFilter(
         label: '1+ Bedroom',
         isSelected: () => _bedrooms >= 1,
-        onTap: () => setState(() => _bedrooms = _bedrooms >= 1 ? 0 : 1),
+        onTap: () { setState(() => _bedrooms = _bedrooms >= 1 ? 0 : 1); _performSearch(); },
       ),
       QuickFilter(
         label: '2+ Bedrooms',
         isSelected: () => _bedrooms >= 2,
-        onTap: () => setState(() => _bedrooms = _bedrooms >= 2 ? 0 : 2),
+        onTap: () { setState(() => _bedrooms = _bedrooms >= 2 ? 0 : 2); _performSearch(); },
       ),
     ];
   }
@@ -2775,7 +2781,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             onPressed: () {
                               setState(() {
                                 _propertyType = 'all';
-                                _priceRange = const RangeValues(0, 5000);
+                                _priceRange = const RangeValues(0, 100000);
                                 _bedrooms = 0;
                                 _bathrooms = 0;
                                 _instantBooking = false;
@@ -2870,7 +2876,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   void _resetFilters() {
     setState(() {
       _propertyType = 'all';
-      _priceRange = const RangeValues(0, 5000);
+      _priceRange = const RangeValues(0, 100000);
       _bedrooms = 0;
       _bathrooms = 0;
       _instantBooking = false;
@@ -3233,6 +3239,12 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             child: TextField(
                               controller: _searchController,
                               focusNode: _searchFocusNode,
+                              textInputAction: TextInputAction.search,
+                              onSubmitted: (_) {
+                                // Trigger search immediately on Enter key
+                                _debounceTimer?.cancel();
+                                _performSearch();
+                              },
                               cursorColor: isDark
                                   ? EnterpriseDarkTheme.primaryAccent
                                   : theme.primaryColor,
@@ -3734,7 +3746,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                 child: _buildModernChoiceChip(
                   type.replaceAll('_', ' ').toUpperCase(),
                   _propertyType == type,
-                  () => setState(() => _propertyType = type),
+                  () {
+                    setState(() => _propertyType = type);
+                    _performSearch(); // Apply the filter
+                  },
                   theme,
                 ),
               )).toList(),
@@ -3781,6 +3796,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                   divisions: 50,
                   activeColor: theme.primaryColor,
                   onChanged: (values) => setState(() => _priceRange = values),
+                  onChangeEnd: (_) => _performSearch(), // Apply filter when released
                 ),
               ),
             ],

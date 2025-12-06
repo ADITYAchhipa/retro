@@ -24,6 +24,7 @@ class User {
   final UserRole role;
   final String? profileImageUrl;
   final bool isKycVerified;
+  final String? kycStatus; // 'completed', 'pending', 'UnCompleted' or null (treated as UnCompleted)
 
   const User({
     required this.id,
@@ -34,6 +35,7 @@ class User {
     required this.role,
     this.profileImageUrl,
     this.isKycVerified = false,
+    this.kycStatus,
   });
 
   User copyWith({
@@ -45,6 +47,7 @@ class User {
     UserRole? role,
     String? profileImageUrl,
     bool? isKycVerified,
+    String? kycStatus,
   }) {
     return User(
       id: id ?? this.id,
@@ -55,6 +58,7 @@ class User {
       role: role ?? this.role,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isKycVerified: isKycVerified ?? this.isKycVerified,
+      kycStatus: kycStatus ?? this.kycStatus,
     );
   }
 }
@@ -130,7 +134,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
                 role: role,
                 // Backend returns 'avatar', check both fields
                 profileImageUrl: userData['avatar'] as String? ?? userData['profileImageUrl'] as String?,
-                isKycVerified: userData['isKycVerified'] as bool? ?? false,
+                isKycVerified: userData['isKycVerified'] as bool? ?? (userData['kyc'] == 'completed'),
+                kycStatus: (userData['kyc'] != null) ? userData['kyc'].toString() : 'UnCompleted',
               );
 
               state = state.copyWith(
@@ -174,6 +179,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           role: role,
           profileImageUrl: data['profileImageUrl'] as String?,
           isKycVerified: data['isKycVerified'] as bool? ?? false,
+          kycStatus: (data['kycStatus'] != null) ? data['kycStatus'].toString() : 'UnCompleted',
         );
 
         state = state.copyWith(
@@ -205,6 +211,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'role': user.role.name,
           'profileImageUrl': user.profileImageUrl,
           'isKycVerified': user.isKycVerified,
+          'kycStatus': user.kycStatus,
         };
 
         await prefs.setString(_authUserKey, jsonEncode(payload));

@@ -1,5 +1,11 @@
 import 'dart:convert';
+import 'dart:io' if (dart.library.html) 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import '../token_storage_service.dart';
 
 enum KycStatus { notStarted, inProgress, submitted, verified, rejected }
 
@@ -126,6 +132,10 @@ class KycService {
   static final KycService instance = KycService._();
 
   static const _storageKey = 'kyc_profile_v1';
+  static const _frontIdBytesKey = 'kyc_front_id_bytes';
+  static const _backIdBytesKey = 'kyc_back_id_bytes';
+  static const _selfieBytesKey = 'kyc_selfie_bytes';
+  static const String _baseUrl = 'http://localhost:4000/api';
 
   Future<KycProfile> getProfile() async {
     final prefs = await SharedPreferences.getInstance();
@@ -187,10 +197,199 @@ class KycService {
     await _save(updated);
   }
 
+  /// Save image bytes (for web compatibility)
+  Future<void> saveFrontIdBytes(Uint8List bytes) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_frontIdBytesKey, base64Encode(bytes));
+  }
+
+  Future<void> saveBackIdBytes(Uint8List bytes) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_backIdBytesKey, base64Encode(bytes));
+  }
+
+  Future<void> saveSelfieBytes(Uint8List bytes) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selfieBytesKey, base64Encode(bytes));
+  }
+
+  /// Get image bytes (for web compatibility)
+  Future<Uint8List?> getFrontIdBytes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = prefs.getString(_frontIdBytesKey);
+    if (encoded == null || encoded.isEmpty) return null;
+    return base64Decode(encoded);
+  }
+
+  Future<Uint8List?> getBackIdBytes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = prefs.getString(_backIdBytesKey);
+    if (encoded == null || encoded.isEmpty) return null;
+    return base64Decode(encoded);
+  }
+
+  Future<Uint8List?> getSelfieBytes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = prefs.getString(_selfieBytesKey);
+    if (encoded == null || encoded.isEmpty) return null;
+    return base64Decode(encoded);
+  }
+
   Future<void> submit() async {
     final current = await getProfile();
     final updated = current.copyWith(status: KycStatus.submitted, submittedAt: DateTime.now());
     await _save(updated);
+  }
+
+  /// Submit KYC to backend API with all documents
+  /// Returns a map with 'success' and 'message' keys
+  /// Works on both web and mobile platforms
+  Future<Map<String, dynamic>> submitToBackend() async {
+    try {
+      final profile = await getProfile();
+      final token = await TokenStorageService.getToken();
+
+      if (token == null) {
+        return {'success': false, 'message': 'Not authenticated. Please login first.'};
+      }
+
+      // Validate required fields
+      if (profile.firstName == null || profile.lastName == null || 
+          profile.dob == null || profile.address == null || 
+          profile.city == null || profile.postalCode == null || 
+          profile.country == null) {
+        return {'success': false, 'message': 'Please fill in all personal information.'};
+      }
+
+      // Get image bytes - works on both web and mobile
+      Uint8List? frontIdBytes;
+      Uint8List? backIdBytes;
+      Uint8List? selfieBytes;
+
+      if (kIsWeb) {
+        // On web, get bytes from stored base64
+        frontIdBytes = await getFrontIdBytes();
+        backIdBytes = await getBackIdBytes();
+        selfieBytes = await getSelfieBytes();
+      } else {
+        // On mobile, read from file paths
+        if (profile.frontIdPath != null) {
+          final frontIdFile = File(profile.frontIdPath!);
+          if (await frontIdFile.exists()) {
+            frontIdBytes = await frontIdFile.readAsBytes();
+          }
+        }
+        if (profile.backIdPath != null) {
+          final backIdFile = File(profile.backIdPath!);
+          if (await backIdFile.exists()) {
+            backIdBytes = await backIdFile.readAsBytes();
+          }
+        }
+        if (profile.selfiePath != null) {
+          final selfieFile = File(profile.selfiePath!);
+          if (await selfieFile.exists()) {
+            selfieBytes = await selfieFile.readAsBytes();
+          }
+        }
+      }
+
+      // Validate required images
+      if (frontIdBytes == null || frontIdBytes.isEmpty) {
+        return {'success': false, 'message': 'Please upload front ID image.'};
+      }
+
+      if (selfieBytes == null || selfieBytes.isEmpty) {
+        return {'success': false, 'message': 'Please take a selfie.'};
+      }
+
+      // Create multipart request
+      final uri = Uri.parse('$_baseUrl/identity-verification/submit');
+      final request = http.MultipartRequest('POST', uri);
+
+      // Add authorization header
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Add personal info fields
+      request.fields['firstName'] = profile.firstName!;
+      request.fields['lastName'] = profile.lastName!;
+      request.fields['dob'] = profile.dob!;
+      request.fields['address'] = profile.address!;
+      request.fields['city'] = profile.city!;
+      request.fields['postalCode'] = profile.postalCode!;
+      request.fields['country'] = profile.country!;
+      request.fields['documentType'] = profile.documentType;
+
+      // Add front ID image using bytes
+      request.files.add(http.MultipartFile.fromBytes(
+        'frontId',
+        frontIdBytes,
+        filename: 'front_id.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ));
+
+      // Add back ID image (if exists and document type is not passport)
+      if (backIdBytes != null && backIdBytes.isNotEmpty && profile.documentType != 'passport') {
+        request.files.add(http.MultipartFile.fromBytes(
+          'backId',
+          backIdBytes,
+          filename: 'back_id.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      }
+
+      // Add selfie image using bytes
+      request.files.add(http.MultipartFile.fromBytes(
+        'selfie',
+        selfieBytes,
+        filename: 'selfie.jpg',
+        contentType: MediaType('image', 'jpeg'),
+      ));
+
+      // Send request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          // Update local status
+          await submit();
+          return {'success': true, 'message': 'KYC submitted successfully!'};
+        } else {
+          return {'success': false, 'message': data['message'] ?? 'Failed to submit KYC'};
+        }
+      } else {
+        return {'success': false, 'message': 'Server error. Please try again later.'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
+    }
+  }
+
+  /// Get KYC status from backend
+  Future<Map<String, dynamic>> getBackendStatus() async {
+    try {
+      final token = await TokenStorageService.getToken();
+
+      if (token == null) {
+        return {'success': false, 'status': 'not_authenticated'};
+      }
+
+      final uri = Uri.parse('$_baseUrl/identity-verification/status');
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        return {'success': false, 'message': 'Failed to get KYC status'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
+    }
   }
 
   Future<void> markVerified() async {

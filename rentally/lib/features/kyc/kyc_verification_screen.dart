@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../../core/widgets/tab_back_handler.dart';
 import '../../app/app_state.dart';
 import '../../services/kyc/kyc_service.dart';
@@ -21,11 +23,15 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   int _furthestStep = 0; // highest index user has reached
   bool _isLoading = false;
   
-  // Document verification
-  File? _frontIdImage;
-  File? _backIdImage;
-  File? _selfieImage;
-  File? _profileIdImage;
+  // Document verification - store both XFile and bytes for cross-platform
+  XFile? _frontIdXFile;
+  XFile? _backIdXFile;
+  XFile? _selfieXFile;
+  XFile? _profileIdXFile;
+  Uint8List? _frontIdBytes;
+  Uint8List? _backIdBytes;
+  Uint8List? _selfieBytes;
+  Uint8List? _profileIdBytes;
   String _selectedDocumentType = 'passport';
   
   // Personal information
@@ -57,6 +63,40 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
       } catch (_) {}
 
       if (!mounted) return;
+      
+      // For non-web platforms, load bytes from file paths
+      if (!kIsWeb) {
+        if (profile.frontIdPath != null) {
+          final file = File(profile.frontIdPath!);
+          if (await file.exists()) {
+            _frontIdXFile = XFile(profile.frontIdPath!);
+            _frontIdBytes = await file.readAsBytes();
+          }
+        }
+        if (profile.backIdPath != null) {
+          final file = File(profile.backIdPath!);
+          if (await file.exists()) {
+            _backIdXFile = XFile(profile.backIdPath!);
+            _backIdBytes = await file.readAsBytes();
+          }
+        }
+        if (profile.selfiePath != null) {
+          final file = File(profile.selfiePath!);
+          if (await file.exists()) {
+            _selfieXFile = XFile(profile.selfiePath!);
+            _selfieBytes = await file.readAsBytes();
+          }
+        }
+        if (profileIdPath != null) {
+          final file = File(profileIdPath);
+          if (await file.exists()) {
+            _profileIdXFile = XFile(profileIdPath);
+            _profileIdBytes = await file.readAsBytes();
+          }
+        }
+      }
+      
+      if (!mounted) return;
       setState(() {
         _selectedDocumentType = profile.documentType;
         _firstNameController.text = profile.firstName ?? _firstNameController.text;
@@ -66,14 +106,6 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
         _cityController.text = profile.city ?? _cityController.text;
         _postalCodeController.text = profile.postalCode ?? _postalCodeController.text;
         _countryController.text = profile.country ?? _countryController.text;
-        if (profile.frontIdPath != null) _frontIdImage = File(profile.frontIdPath!);
-        if (profile.backIdPath != null) _backIdImage = File(profile.backIdPath!);
-        if (profile.selfiePath != null) _selfieImage = File(profile.selfiePath!);
-
-        // Load ID document previously uploaded in the profile screen (if any)
-        if (profileIdPath != null) {
-          _profileIdImage = File(profileIdPath);
-        }
       });
     } catch (_) {}
   }
@@ -583,7 +615,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Take clear photos of both sides of your ${_getDocumentName()}. Ensure all text is readable.',
+            'Upload clear photos of both sides of your ${_getDocumentName()}. Ensure all text is readable.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -612,47 +644,6 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                   Text('• Good lighting, no glare', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                   Text('• Entire document in frame', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                   Text('• Text and photo clearly visible', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.8))),
-                  if (_profileIdImage != null && _frontIdImage == null) ...[
-                    const SizedBox(height: 6),
-                    Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.3)),
-                    const SizedBox(height: 6),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(Icons.badge_outlined, size: 14, color: theme.colorScheme.primary),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'You already uploaded an ID in your profile. You can reuse it here for faster KYC.',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () async {
-                            if (_profileIdImage == null) return;
-                            setState(() {
-                              _frontIdImage = _profileIdImage;
-                            });
-                            try {
-                              await KycService.instance.saveDocumentPaths(frontIdPath: _profileIdImage!.path);
-                            } catch (_) {}
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            'Use profile ID',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -665,18 +656,18 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                   _buildDocumentUploadCard(
                     theme,
                     'Front Side',
-                    'Take a photo of the front of your ${_getDocumentName()}',
-                    _frontIdImage,
-                    () => _pickImage(ImageSource.camera, 'front'),
+                    'Upload a photo of the front of your ${_getDocumentName()}',
+                    _frontIdBytes,
+                    () => _pickImage(ImageSource.gallery, 'front'),
                   ),
                   const SizedBox(height: 8),
                   if (_selectedDocumentType != 'passport')
                     _buildDocumentUploadCard(
                       theme,
                       'Back Side',
-                      'Take a photo of the back of your ${_getDocumentName()}',
-                      _backIdImage,
-                      () => _pickImage(ImageSource.camera, 'back'),
+                      'Upload a photo of the back of your ${_getDocumentName()}',
+                      _backIdBytes,
+                      () => _pickImage(ImageSource.gallery, 'back'),
                     ),
                 ],
               ),
@@ -687,7 +678,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
     );
   }
 
-  Widget _buildDocumentUploadCard(ThemeData theme, String title, String subtitle, File? image, VoidCallback onTap) {
+  Widget _buildDocumentUploadCard(ThemeData theme, String title, String subtitle, Uint8List? imageBytes, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -697,15 +688,15 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
         decoration: BoxDecoration(
           border: Border.all(color: theme.colorScheme.outline),
           borderRadius: BorderRadius.circular(10),
-          color: image != null ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+          color: imageBytes != null ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
         ),
-        child: image != null
+        child: imageBytes != null
           ? Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: Image.file(
-                    image,
+                  child: Image.memory(
+                    imageBytes,
                     width: 56,
                     height: 56,
                     fit: BoxFit.cover,
@@ -830,13 +821,13 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Center(
-                child: _selfieImage != null
+                child: _selfieBytes != null
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ClipOval(
-                            child: Image.file(
-                              _selfieImage!,
+                            child: Image.memory(
+                              _selfieBytes!,
                               width: 128,
                               height: 128,
                               fit: BoxFit.cover,
@@ -952,10 +943,10 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
                     theme,
                     'Uploaded Documents',
                     [
-                      'Front ID: ${_frontIdImage != null ? "✓ Uploaded" : "✗ Missing"}',
+                      'Front ID: ${_frontIdBytes != null ? "✓ Uploaded" : "✗ Missing"}',
                       if (_selectedDocumentType != 'passport')
-                        'Back ID: ${_backIdImage != null ? "✓ Uploaded" : "✗ Missing"}',
-                      'Selfie: ${_selfieImage != null ? "✓ Uploaded" : "✗ Missing"}',
+                        'Back ID: ${_backIdBytes != null ? "✓ Uploaded" : "✗ Missing"}',
+                      'Selfie: ${_selfieBytes != null ? "✓ Uploaded" : "✗ Missing"}',
                     ],
                   ),
                 ],
@@ -1108,10 +1099,10 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
       case 2:
         return _selectedDocumentType.isNotEmpty;
       case 3:
-        return _frontIdImage != null && 
-               (_selectedDocumentType == 'passport' || _backIdImage != null);
+        return _frontIdBytes != null && 
+               (_selectedDocumentType == 'passport' || _backIdBytes != null);
       case 4:
-        return _selfieImage != null;
+        return _selfieBytes != null;
       case 5:
         return true;
       default:
@@ -1152,27 +1143,45 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   Future<void> _pickImage(ImageSource source, String type) async {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
+      // Read bytes for cross-platform display
+      final bytes = await image.readAsBytes();
+      
       setState(() {
         switch (type) {
           case 'front':
-            _frontIdImage = File(image.path);
+            _frontIdXFile = image;
+            _frontIdBytes = bytes;
             break;
           case 'back':
-            _backIdImage = File(image.path);
+            _backIdXFile = image;
+            _backIdBytes = bytes;
             break;
           case 'selfie':
-            _selfieImage = File(image.path);
+            _selfieXFile = image;
+            _selfieBytes = bytes;
             break;
         }
       });
-      // Persist paths
+      
+      // Persist data for submission
       try {
         if (type == 'front') {
-          await KycService.instance.saveDocumentPaths(frontIdPath: image.path);
+          // Save bytes for web compatibility
+          await KycService.instance.saveFrontIdBytes(bytes);
+          // Also save path for mobile platforms
+          if (!kIsWeb) {
+            await KycService.instance.saveDocumentPaths(frontIdPath: image.path);
+          }
         } else if (type == 'back') {
-          await KycService.instance.saveDocumentPaths(backIdPath: image.path);
+          await KycService.instance.saveBackIdBytes(bytes);
+          if (!kIsWeb) {
+            await KycService.instance.saveDocumentPaths(backIdPath: image.path);
+          }
         } else if (type == 'selfie') {
-          await KycService.instance.saveSelfiePath(image.path);
+          await KycService.instance.saveSelfieBytes(bytes);
+          if (!kIsWeb) {
+            await KycService.instance.saveSelfiePath(image.path);
+          }
         }
       } catch (_) {}
     }
@@ -1249,30 +1258,51 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
-    // Simulate API submission
-    await Future.delayed(const Duration(seconds: 3));
     try {
-      await KycService.instance.submit();
-    } catch (_) {}
+      // Submit to backend API
+      final result = await KycService.instance.submitToBackend();
+      
+      if (!mounted) return;
+      
+      if (result['success'] == true) {
+        // Update user's kycStatus to 'pending' in auth state for instant UI update
+        try {
+          final auth = ref.read(authProvider);
+          final current = auth.user;
+          if (current != null) {
+            await ref.read(authProvider.notifier).updateProfile(
+              current.copyWith(kycStatus: 'pending'),
+            );
+          }
+        } catch (_) {}
 
-    if (!mounted) return;
-    // Mark user as KYC-verified in auth state
-    try {
-      final auth = ref.read(authProvider);
-      final current = auth.user;
-      if (current != null) {
-        await ref.read(authProvider.notifier).updateProfile(
-          current.copyWith(isKycVerified: true),
-        );
+        setState(() => _isLoading = false);
+        if (_pageController.hasClients) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      } else {
+        // Show error message
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to submit KYC. Please try again.'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
-    } catch (_) {}
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    if (_pageController.hasClients) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }

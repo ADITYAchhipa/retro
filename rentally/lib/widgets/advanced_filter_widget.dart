@@ -87,15 +87,23 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPriceRangeFilter(theme),
+                    _buildCategoryTypeFilter(theme),
                     const SizedBox(height: 24),
                     _buildPropertyTypeFilter(theme),
                     const SizedBox(height: 24),
-                    _buildVenueFilter(theme),
+                    _buildPriceRangeFilter(theme),
+                    const SizedBox(height: 24),
+                    _buildAreaRangeFilter(theme),
+                    const SizedBox(height: 24),
+                    _buildFurnishedFilter(theme),
                     const SizedBox(height: 24),
                     _buildBedroomsBathroomsFilter(theme),
                     const SizedBox(height: 24),
                     _buildAmenitiesFilter(theme),
+                    const SizedBox(height: 24),
+                    _buildEssentialAmenitiesFilter(theme),
+                    const SizedBox(height: 24),
+                    _buildVenueFilter(theme),
                     const SizedBox(height: 24),
                     _buildRatingFilter(theme),
                     const SizedBox(height: 24),
@@ -139,19 +147,135 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
     );
   }
   
+  /// Category type filter (residential, commercial, venue)
+  Widget _buildCategoryTypeFilter(ThemeData theme) {
+    final types = ['Any', 'Residential', 'Commercial', 'Venue'];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Category',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: types.map((type) {
+            final value = type == 'Any' ? null : type.toLowerCase();
+            final isSelected = _filters.categoryType == value;
+            
+            return FilterChip(
+              label: Text(type),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _filters = _filters.copyWith(
+                    categoryType: selected ? value : null,
+                    propertyTypes: [], // Reset property types when category changes
+                  );
+                });
+                _updateFilters();
+              },
+              selectedColor: theme.primaryColor.withValues(alpha: 0.2),
+              checkmarkColor: theme.primaryColor,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+  
+  /// Get property types based on selected category type
+  /// Returns list of display names for UI
+  List<String> _getPropertyTypesForCategory() {
+    switch (_filters.categoryType) {
+      case 'residential':
+        return [
+          'Any', 'Apartment', 'Independent House', 'Independent Villa', 
+          '1RK/Studio House', 'Townhouse', 'Condo', 'Room', 'PG/Co-Living', 
+          'Hostel', 'Duplex', 'Penthouse', 'Bungalow'
+        ];
+      case 'commercial':
+        return [
+          'Any', 'Office', 'Shop', 'Warehouse', 'Co-Working Space', 
+          'Showroom', 'Clinic/Healthcare', 'Restaurant/Cafe'
+        ];
+      case 'venue':
+        return [
+          'Any', 'Banquet Hall', 'Wedding Venue', 'Party Hall', 
+          'Conference Room', 'Meeting Room', 'Auditorium/Theater', 
+          'Outdoor Lawn/Garden', 'Rooftop Venue', 'Hotel Ballroom', 
+          'Resort Venue', 'Farmhouse/Villa Event Space', 'Studio', 
+          'Exhibition Center', 'Club/Lounge Event Space', 'Private Dining Room'
+        ];
+      default:
+        // Show all when no category type selected
+        return ['Any'];
+    }
+  }
+  
+  /// Convert display name to backend value(s)
+  /// Some display names map to multiple backend values (OR logic)
+  List<String> _toBackendCategories(String displayName) {
+    // Special mappings for OR cases
+    final Map<String, List<String>> specialMappings = {
+      // Residential mappings
+      'Independent House': ['house'],
+      'Independent Villa': ['villa'],
+      '1RK/Studio House': ['studio'],
+      'PG/Co-Living': ['pg'],
+      // Commercial mappings
+      'Co-Working Space': ['coworking'],
+      'Clinic/Healthcare': ['clinic'],
+      'Restaurant/Cafe': ['restaurant', 'cafe'],
+      // Venue mappings
+      'Banquet Hall': ['banquet_hall'],
+      'Wedding Venue': ['wedding_venue'],
+      'Party Hall': ['party_hall'],
+      'Conference Room': ['conference_room'],
+      'Meeting Room': ['meeting_room'],
+      'Auditorium/Theater': ['auditorium', 'theater'],
+      'Outdoor Lawn/Garden': ['garden'],
+      'Rooftop Venue': ['rooftop'],
+      'Hotel Ballroom': ['ballroom'],
+      'Resort Venue': ['resort'],
+      'Farmhouse/Villa Event Space': ['farmhouse', 'villa'],
+      'Studio': ['studio_venue'],
+      'Exhibition Center': ['exhibition'],
+      'Club/Lounge Event Space': ['club'],
+      'Private Dining Room': ['dining_room'],
+    };
+    
+    if (specialMappings.containsKey(displayName)) {
+      return specialMappings[displayName]!;
+    }
+    
+    // Default: convert to lowercase with underscores
+    return [displayName.toLowerCase().replaceAll(' ', '_').replaceAll('/', '_')];
+  }
+  
+  /// Convert display name to backend value (simple version for single values)
+  String _toBackendCategory(String displayName) {
+    return _toBackendCategories(displayName).first;
+  }
+  
   Widget _buildPriceRangeFilter(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Price Range',
+          'Budget (per day)',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          '\$${_filters.minPrice.round()} - \$${_filters.maxPrice.round()}',
+          '₹${_filters.minPrice.round()} - ₹${_filters.maxPrice.round()}',
           style: theme.textTheme.bodyLarge?.copyWith(
             color: theme.primaryColor,
             fontWeight: FontWeight.w600,
@@ -160,25 +284,164 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
         RangeSlider(
           values: RangeValues(_filters.minPrice, _filters.maxPrice),
           min: 0,
-          max: 5000,
-          divisions: 50,
+          max: 50000,
+          divisions: 100,
           labels: RangeLabels(
-            '\$${_filters.minPrice.round()}',
-            '\$${_filters.maxPrice.round()}',
+            '₹${_filters.minPrice.round()}',
+            '₹${_filters.maxPrice.round()}',
           ),
           onChanged: (values) {
-            setState(() {
-              _filters = _filters.copyWith(
-                minPrice: values.start,
-                maxPrice: values.end,
-              );
-            });
+            // Ensure min <= max
+            if (values.start <= values.end) {
+              setState(() {
+                _filters = _filters.copyWith(
+                  minPrice: values.start,
+                  maxPrice: values.end,
+                );
+              });
+            }
           },
           onChangeEnd: (values) => _updateFilters(),
         ),
       ],
     );
   }
+  
+  /// Built-up area filter with min/max validation
+  Widget _buildAreaRangeFilter(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Built-up Area (sq ft)',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${_filters.minArea.round()} - ${_filters.maxArea.round()} sq ft',
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.primaryColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        RangeSlider(
+          values: RangeValues(_filters.minArea, _filters.maxArea),
+          min: 0,
+          max: 10000,
+          divisions: 100,
+          labels: RangeLabels(
+            '${_filters.minArea.round()}',
+            '${_filters.maxArea.round()}',
+          ),
+          onChanged: (values) {
+            // Ensure min <= max
+            if (values.start <= values.end) {
+              setState(() {
+                _filters = _filters.copyWith(
+                  minArea: values.start,
+                  maxArea: values.end,
+                );
+              });
+            }
+          },
+          onChangeEnd: (values) => _updateFilters(),
+        ),
+      ],
+    );
+  }
+  
+  /// Furnished status filter
+  Widget _buildFurnishedFilter(ThemeData theme) {
+    final options = ['Any', 'Unfurnished', 'Semi-Furnished', 'Furnished'];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Furnished Status',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: options.map((option) {
+            final value = option == 'Any' ? null : option.toLowerCase().replaceAll('-', '-');
+            final isSelected = _filters.furnished == value;
+            
+            return FilterChip(
+              label: Text(option),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _filters = _filters.copyWith(
+                    furnished: selected ? value : null,
+                  );
+                });
+                _updateFilters();
+              },
+              selectedColor: theme.primaryColor.withValues(alpha: 0.2),
+              checkmarkColor: theme.primaryColor,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+  
+  /// Essential amenities filter
+  Widget _buildEssentialAmenitiesFilter(ThemeData theme) {
+    final amenities = [
+      'WiFi', 'Parking', 'AC', 'Gym', 'Swimming Pool', 
+      'Power Backup', 'Lift', 'Security', 'Garden', 
+      'Water Supply', 'Gas', 'CCTV'
+    ];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Essential Amenities',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: amenities.map((amenity) {
+            final backendValue = amenity.toLowerCase().replaceAll(' ', '_');
+            final isSelected = _filters.essentialAmenities.contains(backendValue);
+            
+            return FilterChip(
+              label: Text(amenity),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  final list = List<String>.from(_filters.essentialAmenities);
+                  if (selected) {
+                    list.add(backendValue);
+                  } else {
+                    list.remove(backendValue);
+                  }
+                  _filters = _filters.copyWith(essentialAmenities: list);
+                });
+                _updateFilters();
+              },
+              selectedColor: theme.primaryColor.withValues(alpha: 0.2),
+              checkmarkColor: theme.primaryColor,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
 
   Widget _buildVenueFilter(ThemeData theme) {
     return Column(
@@ -282,11 +545,8 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
   }
   
   Widget _buildPropertyTypeFilter(ThemeData theme) {
-    final types = [
-      'All',
-      'Apartment', 'House', 'Villa', 'Studio', 'Room',
-      'Resort', 'Event Hall', 'Event Garden',
-    ];
+    // Get dynamic property types based on selected category type
+    final types = _getPropertyTypesForCategory();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,24 +562,34 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
           spacing: 8,
           runSpacing: 8,
           children: types.map((type) {
-            final isSelected = _filters.propertyTypes.contains(type) || 
-                              (_filters.propertyTypes.isEmpty && type == 'All');
+            // Get all backend values for this type (handles OR mappings)
+            final backendValues = _toBackendCategories(type);
+            // Check if any of the backend values are selected
+            final isSelected = type == 'Any' 
+                ? _filters.propertyTypes.isEmpty 
+                : backendValues.any((v) => _filters.propertyTypes.contains(v));
             
             return FilterChip(
               label: Text(type),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
-                  if (type == 'All') {
+                  if (type == 'Any') {
                     _filters = _filters.copyWith(propertyTypes: []);
                   } else {
-                    final types = List<String>.from(_filters.propertyTypes);
+                    final typesList = List<String>.from(_filters.propertyTypes);
                     if (selected) {
-                      types.add(type);
+                      // Add all backend values for this type
+                      for (final v in backendValues) {
+                        if (!typesList.contains(v)) typesList.add(v);
+                      }
                     } else {
-                      types.remove(type);
+                      // Remove all backend values for this type
+                      for (final v in backendValues) {
+                        typesList.remove(v);
+                      }
                     }
-                    _filters = _filters.copyWith(propertyTypes: types);
+                    _filters = _filters.copyWith(propertyTypes: typesList);
                   }
                 });
                 _updateFilters();
@@ -606,16 +876,21 @@ class _AdvancedFilterWidgetState extends ConsumerState<AdvancedFilterWidget>
 
 /// Filter options model
 class FilterOptions {
+  final String? categoryType; // 'residential', 'commercial', 'venue'
   final double minPrice;
   final double maxPrice;
   final List<String> propertyTypes;
   final int minBedrooms;
   final int minBathrooms;
   final List<String> amenities;
+  final List<String> essentialAmenities;
   final int minRating;
   final double maxDistance;
   final bool instantBookingOnly;
   final bool verifiedOnly;
+  final String? furnished; // 'unfurnished', 'semi-furnished', 'furnished'
+  final double minArea;
+  final double maxArea;
   // Venue-specific
   final int minSeatedCapacity;
   final bool venueInHouseCatering;
@@ -626,16 +901,21 @@ class FilterOptions {
   final DateTime? checkOut;
 
   FilterOptions({
+    this.categoryType,
     this.minPrice = 0,
-    this.maxPrice = 5000,
+    this.maxPrice = 50000,
     this.propertyTypes = const [],
     this.minBedrooms = 0,
     this.minBathrooms = 0,
     this.amenities = const [],
+    this.essentialAmenities = const [],
     this.minRating = 0,
     this.maxDistance = 25,
     this.instantBookingOnly = false,
     this.verifiedOnly = false,
+    this.furnished,
+    this.minArea = 0,
+    this.maxArea = 10000,
     this.minSeatedCapacity = 0,
     this.venueInHouseCatering = false,
     this.venueOutsideCateringAllowed = false,
@@ -646,16 +926,21 @@ class FilterOptions {
   });
 
   FilterOptions copyWith({
+    String? categoryType,
     double? minPrice,
     double? maxPrice,
     List<String>? propertyTypes,
     int? minBedrooms,
     int? minBathrooms,
     List<String>? amenities,
+    List<String>? essentialAmenities,
     int? minRating,
     double? maxDistance,
     bool? instantBookingOnly,
     bool? verifiedOnly,
+    String? furnished,
+    double? minArea,
+    double? maxArea,
     // Venue-specific
     int? minSeatedCapacity,
     bool? venueInHouseCatering,
@@ -666,16 +951,21 @@ class FilterOptions {
     DateTime? checkOut,
   }) {
     return FilterOptions(
+      categoryType: categoryType ?? this.categoryType,
       minPrice: minPrice ?? this.minPrice,
       maxPrice: maxPrice ?? this.maxPrice,
       propertyTypes: propertyTypes ?? this.propertyTypes,
       minBedrooms: minBedrooms ?? this.minBedrooms,
       minBathrooms: minBathrooms ?? this.minBathrooms,
       amenities: amenities ?? this.amenities,
+      essentialAmenities: essentialAmenities ?? this.essentialAmenities,
       minRating: minRating ?? this.minRating,
       maxDistance: maxDistance ?? this.maxDistance,
       instantBookingOnly: instantBookingOnly ?? this.instantBookingOnly,
       verifiedOnly: verifiedOnly ?? this.verifiedOnly,
+      furnished: furnished ?? this.furnished,
+      minArea: minArea ?? this.minArea,
+      maxArea: maxArea ?? this.maxArea,
       // Venue-specific
       minSeatedCapacity: minSeatedCapacity ?? this.minSeatedCapacity,
       venueInHouseCatering: venueInHouseCatering ?? this.venueInHouseCatering,
@@ -688,16 +978,21 @@ class FilterOptions {
   }
 
   bool get hasActiveFilters {
-    return minPrice > 0 ||
-           maxPrice < 5000 ||
+    return categoryType != null ||
+           minPrice > 0 ||
+           maxPrice < 50000 ||
            propertyTypes.isNotEmpty ||
            minBedrooms > 0 ||
            minBathrooms > 0 ||
            amenities.isNotEmpty ||
+           essentialAmenities.isNotEmpty ||
            minRating > 0 ||
            maxDistance < 25 ||
            instantBookingOnly ||
            verifiedOnly ||
+           furnished != null ||
+           minArea > 0 ||
+           maxArea < 10000 ||
            // Venue-specific
            minSeatedCapacity > 0 ||
            venueInHouseCatering ||
@@ -708,15 +1003,19 @@ class FilterOptions {
 
   int get activeFilterCount {
     int count = 0;
-    if (minPrice > 0 || maxPrice < 5000) count++;
+    if (categoryType != null) count++;
+    if (minPrice > 0 || maxPrice < 50000) count++;
     if (propertyTypes.isNotEmpty) count++;
     if (minBedrooms > 0) count++;
     if (minBathrooms > 0) count++;
     if (amenities.isNotEmpty) count++;
+    if (essentialAmenities.isNotEmpty) count++;
     if (minRating > 0) count++;
     if (maxDistance < 25) count++;
     if (instantBookingOnly) count++;
     if (verifiedOnly) count++;
+    if (furnished != null) count++;
+    if (minArea > 0 || maxArea < 10000) count++;
     // Venue-specific
     if (minSeatedCapacity > 0) count++;
     if (venueInHouseCatering) count++;
@@ -725,4 +1024,20 @@ class FilterOptions {
     if (venueOpenAirAllowed) count++;
     return count;
   }
+  
+  /// Convert to API request body
+  Map<String, dynamic> toApiBody() {
+    return {
+      if (categoryType != null) 'categoryType': categoryType,
+      if (propertyTypes.isNotEmpty) 'category': propertyTypes,
+      if (minPrice > 0) 'minPrice': minPrice,
+      if (maxPrice < 50000) 'maxPrice': maxPrice,
+      if (minArea > 0) 'minArea': minArea,
+      if (maxArea < 10000) 'maxArea': maxArea,
+      if (furnished != null) 'furnished': furnished,
+      if (amenities.isNotEmpty) 'amenities': amenities,
+      if (essentialAmenities.isNotEmpty) 'essentialAmenities': essentialAmenities,
+    };
+  }
 }
+
