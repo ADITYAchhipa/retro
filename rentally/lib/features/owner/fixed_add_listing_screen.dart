@@ -18,7 +18,8 @@ import '../../services/listing_service.dart';
 import '../../services/image_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../utils/snackbar_utils.dart';
-import 'forms/residential_details_form.dart';
+
+import 'forms/modern_form_controls.dart';
 import '../../app/app_state.dart';
 
 class FixedAddListingScreen extends ConsumerStatefulWidget {
@@ -194,6 +195,8 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   // PG/Hostel options
   final List<String> _pgGenderOptions = ['Any', 'Male', 'Female'];
   final List<String> _pgMealsOptions = ['No Meals', 'Breakfast', 'Breakfast + Dinner', 'All Meals'];
+
+
   
   // Categories (now restricted to Residential-only for this screen)
   final List<String> _categories = ['Residential'];
@@ -307,17 +310,17 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                 const SizedBox(height: 16),
                 
                 // Title Field
-                _buildModernTextField(
+                ModernTextFormField(
                   controller: _titleController,
                   label: 'Property Title',
                   hint: 'e.g., Spacious 2BHK Apartment...',
                   prefixIcon: Icons.title_rounded,
                   validator: (value) => value?.isEmpty ?? true ? 'Title is required' : null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 
                 // Description Field
-                _buildModernTextField(
+                ModernTextFormField(
                   controller: _descriptionController,
                   label: 'Description',
                   hint: 'Describe features, amenities...',
@@ -498,202 +501,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
     );
   }
   
-  // Helper method to build modern text fields
-  Widget _buildModernTextField({
-    required TextEditingController controller,
-    required String label,
-    String? hint,
-    String? helperText,
-    IconData? prefixIcon,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    bool showRequiredMarker = true,
-  }) {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    final isRequired = validator != null && showRequiredMarker;
-    
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: TextStyle(fontSize: isPhone ? 11 : 12),
-      decoration: InputDecoration(
-        labelText: isRequired ? '$label *' : label,
-        hintText: hint,
-        helperText: helperText,
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
-        hintStyle: TextStyle(
-          fontSize: isPhone ? 11 : 12,
-          color: theme.hintColor.withValues(alpha: 0.9),
-        ),
-        labelStyle: TextStyle(fontSize: isPhone ? 13 : 15),
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.error),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: prefixIcon != null ? 12 : 16,
-          vertical: maxLines > 1 ? 12 : 14,
-        ),
-      ),
-    );
-  }
-  
-  // Helper method to build compact text fields
-  Widget _buildCompactTextField({
-    required TextEditingController controller,
-    required String label,
-    String? hint,
-    String? helperText,
-    IconData? prefixIcon,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    bool showRequiredMarker = true,
-  }) {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    final isRequired = validator != null && showRequiredMarker;
-    
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: TextStyle(fontSize: isPhone ? 10 : 11),
-      decoration: InputDecoration(
-        labelText: isRequired ? '$label *' : label,
-        hintText: hint,
-        helperText: helperText,
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
-        labelStyle: TextStyle(fontSize: isPhone ? 12 : 13),
-        hintStyle: TextStyle(fontSize: isPhone ? 11 : 12, color: theme.hintColor.withValues(alpha: 0.9)),
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.error),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: prefixIcon != null ? 12 : 14,
-          vertical: maxLines > 1 ? 12 : 12,
-        ),
-      ),
-    );
-  }
 
-  // Helper method to build modern dropdowns
-  Widget _buildModernDropdown<T>({
-    required T value,
-    required String label,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    IconData? prefixIcon,
-  }) {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      items: items,
-      onChanged: onChanged,
-      isExpanded: true,
-      style: TextStyle(fontSize: isPhone ? 12 : 13, color: theme.colorScheme.onSurface),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(fontSize: isPhone ? 13 : 15),
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: prefixIcon != null ? 12 : 16,
-          vertical: 14,
-        ),
-      ),
-    );
-  }
-
-  // Helper method to build compact dropdowns
-  Widget _buildCompactDropdown<T>({
-    required T value,
-    required String label,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
-    IconData? prefixIcon,
-  }) {
-    final theme = Theme.of(context);
-    final isPhone = MediaQuery.of(context).size.width < 600;
-    return DropdownButtonFormField<T>(
-      initialValue: value,
-      items: items,
-      onChanged: onChanged,
-      isExpanded: true,
-      style: TextStyle(fontSize: isPhone ? 12 : 13, color: theme.colorScheme.onSurface),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(fontSize: isPhone ? 12 : 13),
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: isPhone ? 14 : 16) : null,
-        filled: true,
-        fillColor: theme.colorScheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-        ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: prefixIcon != null ? 12 : 14,
-          vertical: 12,
-        ),
-      ),
-    );
-  }
 
   // Format property type strings like "apartment" -> "Apartment", "penthouse_suite" -> "Penthouse Suite"
   String _formatPropertyType(String type) {
@@ -2010,7 +1818,6 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
   Widget _buildDetailsStep() {
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
-    final showFurnishing = _selectedPropertyType != 'studio';
     
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -2028,977 +1835,568 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             ),
           ),
           const SizedBox(height: 12),
-          const SizedBox(height: 12),
-          if (_selectedCategory == 'Residential') ...[
-            ResidentialDetailsForm(
-              propertyType: _selectedPropertyType,
-              furnishing: _furnishing,
-              furnishingOptions: _furnishingOptions,
-              onFurnishingChanged: (v) { setState(() { _furnishing = v; }); _scheduleDraftSave(); },
-              apartmentBhk: _apartmentBhk,
-              bhkOptions: _bhkOptions,
-              onApartmentBhkChanged: (v) { setState(() { _apartmentBhk = v; }); _scheduleDraftSave(); },
-              bedrooms: _bedrooms,
-              onBedroomsChanged: (v) { setState(() { _bedrooms = v; }); _scheduleDraftSave(); },
-              bathrooms: _bathrooms,
-              onBathroomsChanged: (v) { setState(() { _bathrooms = v; }); _scheduleDraftSave(); },
-              roomBathroomType: _roomBathroomType,
-              roomBathroomOptions: _roomBathroomOptions,
-              onRoomBathroomTypeChanged: (v) { setState(() { _roomBathroomType = v; }); _scheduleDraftSave(); },
-              studioSizeController: _studioSizeController,
-              floorController: _floorController,
-              totalFloorsController: _totalFloorsController,
-              plotAreaController: _plotAreaController,
-              parkingSpacesController: _parkingSpacesController,
-              hoaFeeController: _hoaFeeController,
-              carpetAreaController: _carpetAreaController,
-              terraceAreaController: _terraceAreaController,
-              pgOccupancyController: _pgOccupancyController,
-              pgGender: _pgGender,
-              pgGenderOptions: _pgGenderOptions,
-              onPgGenderChanged: (v) { setState(() { _pgGender = v; }); _scheduleDraftSave(); },
-              pgMeals: _pgMeals,
-              pgMealsOptions: _pgMealsOptions,
-              onPgMealsChanged: (v) { setState(() { _pgMeals = v; }); _scheduleDraftSave(); },
-              pgAttachedBathroom: _pgAttachedBathroom,
-              onPgAttachedBathroomChanged: (v) { setState(() { _pgAttachedBathroom = v; }); _scheduleDraftSave(); },
-            ),
-            const SizedBox(height: 12),
-            if (_selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel') ...[
-              Text(
-                'PG Occupancy Quick Select',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: const [1, 2, 3, 4, 5, 6].map((occ) {
-                  return Builder(builder: (context) {
-                    final theme = Theme.of(context);
-                    final isSelected = _pgOccupancyController.text.trim() == occ.toString();
-                    return ChoiceChip(
-                      label: Text('$occ per room'),
-                      selected: isSelected,
-                      showCheckmark: false,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      selectedColor: theme.colorScheme.secondary.withValues(alpha: 0.9),
-                      backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                      shape: const StadiumBorder(),
-                      onSelected: (_) {
-                        setState(() {
-                          _pgOccupancyController.text = occ.toString();
-                        });
-                        _scheduleDraftSave();
-                      },
-                    );
-                  });
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ],
-          LayoutBuilder(builder: (context, cons) {
-            final isXS = cons.maxWidth < 360;
-            if (isXS) {
-              return Column(
-                children: [
-                  if (showFurnishing)
-                    _buildCompactDropdown<String>(
-                      value: _furnishing,
-                      label: 'Furnishing',
-                      items: _furnishingOptions.map((option) {
-                        return DropdownMenuItem(
-                          value: option,
-                          child: Text(
-                            option,
-                            style: TextStyle(fontSize: isPhone ? 12 : 13),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _furnishing = value!),
-                    ),
-                  if (_selectedPropertyType == 'apartment') ...[
-                    const SizedBox(height: 12),
-                    _buildCompactDropdown<String>(
-                      value: _apartmentBhk,
-                      label: 'Configuration',
-                      items: _bhkOptions.map((bhk) {
-                        return DropdownMenuItem(
-                          value: bhk,
-                          child: Text(
-                            bhk,
-                            style: TextStyle(fontSize: isPhone ? 12 : 13),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() {
-                        _apartmentBhk = value!;
-                        _scheduleDraftSave();
-                      }),
-                    ),
-                  ] else if (_selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room') ...[
-                    const SizedBox(height: 12),
-                    _buildCompactDropdown<int>(
-                      value: _bedrooms,
-                      label: 'Bedrooms',
-                      items: List.generate(6, (index) => index + 1).map((number) {
-                        return DropdownMenuItem(
-                          value: number,
-                          child: Text(
-                            '$number',
-                            style: TextStyle(fontSize: isPhone ? 12 : 13),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _bedrooms = value!),
-                    ),
-                  ],
-                  if (_selectedPropertyType == 'room')
-                    _buildCompactDropdown<String>(
-                      value: _roomBathroomType,
-                      label: 'Bathroom Type',
-                      items: _roomBathroomOptions.map((t) => DropdownMenuItem(
-                        value: t,
-                        child: Text(
-                          t,
-                          style: TextStyle(fontSize: isPhone ? 12: 13),
-                        ),
-                      )).toList(),
-                      onChanged: (v) => setState(() { _roomBathroomType = v ?? _roomBathroomType; _scheduleDraftSave(); }),
-                    ),
-                ],
-              );
-            }
-            return Row(
+          // --- MERGED RESIDENTIAL FORM SECTIONS ---
+
+          // 1. Configuration (Furnishing & Layout)
+          _buildModernSectionCard(
+            title: 'Configuration',
+            subtitle: 'Property layout and furnishing',
+            icon: Icons.weekend_rounded, // or settings_rounded
+            gradientColors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+            child: Column(
               children: [
-                if (showFurnishing)
-                  Expanded(
-                    child: _buildCompactDropdown<String>(
-                      value: _furnishing,
-                      label: 'Furnishing',
-                      items: _furnishingOptions.map((option) {
-                        return DropdownMenuItem(
-                          value: option,
-                          child: Text(
-                            option,
-                            style: TextStyle(fontSize: isPhone ? 12 : 13),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _furnishing = value!),
-                    ),
-                  ),
-                if (showFurnishing) const SizedBox(width: 16),
+                // Furnishing
+                ModernChipGroup<String>(
+                  label: 'Furnishing Status',
+                  items: _furnishingOptions,
+                  selectedItems: [_furnishing],
+                  onItemSelected: (v) { setState(() => _furnishing = v); _scheduleDraftSave(); },
+                  labelBuilder: (s) => s.replaceAll('_', ' ').toUpperCase(),
+                  iconBuilder: (s) => {
+                    'Fully Furnished': Icons.weekend_rounded,
+                    'Semi Furnished': Icons.chair_alt_rounded,
+                    'Unfurnished': Icons.crop_square_rounded,
+                  }[s] ?? Icons.circle,
+                ),
+                const SizedBox(height: 16),
+
+                // BHK (Apartment) vs Bedrooms (House/Villa)
                 if (_selectedPropertyType == 'apartment')
-                  Expanded(
-                    child: _buildCompactDropdown<String>(
-                      value: _apartmentBhk,
-                      label: 'Configuration',
-                      items: _bhkOptions.map((bhk) {
-                        return DropdownMenuItem(
-                          value: bhk,
-                          child: Text(
-                            bhk,
-                            style: TextStyle(fontSize: isPhone ? 12 : 13),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() {
-                        _apartmentBhk = value!;
-                        _scheduleDraftSave();
-                      }),
-                    ),
+                  ModernChipGroup<String>(
+                    label: 'Apartment Type',
+                    items: _bhkOptions,
+                    selectedItems: [_apartmentBhk],
+                    onItemSelected: (v) { setState(() => _apartmentBhk = v); _scheduleDraftSave(); },
+                    labelBuilder: (s) => s,
                   )
-                else if (_selectedPropertyType != 'studio' && _selectedPropertyType != 'pg' && _selectedPropertyType != 'hostel' && _selectedPropertyType != 'room')
-                  Expanded(
-                    child: _buildCompactDropdown<int>(
-                      value: _bedrooms,
-                      label: 'Bedrooms',
-                      items: List.generate(6, (index) => index + 1).map((number) {
-                        return DropdownMenuItem(
-                          value: number,
-                          child: Text(
-                            '$number',
-                            style: TextStyle(fontSize: isPhone ? 12 : 13),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _bedrooms = value!),
-                    ),
-                  )
-                else
-                  const Expanded(child: SizedBox()),
+                else if (!['studio', 'pg', 'hostel', 'room'].contains(_selectedPropertyType))
+                  ModernNumberStepper(
+                    label: 'Bedrooms',
+                    value: _bedrooms,
+                    min: 1,
+                    max: 10,
+                    onChanged: (v) { setState(() => _bedrooms = v); _scheduleDraftSave(); },
+                  ),
+
+                // Bathrooms (except for Room/PG/Studio where it's handled differently or implicitly)
+                if (!['room', 'pg', 'hostel', 'studio'].contains(_selectedPropertyType)) ...[
+                  const SizedBox(height: 12),
+                  ModernNumberStepper(
+                    label: 'Bathrooms',
+                    value: _bathrooms,
+                    min: 1,
+                    max: 6,
+                    onChanged: (v) { setState(() => _bathrooms = v); _scheduleDraftSave(); },
+                  ),
+                ],
+
+                // Room: Bathroom Arrangement
+                if (_selectedPropertyType == 'room') ...[
+                  const SizedBox(height: 16),
+                  ModernChipGroup<String>(
+                    label: 'Bathroom Arrangement',
+                    items: _roomBathroomOptions,
+                    selectedItems: [_roomBathroomType],
+                    onItemSelected: (v) { setState(() => _roomBathroomType = v); _scheduleDraftSave(); },
+                    labelBuilder: (s) => s,
+                  ),
+                ],
               ],
-            );
-          }),
+            ),
+          ),
           const SizedBox(height: 16),
 
-          // Kitchen Details
-          Text(
-            'Kitchen Details',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          if (_selectedPropertyType == 'apartment' ||
-              _selectedPropertyType == 'house' ||
-              _selectedPropertyType == 'villa' ||
-              _selectedPropertyType == 'condo' ||
-              _selectedPropertyType == 'townhouse' ||
-              _selectedPropertyType == 'duplex' ||
-              _selectedPropertyType == 'penthouse' ||
-              _selectedPropertyType == 'studio') ...[
-            DropdownButtonFormField<String>(
-              initialValue: _kitchenType,
-              decoration: InputDecoration(
-                labelText: 'Kitchen Type',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
-              ),
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'Modular', child: Text('Modular')),
-                DropdownMenuItem(value: 'Open', child: Text('Open')),
-                DropdownMenuItem(value: 'Closed', child: Text('Closed')),
-                DropdownMenuItem(value: 'Kitchenette', child: Text('Kitchenette')),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _kitchenType = v);
-                _scheduleDraftSave();
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildCompactTextField(
-              controller: _kitchenPlatformController,
-              label: 'Kitchen Platform / Counter Type',
-              hint: 'e.g., Granite platform',
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                FilterChip(
-                  label: const Text('Gas Connection'),
-                  selected: _kitchenGasConnection,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _kitchenGasConnection
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _kitchenGasConnection = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Chimney'),
-                  selected: _kitchenChimney,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _kitchenChimney
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _kitchenChimney = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Cabinets'),
-                  selected: _kitchenCabinets,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _kitchenCabinets
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _kitchenCabinets = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ] else ...[
-            DropdownButtonFormField<String>(
-              initialValue: _kitchenAccess,
-              decoration: InputDecoration(
-                labelText: 'Kitchen Access',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
-              ),
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'Full', child: Text('Full')),
-                DropdownMenuItem(value: 'Limited', child: Text('Limited')),
-                DropdownMenuItem(value: 'No Access', child: Text('No Access')),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _kitchenAccess = v);
-                _scheduleDraftSave();
-              },
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              value: _kitchenCommonKitchen,
-              onChanged: (v) {
-                setState(() => _kitchenCommonKitchen = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Common Kitchen Available'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 12),
+          // 2. Dimensions & Area
+          if (!['room'].contains(_selectedPropertyType)) ...[
+             _buildModernSectionCard(
+               title: 'Size & Dimensions',
+               subtitle: 'Property measurements',
+               icon: Icons.square_foot_rounded,
+               gradientColors: [Colors.indigo.shade400, Colors.blue.shade600],
+               child: Column(
+                 children: [
+                   if (_selectedPropertyType == 'studio')
+                     ModernTextFormField(
+                       controller: _studioSizeController,
+                       label: 'Studio Size (sq ft)',
+                       prefixIcon: Icons.straighten_rounded,
+                       keyboardType: TextInputType.number,
+                     ),
+
+                   if (['apartment', 'condo', 'townhouse', 'duplex', 'penthouse'].contains(_selectedPropertyType))
+                     ModernTextFormField(
+                       controller: _carpetAreaController,
+                       label: 'Carpet Area (sq ft)',
+                       prefixIcon: Icons.straighten_rounded,
+                       keyboardType: TextInputType.number,
+                     ),
+
+                   if (['house', 'villa', 'bungalow'].contains(_selectedPropertyType)) ...[
+                     ModernTextFormField(
+                       controller: _plotAreaController,
+                       label: 'Plot Area (sq ft)',
+                       prefixIcon: Icons.landscape_rounded,
+                       keyboardType: TextInputType.number,
+                     ),
+                     const SizedBox(height: 12),
+                     ModernTextFormField(
+                       controller: _parkingSpacesController,
+                       label: 'Parking Spaces',
+                       prefixIcon: Icons.directions_car_rounded,
+                       keyboardType: TextInputType.number,
+                     ),
+                   ],
+
+                   if (_selectedPropertyType == 'penthouse') ...[
+                     const SizedBox(height: 12),
+                     ModernTextFormField(
+                       controller: _terraceAreaController,
+                       label: 'Terrace Area (sq ft)',
+                       prefixIcon: Icons.deck_rounded,
+                       keyboardType: TextInputType.number,
+                     ),
+                   ],
+                 ],
+               ),
+             ),
+             const SizedBox(height: 16),
           ],
 
-          // Bathroom Details
-          Text(
-            'Bathroom Details',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          if (!(_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel')) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _bathroomStyle,
-                    decoration: InputDecoration(
-                      labelText: 'Bathroom Style',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      isDense: true,
-                    ),
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: 'Western', child: Text('Western')),
-                      DropdownMenuItem(value: 'Indian', child: Text('Indian')),
-                      DropdownMenuItem(value: 'Both', child: Text('Both')),
-                    ],
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() => _bathroomStyle = v);
-                      _scheduleDraftSave();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: SwitchListTile(
-                    value: _bathroomHasGeyser,
-                    onChanged: (v) {
-                      setState(() => _bathroomHasGeyser = v);
-                      _scheduleDraftSave();
-                    },
-                    title: const Text('Geyser'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              value: _bathroomHasExhaust,
-              onChanged: (v) {
-                setState(() => _bathroomHasExhaust = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Exhaust Fan'),
-              contentPadding: EdgeInsets.zero,
-            ),
-          ] else ...[
-            _buildCompactTextField(
-              controller: _roomSharingCountController,
-              label: 'Number of people sharing bathroom (if shared)',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              value: _pgHotWater,
-              onChanged: (v) {
-                setState(() => _pgHotWater = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Hot Water Available'),
-              contentPadding: EdgeInsets.zero,
-            ),
-          ],
-
-          const SizedBox(height: 16),
-          if (_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel' || _selectedPropertyType == 'studio') ...[
-            Text(
-              'Room Module',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _roomType,
-              decoration: InputDecoration(
-                labelText: 'Room Type',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
-              ),
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'Single Room', child: Text('Single Room')),
-                DropdownMenuItem(value: 'Single Room (Attached Bathroom)', child: Text('Single Room (Attached Bathroom)')),
-                DropdownMenuItem(value: 'Single Room (Shared Bathroom)', child: Text('Single Room (Shared Bathroom)')),
-                DropdownMenuItem(value: 'Double Sharing', child: Text('Double Sharing')),
-                DropdownMenuItem(value: 'Triple Sharing', child: Text('Triple Sharing')),
-                DropdownMenuItem(value: '4+ Sharing', child: Text('4+ Sharing')),
-                DropdownMenuItem(value: 'Dormitory Bed', child: Text('Dormitory Bed')),
-                DropdownMenuItem(value: 'Studio Room', child: Text('Studio Room')),
-                DropdownMenuItem(value: 'Private Room in Shared Apartment', child: Text('Private Room in Shared Apartment')),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _roomType = v);
-                _scheduleDraftSave();
-              },
-            ),
-            const SizedBox(height: 8),
-            _buildCompactTextField(
-              controller: _roomSizeController,
-              label: 'Room Size (sq ft)',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                FilterChip(
-                  label: const Text('Bed'),
-                  selected: _roomHasBed,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasBed
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasBed = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Mattress'),
-                  selected: _roomHasMattress,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasMattress
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasMattress = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Wardrobe'),
-                  selected: _roomHasWardrobe,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasWardrobe
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasWardrobe = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Fan'),
-                  selected: _roomHasFan,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasFan
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasFan = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('AC'),
-                  selected: _roomHasAC,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasAC
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasAC = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Table'),
-                  selected: _roomHasTable,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasTable
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasTable = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Chair'),
-                  selected: _roomHasChair,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasChair
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasChair = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Mirror'),
-                  selected: _roomHasMirror,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasMirror
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasMirror = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-                FilterChip(
-                  label: const Text('Mini Fridge'),
-                  selected: _roomHasMiniFridge,
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                  backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: _roomHasMiniFridge
-                          ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                          : theme.colorScheme.outline.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  onSelected: (v) {
-                    setState(() => _roomHasMiniFridge = v);
-                    _scheduleDraftSave();
-                  },
-                ),
-              ],
+          // 3. Building Info (Apartments/Condos)
+          if (['apartment', 'condo', 'townhouse', 'duplex', 'penthouse'].contains(_selectedPropertyType)) ...[
+            _buildModernSectionCard(
+               title: 'Building Details',
+               subtitle: 'Floor and maintenance',
+               icon: Icons.apartment_rounded,
+               gradientColors: [Colors.blueGrey.shade400, Colors.blueGrey.shade600],
+               child: Column(
+                 children: [
+                   Row(
+                     children: [
+                       Expanded(
+                         child: ModernTextFormField(
+                           controller: _floorController,
+                           label: 'Floor No.',
+                           prefixIcon: Icons.layers_rounded,
+                           keyboardType: TextInputType.number,
+                         ),
+                       ),
+                       const SizedBox(width: 16),
+                       Expanded(
+                         child: ModernTextFormField(
+                           controller: _totalFloorsController,
+                           label: 'Total Floors',
+                           prefixIcon: Icons.format_list_numbered_rounded,
+                           keyboardType: TextInputType.number,
+                         ),
+                       ),
+                     ],
+                   ),
+                   if (_selectedPropertyType == 'condo') ...[
+                     const SizedBox(height: 12),
+                     ModernTextFormField(
+                       controller: _hoaFeeController,
+                       label: 'HOA / Maintenance (₹)',
+                       prefixIcon: Icons.attach_money_rounded,
+                       keyboardType: TextInputType.number,
+                     ),
+                   ],
+                 ],
+               ),
             ),
             const SizedBox(height: 16),
-            const SizedBox(height: 12),
-
-            // Rules & Restrictions (for PG/Hostel/Shared)
-            Text(
-              'Rules & Restrictions',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              value: _ruleVisitorsAllowed,
-              onChanged: (v) {
-                setState(() => _ruleVisitorsAllowed = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Visitors allowed'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile(
-              value: _ruleOvernightGuestsAllowed,
-              onChanged: (v) {
-                setState(() => _ruleOvernightGuestsAllowed = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Overnight guests allowed'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile(
-              value: _ruleSmokingAllowed,
-              onChanged: (v) {
-                setState(() => _ruleSmokingAllowed = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Smoking allowed'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile(
-              value: _ruleDrinkingAllowed,
-              onChanged: (v) {
-                setState(() => _ruleDrinkingAllowed = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Drinking allowed'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile(
-              value: _ruleCookingAllowed,
-              onChanged: (v) {
-                setState(() => _ruleCookingAllowed = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Cooking allowed'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            SwitchListTile(
-              value: _ruleOwnerStaysOnProperty,
-              onChanged: (v) {
-                setState(() => _ruleOwnerStaysOnProperty = v);
-                _scheduleDraftSave();
-              },
-              title: const Text('Owner stays on property'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 8),
-            _buildCompactTextField(
-              controller: _gateClosingTimeController,
-              label: 'Gate closing time (optional)',
-              hint: 'e.g., 11:00 PM',
-            ),
           ],
 
-          const SizedBox(height: 12),
-          // Type-specific details (moved into ResidentialDetailsForm)
-/*
-          Text('Type-Specific Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          if (_selectedPropertyType == 'studio') ...[
-            _buildCompactTextField(
-              controller: _studioSizeController,
-              label: 'Studio Size (sq ft)*',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if (_selectedPropertyType == 'studio' && (value?.isEmpty ?? true)) {
-                  return 'Studio size is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel') ...[
-            _buildCompactTextField(
-              controller: _pgOccupancyController,
-              label: 'Occupancy per Room*',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if ((_selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel') && (value?.isEmpty ?? true)) {
-                  return 'Occupancy is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCompactDropdown<String>(
-                    value: _pgGender,
+          // 4. PG / Hostel Details
+          if (['pg', 'hostel'].contains(_selectedPropertyType)) ...[
+            _buildModernSectionCard(
+              title: 'PG Configuration',
+              subtitle: 'Occupancy and rules',
+              icon: Icons.group_rounded,
+              gradientColors: [Colors.purple.shade300, Colors.deepPurple.shade400],
+              child: Column(
+                children: [
+                  ModernTextFormField(
+                    controller: _pgOccupancyController,
+                    label: 'Persons per room',
+                    prefixIcon: Icons.person_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  ModernChipGroup<String>(
                     label: 'Gender Preference',
-                    items: _pgGenderOptions.map((g) => DropdownMenuItem(
-                      value: g,
-                      child: Text(
-                        g,
-                        style: TextStyle(fontSize: isPhone ? 12 : 13),
-                      ),
-                    )).toList(),
-                    onChanged: (v) => setState(() { _pgGender = v ?? _pgGender; _scheduleDraftSave(); }),
+                    items: _pgGenderOptions,
+                    selectedItems: [_pgGender],
+                    onItemSelected: (v) { setState(() => _pgGender = v); _scheduleDraftSave(); },
+                    labelBuilder: (s) => s,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildCompactDropdown<String>(
-                    value: _pgMeals,
+                  const SizedBox(height: 12),
+                  ModernChipGroup<String>(
                     label: 'Meal Preference',
-                    items: _pgMealsOptions.map((m) => DropdownMenuItem(
-                      value: m,
-                      child: Text(
-                        m,
-                        style: TextStyle(fontSize: isPhone ? 12 : 13),
-                      ),
-                    )).toList(),
-                    onChanged: (v) => setState(() { _pgMeals = v ?? _pgMeals; _scheduleDraftSave(); }),
+                    items: _pgMealsOptions,
+                    selectedItems: [_pgMeals],
+                    onItemSelected: (v) { setState(() => _pgMeals = v); _scheduleDraftSave(); },
+                    labelBuilder: (s) => s,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  ModernSwitchTile(
+                     title: 'Attached Bathroom',
+                     value: _pgAttachedBathroom,
+                     onChanged: (v) { setState(() => _pgAttachedBathroom = v); _scheduleDraftSave(); },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            SwitchListTile(
-              value: _pgAttachedBathroom,
-              onChanged: (v) => setState(() => _pgAttachedBathroom = v),
-              title: const Text('Attached Bathroom'),
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
           ],
-          if (_selectedPropertyType == 'apartment' || _selectedPropertyType == 'condo') ...[
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCompactTextField(
-                    controller: _floorController,
-                    label: 'Floor Number*',
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if ((_selectedPropertyType == 'apartment' || _selectedPropertyType == 'condo') && (value?.isEmpty ?? true)) {
-                        return 'Floor number is required';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildCompactTextField(
-                    controller: _totalFloorsController,
-                    label: 'Total Floors',
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_selectedPropertyType == 'house' || _selectedPropertyType == 'villa') ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _plotAreaController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Plot Area (sq ft)*',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    validator: (value) {
-                      if ((_selectedPropertyType == 'house' || _selectedPropertyType == 'villa') && (value?.isEmpty ?? true)) {
-                        return 'Plot area is required';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _parkingSpacesController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Parking Spaces',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_selectedPropertyType == 'condo') ...[
-            _buildCompactTextField(
-              controller: _hoaFeeController,
-              label: 'HOA Fee (monthly)',
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-          ],
-          // Residential: Area for apartment/condo/townhouse
-          if (_selectedPropertyType == 'apartment' || _selectedPropertyType == 'condo' || _selectedPropertyType == 'townhouse' || _selectedPropertyType == 'duplex' || _selectedPropertyType == 'penthouse') ...[
-            _buildCompactTextField(
-              controller: _carpetAreaController,
-              label: 'Carpet Area (sq ft)*',
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                if ((_selectedPropertyType == 'apartment' || _selectedPropertyType == 'condo' || _selectedPropertyType == 'townhouse' || _selectedPropertyType == 'duplex' || _selectedPropertyType == 'penthouse') && (value?.isEmpty ?? true)) {
-                  return 'Carpet area is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_selectedPropertyType == 'bungalow') ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _plotAreaController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Plot Area (sq ft)*',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    validator: (value) {
-                      if ((_selectedPropertyType == 'bungalow') && (value?.isEmpty ?? true)) {
-                        return 'Plot area is required';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _parkingSpacesController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Parking Spaces',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-*/
-          // Commercial: generic extra fields removed; this screen is residential-only now
-          Text('Location Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          _buildCompactTextField(
-            controller: _addressController,
-            label: 'Address',
-            validator: (value) => value?.isEmpty ?? true ? 'Address is required' : null,
-          ),
-          const SizedBox(height: 12),
-          _buildCompactTextField(
-            controller: _nearLandmarkController,
-            label: 'Near Landmark',
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(builder: (context, cons) {
-            final isXS = cons.maxWidth < 360;
-            if (isXS) {
-              return Column(children: [
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: 'Select State',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  selectedItemBuilder: (context) => const [
-                    Align(alignment: Alignment.centerLeft, child: Text('Select state', overflow: TextOverflow.ellipsis)),
-                  ],
-                  items: const [
-                    DropdownMenuItem(value: 'Select state', child: Text('Select state')),
-                  ],
-                  onChanged: (value) {},
+          if (_selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel') ...[
+             // PG Quick Select logic... (Already modern enough or keep as is? It uses ChoiceChip inside LayoutBuilder. I'll make it ModernChipGroup later or now?)
+             // I'll modernize it now:
+            Text(
+              'PG Occupancy Quick Select',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            ModernChipGroup<int>(
+               label: '',
+               items: const [1, 2, 3, 4, 5, 6],
+               selectedItems: [int.tryParse(_pgOccupancyController.text) ?? 0],
+               labelBuilder: (i) => '$i per room',
+               onItemSelected: (i) {
+                 setState(() {
+                   _pgOccupancyController.text = i.toString();
+                 });
+                 _scheduleDraftSave();
+               },
+            ),
+            const SizedBox(height: 12),
+          ],
+        // Removed duplicate LayoutBuilder block here.
+        
+        const SizedBox(height: 16),
+
+        // Kitchen Details
+        _buildModernSectionCard(
+          title: 'Kitchen Details',
+          subtitle: 'Layout and amenities',
+          icon: Icons.kitchen_rounded,
+          gradientColors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+          child: Column(
+            children: [
+              if (['apartment', 'house', 'villa', 'condo', 'townhouse', 'duplex', 'penthouse', 'studio'].contains(_selectedPropertyType)) ...[
+                ModernCustomDropdown<String>(
+                  label: 'Kitchen Type',
+                  value: _kitchenType,
+                  items: const ['Modular', 'Open', 'Closed', 'Kitchenette'],
+                  itemLabelBuilder: (s) => s,
+                  onChanged: (v) {
+                     setState(() => _kitchenType = v);
+                     _scheduleDraftSave();
+                  },
+                  prefixIcon: Icons.countertops_rounded,
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: 'City/District',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  selectedItemBuilder: (context) => const [
-                    Align(alignment: Alignment.centerLeft, child: Text('Select city', overflow: TextOverflow.ellipsis)),
-                  ],
-                  items: const [
-                    DropdownMenuItem(value: 'Select city', child: Text('Select city')),
-                  ],
-                  onChanged: (value) {},
+                ModernTextFormField(
+                  controller: _kitchenPlatformController,
+                  label: 'Kitchen Platform / Counter Type',
+                  hint: 'e.g., Granite platform',
                 ),
-              ]);
-            }
-            return Row(children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    labelText: 'State',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  isExpanded: true,
-                  selectedItemBuilder: (context) => const [
-                    Align(alignment: Alignment.centerLeft, child: Text('Select state', overflow: TextOverflow.ellipsis)),
+                const SizedBox(height: 12),
+                ModernChipGroup<String>(
+                  label: 'Kitchen Amenities',
+                  items: const ['Gas Connection', 'Chimney', 'Cabinets'],
+                  selectedItems: [
+                    if(_kitchenGasConnection) 'Gas Connection',
+                    if(_kitchenChimney) 'Chimney',
+                    if(_kitchenCabinets) 'Cabinets',
                   ],
-                  items: const [
-                    DropdownMenuItem(value: 'Select state', child: Text('Select state')),
-                  ],
-                  onChanged: (value) {},
+                  labelBuilder: (s) => s,
+                  multiSelect: true,
+                  onItemSelected: (s) {
+                    setState(() {
+                      if (s == 'Gas Connection') _kitchenGasConnection = !_kitchenGasConnection;
+                      if (s == 'Chimney') _kitchenChimney = !_kitchenChimney;
+                      if (s == 'Cabinets') _kitchenCabinets = !_kitchenCabinets;
+                    });
+                    _scheduleDraftSave();
+                  },
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _cityController,
-                  label: 'City Name',
-                  validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
+                const SizedBox(height: 12),
+              ] else ...[
+                ModernCustomDropdown<String>(
+                  label: 'Kitchen Access',
+                  value: _kitchenAccess,
+                  items: const ['Full', 'Limited', 'No Access'],
+                  itemLabelBuilder: (s) => s,
+                  onChanged: (v) {
+                    setState(() => _kitchenAccess = v);
+                    _scheduleDraftSave();
+                  },
+                  prefixIcon: Icons.lock_open_rounded,
                 ),
-              ),
-            ]);
-          }),
-          const SizedBox(height: 12),
-          _buildCompactTextField(
-            controller: _pincodeController,
-            label: 'Pincode',
-            keyboardType: TextInputType.number,
+                const SizedBox(height: 8),
+                ModernSwitchTile(
+                   title: 'Common Kitchen Available',
+                   value: _kitchenCommonKitchen,
+                   onChanged: (v) {
+                     setState(() => _kitchenCommonKitchen = v);
+                     _scheduleDraftSave();
+                   },
+                ),
+                const SizedBox(height: 12),
+              ],
+            ],
           ),
+        ),
+
+          // Bathroom Details
+          _buildModernSectionCard(
+            title: 'Bathroom Details',
+            subtitle: 'Facilities and arrangement',
+            icon: Icons.bathtub_rounded,
+            gradientColors: [Colors.cyan.shade400, Colors.blue.shade400],
+            child: Column(
+              children: [
+                if (!['room', 'pg', 'hostel'].contains(_selectedPropertyType)) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ModernCustomDropdown<String>(
+                          label: 'Bathroom Style',
+                          value: _bathroomStyle,
+                          items: const ['Western', 'Indian', 'Both'],
+                          itemLabelBuilder: (s) => s,
+                          onChanged: (v) {
+                            setState(() => _bathroomStyle = v);
+                            _scheduleDraftSave();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ModernSwitchTile(
+                          title: 'Geyser',
+                          value: _bathroomHasGeyser,
+                          onChanged: (v) {
+                            setState(() => _bathroomHasGeyser = v);
+                            _scheduleDraftSave();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ModernSwitchTile(
+                    title: 'Exhaust Fan',
+                    value: _bathroomHasExhaust,
+                    onChanged: (v) {
+                      setState(() => _bathroomHasExhaust = v);
+                      _scheduleDraftSave();
+                    },
+                  ),
+                ] else ...[
+                  ModernTextFormField(
+                    controller: _roomSharingCountController,
+                    label: 'Number of people sharing bathroom (if shared)',
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  ModernSwitchTile(
+                    title: 'Hot Water Available',
+                    value: _pgHotWater,
+                    onChanged: (v) {
+                      setState(() => _pgHotWater = v);
+                      _scheduleDraftSave();
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          if (_selectedPropertyType == 'room' || _selectedPropertyType == 'pg' || _selectedPropertyType == 'hostel' || _selectedPropertyType == 'studio')
+            _buildModernSectionCard(
+               title: 'Room Module',
+               subtitle: 'Specific room details',
+               icon: Icons.meeting_room_rounded,
+               gradientColors: [Colors.purple.shade400, Colors.deepPurple.shade400],
+               child: Column(
+                 children: [
+                   ModernCustomDropdown<String>(
+                     label: 'Room Type',
+                     value: _roomType,
+                     items: const [
+                        'Single Room',
+                        'Single Room (Attached Bathroom)',
+                        'Single Room (Shared Bathroom)',
+                        'Double Sharing',
+                        'Triple Sharing',
+                        '4+ Sharing',
+                        'Dormitory Bed',
+                        'Studio Room',
+                        'Private Room in Shared Apartment'
+                     ],
+                     itemLabelBuilder: (s) => s,
+                     onChanged: (v) {
+                       setState(() => _roomType = v);
+                       _scheduleDraftSave();
+                     },
+                   ),
+                   const SizedBox(height: 12),
+                   ModernTextFormField(
+                     controller: _roomSizeController,
+                     label: 'Room Size (sq ft)',
+                     keyboardType: TextInputType.number,
+                   ),
+                   const SizedBox(height: 12),
+                   ModernChipGroup<String>(
+                     label: 'Room Amenities',
+                     items: const [
+                       'Bed', 'Mattress', 'Wardrobe', 'Fan', 'AC',
+                       'Table', 'Chair', 'Mirror', 'Mini Fridge'
+                     ],
+                     selectedItems: [
+                       if(_roomHasBed) 'Bed',
+                       if(_roomHasMattress) 'Mattress',
+                       if(_roomHasWardrobe) 'Wardrobe',
+                       if(_roomHasFan) 'Fan',
+                       if(_roomHasAC) 'AC',
+                       if(_roomHasTable) 'Table',
+                       if(_roomHasChair) 'Chair',
+                       if(_roomHasMirror) 'Mirror',
+                       if(_roomHasMiniFridge) 'Mini Fridge',
+                     ],
+                     multiSelect: true,
+                     labelBuilder: (s) => s,
+                     onItemSelected: (s) {
+                       setState(() {
+                         if (s == 'Bed') _roomHasBed = !_roomHasBed;
+                         if (s == 'Mattress') _roomHasMattress = !_roomHasMattress;
+                         if (s == 'Wardrobe') _roomHasWardrobe = !_roomHasWardrobe;
+                         if (s == 'Fan') _roomHasFan = !_roomHasFan;
+                         if (s == 'AC') _roomHasAC = !_roomHasAC;
+                         if (s == 'Table') _roomHasTable = !_roomHasTable;
+                         if (s == 'Chair') _roomHasChair = !_roomHasChair;
+                         if (s == 'Mirror') _roomHasMirror = !_roomHasMirror;
+                         if (s == 'Mini Fridge') _roomHasMiniFridge = !_roomHasMiniFridge;
+                       });
+                       _scheduleDraftSave();
+                     },
+                   ),
+                 ],
+               ),
+            ),
+
+
+          // Rules & Restrictions
+          _buildModernSectionCard(
+             title: 'Rules & Restrictions',
+             subtitle: 'Set policies for your property',
+             icon: Icons.gavel_rounded,
+             gradientColors: [Colors.red.shade400, Colors.pink.shade400],
+             child: Column(
+               children: [
+                 ModernSwitchTile(
+                    title: 'Visitors Allowed',
+                    value: _ruleVisitorsAllowed,
+                    onChanged: (v) { setState(() => _ruleVisitorsAllowed = v); _scheduleDraftSave(); },
+                 ),
+                 ModernSwitchTile(
+                    title: 'Overnight Guests Allowed',
+                    value: _ruleOvernightGuestsAllowed,
+                    onChanged: (v) { setState(() => _ruleOvernightGuestsAllowed = v); _scheduleDraftSave(); },
+                 ),
+                 ModernSwitchTile(
+                    title: 'Smoking Allowed',
+                    value: _ruleSmokingAllowed,
+                    onChanged: (v) { setState(() => _ruleSmokingAllowed = v); _scheduleDraftSave(); },
+                 ),
+                 ModernSwitchTile(
+                    title: 'Drinking Allowed',
+                    value: _ruleDrinkingAllowed,
+                    onChanged: (v) { setState(() => _ruleDrinkingAllowed = v); _scheduleDraftSave(); },
+                 ),
+                 ModernSwitchTile(
+                    title: 'Cooking Allowed',
+                    value: _ruleCookingAllowed,
+                    onChanged: (v) { setState(() => _ruleCookingAllowed = v); _scheduleDraftSave(); },
+                 ),
+                 ModernSwitchTile(
+                    title: 'Owner Stays on Property',
+                    value: _ruleOwnerStaysOnProperty,
+                    onChanged: (v) { setState(() => _ruleOwnerStaysOnProperty = v); _scheduleDraftSave(); },
+                 ),
+                 const SizedBox(height: 12),
+                 ModernTextFormField(
+                    controller: _gateClosingTimeController,
+                    label: 'Gate closing time (optional)',
+                    hint: 'e.g., 11:00 PM',
+                    prefixIcon: Icons.access_time_rounded,
+                 ),
+               ],
+             ),
+          ),
+          
+          const SizedBox(height: 16),
+
+          // Location Details
+          _buildModernSectionCard(
+             title: 'Location Details',
+             subtitle: 'Accurate location helps search',
+             icon: Icons.location_on_rounded,
+             gradientColors: [Colors.green.shade400, Colors.teal.shade400],
+             child: Column(
+                children: [
+                  ModernTextFormField(
+                    controller: _addressController,
+                    label: 'Address',
+                    maxLines: 2,
+                    prefixIcon: Icons.map_outlined,
+                    validator: (value) => value?.isEmpty ?? true ? 'Address is required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  ModernTextFormField(
+                    controller: _nearLandmarkController,
+                    label: 'Near Landmark',
+                    prefixIcon: Icons.landscape_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ModernCustomDropdown<String>(
+                          label: 'State',
+                          value: 'Select state', // Keeping dummy value as per original code
+                          items: const ['Select state'],
+                          itemLabelBuilder: (s) => s,
+                          onChanged: (_) {},
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ModernTextFormField(
+                          controller: _cityController,
+                          label: 'City Name',
+                          prefixIcon: Icons.location_city_rounded,
+                          validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ModernTextFormField(
+                    controller: _pincodeController,
+                    label: 'Pincode',
+                    prefixIcon: Icons.pin_drop_rounded,
+                    keyboardType: TextInputType.number,
+                    validator: (v) => (v?.isEmpty ?? true) ? 'Required' : null,
+                  ),
+                ],
+             ),
+          ),
+
           const SizedBox(height: 12),
           if (_latitude != null && _longitude != null) ...[
             Text('Coordinates: ${_latitude!.toStringAsFixed(6)}, ${_longitude!.toStringAsFixed(6)}'),
@@ -3128,41 +2526,21 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             subtitle: 'Select available facilities',
             icon: Icons.star_rounded,
             gradientColors: [Colors.amber.shade700, Colors.orange.shade500],
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: amenities.map((amenity) {
-                final isSelected = _selectedAmenities.contains(amenity);
-                return FilterChip(
-                  label: Text(amenity),
-                  selected: isSelected,
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                  selectedColor: theme.colorScheme.primary,
-                  backgroundColor: theme.colorScheme.surface,
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: isSelected
-                          ? Colors.transparent
-                          : theme.colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedAmenities.add(amenity);
-                      } else {
-                        _selectedAmenities.remove(amenity);
-                      }
-                    });
-                    _scheduleDraftSave();
-                  },
-                );
-              }).toList(),
+            child: ModernChipGroup<String>(
+              label: '',
+              items: amenities,
+              selectedItems: _selectedAmenities,
+              labelBuilder: (a) => a,
+              onItemSelected: (amenity) {
+                setState(() {
+                  if (_selectedAmenities.contains(amenity)) {
+                    _selectedAmenities.remove(amenity);
+                  } else {
+                    _selectedAmenities.add(amenity);
+                  }
+                });
+                _scheduleDraftSave();
+              },
             ),
           ),
           
@@ -3174,40 +2552,20 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             subtitle: 'Establishments within 2km',
             icon: Icons.location_on_rounded,
             gradientColors: [Colors.blue.shade700, Colors.cyan.shade500],
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _nearbyFacilities.map((facility) {
-                final isSelected = _selectedNearbyFacilities.contains(facility);
-                return FilterChip(
-                  label: Text(facility),
-                  selected: isSelected,
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                  selectedColor: Colors.blue.shade600,
-                  backgroundColor: theme.colorScheme.surface,
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: isSelected
-                          ? Colors.transparent
-                          : theme.colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedNearbyFacilities.add(facility);
-                      } else {
-                        _selectedNearbyFacilities.remove(facility);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+            child: ModernChipGroup<String>(
+              label: '',
+              items: _nearbyFacilities,
+              selectedItems: _selectedNearbyFacilities,
+              labelBuilder: (f) => f,
+              onItemSelected: (facility) {
+                setState(() {
+                  if (_selectedNearbyFacilities.contains(facility)) {
+                    _selectedNearbyFacilities.remove(facility);
+                  } else {
+                    _selectedNearbyFacilities.add(facility);
+                  }
+                });
+              },
             ),
           ),
           
@@ -3221,7 +2579,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             gradientColors: [Colors.purple.shade700, Colors.purpleAccent.shade400],
             child: Column(
               children: [
-                _buildModernTextField(
+                ModernTextFormField(
                     controller: _otherAmenitiesController,
                     label: 'Additional Features',
                     hint: 'Any other special perks...',
@@ -3229,77 +2587,40 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                     maxLines: 2,
                 ),
                 const SizedBox(height: 16),
-                LayoutBuilder(builder: (context, cons) {
-                  return Column(children: [
-                    DropdownButtonFormField<String>(
-                      value: _preferredTenant,
-                      decoration: InputDecoration(
-                        labelText: 'Preferred Tenants',
-                        prefixIcon: const Icon(Icons.people_outline_rounded, size: 20),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      isExpanded: true,
-                      items: _tenantPreferences.map((pref) {
-                          return DropdownMenuItem(value: pref, child: Text(pref, style: const TextStyle(fontSize: 14)));
-                      }).toList(),
-                      onChanged: (value) => setState(() => _preferredTenant = value!),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: _foodPreference,
-                      decoration: InputDecoration(
-                        labelText: 'Food Preference',
-                        prefixIcon: const Icon(Icons.restaurant_menu_rounded, size: 20),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      isExpanded: true,
-                      items: _foodPreferences.map((pref) {
-                        return DropdownMenuItem(value: pref, child: Text(pref, style: const TextStyle(fontSize: 14)));
-                      }).toList(),
-                      onChanged: (value) => setState(() => _foodPreference = value!),
-                    ),
-                  ]);
-                }),
-                const SizedBox(height: 16),
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-                  ),
-                  child: SwitchListTile(
-                    title: const Text('Pets Allowed', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Small pets like cats/dogs', style: TextStyle(fontSize: 12)),
-                    secondary: Icon(Icons.pets_rounded, color: _petsAllowed ? Colors.teal : Colors.grey),
-                    value: _petsAllowed,
-                    activeColor: Colors.teal,
-                    onChanged: (value) => setState(() => _petsAllowed = value),
-                  ),
+                ModernCustomDropdown<String>(
+                  label: 'Preferred Tenants',
+                  value: _preferredTenant,
+                  items: _tenantPreferences,
+                  onChanged: (value) => setState(() => _preferredTenant = value),
+                  itemLabelBuilder: (item) => item,
+                  prefixIcon: Icons.people_outline_rounded,
                 ),
-                const SizedBox(height: 8),
-                Container(
-                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-                  ),
-                  child: SwitchListTile(
-                    title: const Text('Require Verified ID', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Govt. ID required for booking', style: TextStyle(fontSize: 12)),
-                    secondary: Icon(Icons.badge_rounded, color: _requireSeekerId ? Colors.blue : Colors.grey),
-                    value: _requireSeekerId,
-                    activeColor: Colors.blue,
-                    onChanged: (value) {
-                      setState(() => _requireSeekerId = value);
-                      _scheduleDraftSave();
-                    },
-                  ),
+                const SizedBox(height: 12),
+                ModernCustomDropdown<String>(
+                  label: 'Food Preference',
+                  value: _foodPreference,
+                  items: _foodPreferences,
+                  onChanged: (value) => setState(() => _foodPreference = value),
+                  itemLabelBuilder: (item) => item,
+                  prefixIcon: Icons.restaurant_menu_rounded,
+                ),
+                const SizedBox(height: 16),
+                ModernSwitchTile(
+                  title: 'Pets Allowed',
+                  subtitle: 'Small pets like cats/dogs',
+                  icon: Icons.pets_rounded,
+                  value: _petsAllowed,
+                  onChanged: (value) => setState(() => _petsAllowed = value),
+                ),
+                ModernSwitchTile(
+                  title: 'Require Verified ID',
+                  subtitle: 'Govt. ID required for booking',
+                  icon: Icons.badge_rounded,
+                  value: _requireSeekerId,
+                  onChanged: (value) {
+                    setState(() => _requireSeekerId = value);
+                    _scheduleDraftSave();
+                  },
                 ),
               ],
             ),
@@ -3340,7 +2661,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               children: [
                 Row(children: [
                   Expanded(
-                    child: _buildCompactTextField(
+                    child: ModernTextFormField(
                       controller: _monthlyRentController,
                       label: rentLabel,
                       prefixIcon: Icons.currency_rupee,
@@ -3351,7 +2672,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildCompactTextField(
+                    child: ModernTextFormField(
                       controller: _securityDepositController,
                       label: 'Deposit (₹)',
                       hint: 'Optional',
@@ -3363,7 +2684,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                 const SizedBox(height: 12),
                 Row(children: [
                   Expanded(
-                    child: _buildCompactTextField(
+                    child: ModernTextFormField(
                       controller: _discountPercentController,
                       label: 'Discount (%)',
                       hint: '0-90',
@@ -3374,7 +2695,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                   if (isPG) ...[
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildCompactTextField(
+                      child: ModernTextFormField(
                         controller: _pgBedRentController,
                         label: 'Bed Rent (₹)',
                         hint: 'Optional',
@@ -3385,32 +2706,19 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                     const Spacer(),
                 ]),
                 const SizedBox(height: 16),
-                Text('Charges Included', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _chargesIncluded.map((charge) {
-                    final isSelected = _selectedChargesIncluded.contains(charge);
-                    return FilterChip(
-                      label: Text(charge),
-                      selected: isSelected,
-                      showCheckmark: false,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      selectedColor: Colors.teal,
-                      backgroundColor: theme.colorScheme.surface,
-                      shape: StadiumBorder(side: BorderSide(color: isSelected ? Colors.transparent : theme.colorScheme.outline.withValues(alpha: 0.3))),
-                      onSelected: (selected) {
-                        setState(() {
-                          selected ? _selectedChargesIncluded.add(charge) : _selectedChargesIncluded.remove(charge);
-                        });
-                      },
-                    );
-                  }).toList(),
+                ModernChipGroup<String>(
+                  label: 'Charges Included',
+                  items: _chargesIncluded,
+                  selectedItems: _selectedChargesIncluded,
+                  labelBuilder: (c) => c,
+                  multiSelect: true,
+                  onItemSelected: (charge) {
+                    setState(() {
+                       _selectedChargesIncluded.contains(charge) 
+                          ? _selectedChargesIncluded.remove(charge) 
+                          : _selectedChargesIncluded.add(charge);
+                    });
+                  },
                 ),
               ],
             ),
@@ -3427,7 +2735,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCompactTextField(
+                ModernTextFormField(
                   controller: _houseRulesController,
                   label: 'House Rules',
                   hint: 'e.g., No loud music after 10 PM...',
@@ -3435,37 +2743,34 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                   prefixIcon: Icons.library_books_rounded,
                 ),
                 const SizedBox(height: 16),
-                Text('Rent Duration', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  children: [
-                    {'key': 'both', 'label': 'Daily & Monthly'},
-                    {'key': 'rental', 'label': 'Daily Only'},
-                    {'key': 'monthly', 'label': 'Monthly Only'},
-                  ].map((m) {
-                    final sel = _rentalModeListing == m['key'];
-                    return ChoiceChip(
-                      label: Text(m['label']!),
-                      selected: sel,
-                      onSelected: (_) => setState(() => _rentalModeListing = m['key']!),
-                      selectedColor: Colors.indigo,
-                      labelStyle: TextStyle(color: sel ? Colors.white : theme.colorScheme.onSurface, fontSize: 12),
+                Builder(
+                  builder: (context) {
+                    const options = [
+                      {'key': 'both', 'label': 'Daily & Monthly'},
+                      {'key': 'rental', 'label': 'Daily Only'},
+                      {'key': 'monthly', 'label': 'Monthly Only'},
+                    ];
+                    return ModernChipGroup<Map<String, String>>(
+                      label: 'Rent Duration',
+                      items: options,
+                      selectedItems: options.where((m) => m['key'] == _rentalModeListing).toList(),
+                      labelBuilder: (m) => m['label']!,
+                      onItemSelected: (m) => setState(() => _rentalModeListing = m['key']!),
                     );
-                  }).toList(),
+                  }
                 ),
                 if (_rentalModeListing == 'monthly') ...[
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<int>(
+                  ModernCustomDropdown<int>(
+                    label: 'Minimum Stay',
                     value: _minStayMonthsMonthly,
-                    decoration: InputDecoration(
-                        labelText: 'Minimum Stay', prefixIcon: const Icon(Icons.calendar_today_rounded, size: 18), 
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
-                    items: [0, 1, 3, 6, 11, 12].map((m) => DropdownMenuItem(value: m, child: Text(m == 0 ? 'Any' : '$m Months'))).toList(),
-                    onChanged: (v) => setState(() => _minStayMonthsMonthly = v!),
+                    items: const [0, 1, 3, 6, 11, 12],
+                    itemLabelBuilder: (m) => m == 0 ? 'Any' : '$m Months',
+                    onChanged: (v) => setState(() => _minStayMonthsMonthly = v),
+                    prefixIcon: Icons.calendar_today_rounded,
                   ),
                   const SizedBox(height: 12),
-                   _buildCompactTextField(
+                  ModernTextFormField(
                     controller: _noticePeriodDaysController,
                     label: 'Notice Period (Days)',
                     hint: '30',
@@ -3489,7 +2794,7 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
               children: [
                 Row(children: [
                   Expanded(
-                    child: _buildCompactTextField(
+                    child: ModernTextFormField(
                       controller: _availableFromController,
                       label: 'Available From',
                       hint: 'DD-MM-YYYY',
@@ -3498,28 +2803,24 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
+                    child: ModernCustomDropdown<String>(
+                      label: 'Status',
                       value: _availabilityStatus,
-                      decoration: InputDecoration(
-                        labelText: 'Status', 
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), 
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        prefixIcon: Icon(Icons.info_outline, size: 18, color: _availabilityStatus == 'Vacant' ? Colors.green : Colors.red),
-                      ),
-                      items: ['Vacant', 'Occupied'].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                      onChanged: (v) => setState(() => _availabilityStatus = v!),
+                      items: const ['Vacant', 'Occupied'],
+                      onChanged: (v) => setState(() => _availabilityStatus = v),
+                      itemLabelBuilder: (s) => s,
+                      prefixIcon: Icons.info_outline,
                     ),
                   ),
                 ]),
                 const SizedBox(height: 12),
-                SwitchListTile(
-                  title: const Text('Early Move-in Allowed', style: TextStyle(fontSize: 14)),
+                ModernSwitchTile(
+                  title: 'Early Move-in Allowed',
                   value: _earlyMoveInAllowed,
-                  activeColor: Colors.deepOrange,
                   onChanged: (v) => setState(() => _earlyMoveInAllowed = v),
                 ),
                 const SizedBox(height: 12),
-                _buildCompactTextField(
+                ModernTextFormField(
                   controller: _maxOccupancyController,
                   label: 'Max Occupancy',
                   hint: 'e.g., 4',
@@ -3527,22 +2828,14 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
                   prefixIcon: Icons.groups_rounded,
                 ),
                 const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [1, 2, 3, 4, 5, 6].map((n) {
-                      final isSelected = _maxOccupancyController.text == n.toString();
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ChoiceChip(
-                          label: Text('$n'),
-                          selected: isSelected,
-                          onSelected: (_) => setState(() => _maxOccupancyController.text = n.toString()),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                ModernChipGroup<int>(
+                  label: '',
+                  items: const [1, 2, 3, 4, 5, 6],
+                  selectedItems: [
+                    int.tryParse(_maxOccupancyController.text) ?? 0
+                  ],
+                  labelBuilder: (n) => '$n',
+                  onItemSelected: (n) => setState(() => _maxOccupancyController.text = n.toString()),
                 ),
               ],
             ),
@@ -3681,170 +2974,128 @@ class _FixedAddListingScreenState extends ConsumerState<FixedAddListingScreen> w
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Contact Information',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 15),
-          Row(
-            children: [
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _contactPersonController,
-                  label: 'Contact Person Name*',
-                  validator: (value) => value?.isEmpty ?? true ? 'Contact name is required' : null,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCompactTextField(
-                  controller: _phoneController,
-                  label: 'Phone Number*',
-                  keyboardType: TextInputType.phone,
-                  validator: (value) => value?.isEmpty ?? true ? 'Phone number is required' : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _alternatePhoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Alternate Phone (Optional)',
-                    hintText: 'Alternate contact number',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address*',
-                    hintText: 'Your email address',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  validator: (value) => value?.isEmpty ?? true ? 'Email is required' : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Text(
-            'Preferred Contact Method*',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Wrap(
-            spacing: 16,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(value: true, onChanged: (value) {}),
-                  Flexible(
-                    child: Text(
-                      'Phone Call',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                      softWrap: true,
+                  _buildModernSectionCard(
+                    title: 'Owner Details',
+                    subtitle: 'Provide contact info for tenants',
+                    icon: Icons.contact_phone_rounded,
+                    gradientColors: [Colors.teal.shade700, Colors.greenAccent.shade700],
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ModernTextFormField(
+                                controller: _contactPersonController,
+                                label: 'Contact Name',
+                                prefixIcon: Icons.person_outline_rounded,
+                                validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ModernTextFormField(
+                                controller: _phoneController, // Changed from _contactPhoneController to _phoneController
+                                label: 'Phone Number',
+                                prefixIcon: Icons.phone_android_rounded,
+                                keyboardType: TextInputType.phone,
+                                validator: (value) => value?.isEmpty ?? true ? 'Phone is required' : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ModernTextFormField(
+                          controller: _emailController, // Changed from _contactEmailController to _emailController
+                          label: 'Email Address',
+                          prefixIcon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) => value?.isEmpty ?? true ? 'Email is required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        ModernTextFormField(
+                           controller: _alternatePhoneController,
+                           label: 'Alternate Number',
+                           hint: 'Optional',
+                           prefixIcon: Icons.phone_in_talk_rounded,
+                           keyboardType: TextInputType.phone,
+                           showRequiredMarker: false,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(value: false, onChanged: (value) {}),
-                  Flexible(
-                    child: Text(
-                      'WhatsApp',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                      softWrap: true,
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Preferences (Contact Modes)
+                  // Using state variables for these would be better, but they seem to be dummy UI in the original code 
+                  // (Checkbox onChanged was empty or local). 
+                  // I'll keep them as dummy for now or use a placeholder list if real logic exists.
+                  // Looking at original code: Checkbox(value: true, onChanged: (value) {}), Checkbox(value: false...)
+                  // They were completely static/dummy. I will replace with a static ModernChipGroup for visual consistency.
+                  
+                  _buildModernSectionCard(
+                    title: 'Communication Preferences',
+                    subtitle: 'How should tenants contact you?',
+                    icon: Icons.message_rounded,
+                    gradientColors: [Colors.indigo.shade600, Colors.blueAccent.shade400],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                         ModernChipGroup<String>(
+                            label: 'Preferred Contact Method',
+                            items: const ['Phone Call', 'WhatsApp', 'Email', 'SMS'],
+                            selectedItems: const ['Phone Call'], // Mock selection as per original
+                            labelBuilder: (s) => s,
+                            multiSelect: true,
+                            onItemSelected: (_) {}, // Dummy action
+                         ),
+                         const SizedBox(height: 16),
+                         ModernSwitchTile(
+                            title: 'Hide Phone Number',
+                            subtitle: 'Inquiries will be forwarded to your email',
+                            value: _hidePhoneNumber,
+                            onChanged: (value) => setState(() => _hidePhoneNumber = value),
+                            icon: Icons.phonelink_erase_rounded,
+                         ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(value: false, onChanged: (value) {}),
-                  Flexible(
-                    child: Text(
-                      'Email',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                      softWrap: true,
+                  
+                  const SizedBox(height: 16),
+                  
+                  CheckboxListTile(
+                    title: RichText(
+                      text: TextSpan(
+                        text: 'I agree to the ',
+                        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13),
+                        children: [
+                          TextSpan(
+                            text: 'Terms of Service',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const TextSpan(text: ' and '),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              decoration: TextDecoration.underline,
+                               fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
                     ),
+                    value: _agreeToTerms,
+                    onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: theme.colorScheme.primary,
                   ),
-                ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(value: false, onChanged: (value) {}),
-                  Flexible(
-                    child: Text(
-                      'SMS',
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                      softWrap: true,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          SwitchListTile(
-            title: Text(
-              'Hide Phone Number',
-              style: TextStyle(color: theme.colorScheme.onSurface),
-            ),
-            subtitle: Text(
-              'Inquiries will be forwarded to your email if you hide your phone number',
-              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
-            ),
-            value: _hidePhoneNumber,
-            onChanged: (value) => setState(() => _hidePhoneNumber = value),
-          ),
-          const SizedBox(height: 15),
-          CheckboxListTile(
-            title: RichText(
-              text: TextSpan(
-                text: 'I agree to the ',
-                style: TextStyle(color: theme.colorScheme.onSurface),
-                children: [
-                  TextSpan(
-                    text: 'Terms of Service',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  const TextSpan(text: ' and '),
-                  TextSpan(
-                    text: 'Privacy Policy',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  const TextSpan(text: '*'),
-                ],
-              ),
-            ),
-            value: _agreeToTerms,
-            onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),

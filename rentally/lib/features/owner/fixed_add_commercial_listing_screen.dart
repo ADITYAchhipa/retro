@@ -7,9 +7,9 @@ import 'dart:io';
 
 import '../../services/image_service.dart';
 import '../../services/listing_service.dart';
-import '../../utils/snackbar_utils.dart';
 import '../../app/app_state.dart';
-import 'forms/commercial_details_form.dart';
+import '../../utils/snackbar_utils.dart';
+import 'forms/modern_form_controls.dart';
 
 class FixedAddCommercialListingScreen extends ConsumerStatefulWidget {
   const FixedAddCommercialListingScreen({super.key});
@@ -254,30 +254,7 @@ class _FixedAddCommercialListingScreenState
     }
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    String? hint,
-    IconData? prefixIcon,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 18),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        isDense: true,
-      ),
-      style: const TextStyle(fontSize: 13),
-    );
-  }
+
 
   Future<void> _saveListing() async {
     if (!_formKey.currentState!.validate()) return;
@@ -526,148 +503,94 @@ class _FixedAddCommercialListingScreenState
               color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 8),
-          _buildTextField(
+          const SizedBox(height: 16),
+          ModernTextFormField(
             controller: _titleController,
             label: 'Listing Title',
             hint: 'e.g., 1200 sq ft Furnished Office in IT Park',
             prefixIcon: Icons.title_rounded,
-            validator: (v) => (v == null || v.isEmpty)
-                ? 'Title is required'
-                : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Title is required' : null,
           ),
           const SizedBox(height: 12),
-          _buildTextField(
+          ModernTextFormField(
             controller: _descriptionController,
             label: 'Description',
-            hint:
-                'Describe layout, furnishing, connectivity and ideal businesses.',
+            hint: 'Describe layout, furnishing, connectivity and ideal businesses.',
             prefixIcon: Icons.description_outlined,
             maxLines: 4,
-            validator: (v) => (v == null || v.isEmpty)
-                ? 'Description is required'
-                : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Description is required' : null,
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _propertyType,
-            decoration: InputDecoration(
-              labelText: 'Commercial Property Type',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              isDense: true,
-            ),
-            items: _commercialTypes
-                .map((t) => DropdownMenuItem(
-                      value: t,
-                      child: Text(t[0].toUpperCase() + t.substring(1)),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _propertyType = v);
-            },
+          ModernCustomDropdown<String>(
+            label: 'Commercial Property Type',
+            value: _propertyType,
+            items: _commercialTypes,
+            itemLabelBuilder: (t) => t[0].toUpperCase() + t.substring(1),
+            prefixIcon: Icons.business_rounded,
+            onChanged: (v) => setState(() => _propertyType = v),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _availableFor,
-            decoration: InputDecoration(
-              labelText: 'Available For',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              isDense: true,
-            ),
+          ModernCustomDropdown<String>(
+            label: 'Available For',
+            value: _availableFor,
             items: const [
               'Rent/Lease',
               'Sub-Lease',
               'Co-Lease / Shared Space',
-            ]
-                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                .toList(),
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _availableFor = v);
-            },
+            ],
+            itemLabelBuilder: (v) => v,
+            prefixIcon: Icons.handshake_rounded,
+            onChanged: (v) => setState(() => _availableFor = v),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: _propertyStatus,
-            decoration: InputDecoration(
-              labelText: 'Property Status',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              isDense: true,
-            ),
+          ModernCustomDropdown<String>(
+            label: 'Property Status',
+            value: _propertyStatus,
             items: const [
               'Ready to move',
               'Under construction',
               'Newly constructed',
               'Furnishing in progress',
-            ]
-                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                .toList(),
-            onChanged: (v) {
-              if (v == null) return;
-              setState(() => _propertyStatus = v);
-            },
+            ],
+            itemLabelBuilder: (v) => v,
+            prefixIcon: Icons.info_outline_rounded,
+            onChanged: (v) => setState(() => _propertyStatus = v),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _monthlyRentController,
-                  label: 'Monthly Rent (₹)*',
+                  label: 'Monthly Rent (₹)',
                   hint: 'e.g., 75000',
                   keyboardType: TextInputType.number,
+                  prefixIcon: Icons.currency_rupee_rounded,
                   validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return 'Rent is required';
-                    }
-                    final n = double.tryParse(v.trim());
-                    if (n == null || n <= 0) {
-                      return 'Enter a valid amount';
-                    }
+                    if (v == null || v.isEmpty) return 'Rent is required';
+                    if ((double.tryParse(v.trim()) ?? 0) <= 0) return 'Invalid amount';
                     return null;
                   },
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _securityDepositController,
                   label: 'Security Deposit (₹)',
                   keyboardType: TextInputType.number,
+                  prefixIcon: Icons.savings_rounded,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: const [1, 3, 5, 10, 20].map((yrs) {
-              return Builder(builder: (context) {
-                final theme = Theme.of(context);
-                final isSelected = _buildingAgeController.text.trim() == yrs.toString();
-                return ChoiceChip(
-                  label: Text('$yrs yr${yrs > 1 ? 's' : ''}'),
-                  selected: isSelected,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  selectedColor: theme.colorScheme.secondary.withAlpha(90),
-                  backgroundColor: theme.colorScheme.surface.withAlpha(90),
-                  onSelected: (_) {
-                    setState(() {
-                      _buildingAgeController.text = yrs.toString();
-                    });
-                  },
-                );
-              });
-            }).toList(),
+          const SizedBox(height: 16),
+          ModernChipGroup<int>(
+            label: 'Building Age (Years)',
+            items: const [1, 3, 5, 10, 20],
+            selectedItems: [int.tryParse(_buildingAgeController.text) ?? 0],
+            labelBuilder: (y) => '$y yr${y > 1 ? 's' : ''}',
+            onItemSelected: (y) => setState(() => _buildingAgeController.text = y.toString()),
           ),
           const SizedBox(height: 24),
           Row(
@@ -677,11 +600,22 @@ class _FixedAddCommercialListingScreenState
                 onPressed: null,
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: () => _tabController.animateTo(1),
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Next'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                ),
               ),
             ],
           ),
@@ -703,109 +637,94 @@ class _FixedAddCommercialListingScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Location',
+            'Location Details',
             style: TextStyle(
               fontSize: isPhone ? 15 : 16,
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
+          const SizedBox(height: 16),
+          ModernTextFormField(
             controller: _addressController,
-            label: 'Address*',
+            label: 'Address',
             hint: 'Building name, street, area',
             prefixIcon: Icons.location_on_outlined,
-            validator: (v) => (v == null || v.isEmpty)
-                ? 'Address is required'
-                : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Address is required' : null,
           ),
           const SizedBox(height: 12),
-          _buildTextField(
+          ModernTextFormField(
             controller: _landmarkController,
             label: 'Nearby Landmark',
             hint: 'e.g., Near Metro Station',
+            prefixIcon: Icons.map_rounded,
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _cityController,
                   label: 'City',
+                  prefixIcon: Icons.location_city_rounded,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _stateController,
                   label: 'State',
+                  prefixIcon: Icons.flag_rounded,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildTextField(
+          ModernTextFormField(
             controller: _zipCodeController,
             label: 'Pin Code',
             keyboardType: TextInputType.number,
+            prefixIcon: Icons.pin_drop_rounded,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Building Details',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
-          Text(
-            'Building Meta',
-            style:
-                theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
           if (!isWarehouseLike) ...[
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(
+                  child: ModernTextFormField(
                     controller: _floorNumberController,
                     label: 'Floor Number',
-                    hint: 'e.g., 1 for 1st floor',
+                    hint: 'e.g., 1',
                     keyboardType: TextInputType.number,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildTextField(
+                  child: ModernTextFormField(
                     controller: _totalFloorsBuildingController,
-                    label: 'Total Floors in Building',
+                    label: 'Total Floors',
                     keyboardType: TextInputType.number,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
           ],
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
-                  controller: _buildingAgeController,
-                  label: 'Building Age (years)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _facingDirection,
-                  decoration: InputDecoration(
-                    labelText: 'Facing Direction',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    isDense: true,
-                  ),
-                  items: _facingOptions
-                      .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v == null) return;
-                    setState(() => _facingDirection = v);
-                  },
+                child: ModernCustomDropdown<String>(
+                  label: 'Facing Direction',
+                  value: _facingDirection,
+                  items: _facingOptions,
+                  itemLabelBuilder: (d) => d,
+                  prefixIcon: Icons.compass_calibration_rounded,
+                  onChanged: (v) => setState(() => _facingDirection = v),
                 ),
               ),
             ],
@@ -818,11 +737,22 @@ class _FixedAddCommercialListingScreenState
                 onPressed: () => _tabController.animateTo(0),
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: () => _tabController.animateTo(2),
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Next'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                ),
               ),
             ],
           ),
@@ -831,7 +761,7 @@ class _FixedAddCommercialListingScreenState
     );
   }
 
-  Widget _buildSpecificationsStep() {
+  Widget _buildDetailsStep() {
     final theme = Theme.of(context);
     final isPhone = MediaQuery.sizeOf(context).width < 600;
 
@@ -849,225 +779,299 @@ class _FixedAddCommercialListingScreenState
               color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
-          CommercialDetailsForm(
-            propertyType: _propertyType,
-            officeCarpetAreaController: _officeCarpetAreaController,
-            officeCabinsController: _officeCabinsController,
-            officeConferenceRoomsController: _officeConferenceRoomsController,
-            officePantry: _officePantry,
-            onOfficePantryChanged: (v) {
-              setState(() => _officePantry = v);
-            },
-            shopCarpetAreaController: _shopCarpetAreaController,
-            shopFrontageController: _shopFrontageController,
-            shopFootfall: _shopFootfall,
-            onShopFootfallChanged: (v) {
-              setState(() => _shopFootfall = v);
-            },
-            shopWashroom: _shopWashroom,
-            onShopWashroomChanged: (v) {
-              setState(() => _shopWashroom = v);
-            },
-            warehouseBuiltUpAreaController: _warehouseBuiltUpAreaController,
-            warehouseCeilingHeightController:
-                _warehouseCeilingHeightController,
-            warehouseLoadingBaysController:
-                _warehouseLoadingBaysController,
-            warehousePowerController: _warehousePowerController,
-            warehouseTruckAccess: _warehouseTruckAccess,
-            onWarehouseTruckAccessChanged: (v) {
-              setState(() => _warehouseTruckAccess = v);
-            },
-            commercialBuiltUpAreaController:
-                _commercialBuiltUpAreaController,
-          ),
-          if (_propertyType == 'warehouse' || _propertyType == 'industrial') ...[
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _warehouseType,
-              decoration: InputDecoration(
-                labelText: 'Warehouse Type',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
-              ),
-              items: _warehouseTypeOptions
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _warehouseType = v);
-              },
+          const SizedBox(height: 16),
+
+          // 1. Office & Coworking
+          if (_propertyType == 'office' || _propertyType == 'coworking') ...[
+            ModernTextFormField(
+              controller: _officeCarpetAreaController,
+              label: 'Carpet Area (sq ft)',
+              keyboardType: TextInputType.number,
+              prefixIcon: Icons.square_foot_rounded,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(
-                    controller: _warehouseShutterHeightController,
-                    label: 'Shutter Height (ft)',
+                  child: ModernTextFormField(
+                    controller: _officeCabinsController,
+                    label: 'Cabins',
                     keyboardType: TextInputType.number,
+                    prefixIcon: Icons.meeting_room_rounded,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildTextField(
-                    controller: _warehouseFloorLoadController,
-                    label: 'Floor Load Capacity',
-                    hint: 'e.g., kg/sq m',
+                  child: ModernTextFormField(
+                    controller: _officeConferenceRoomsController,
+                    label: 'Conf. Rooms',
                     keyboardType: TextInputType.number,
                   ),
                 ),
               ],
             ),
-          ],
-          if (_propertyType == 'office') ...[
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _officeType,
-              decoration: InputDecoration(
-                labelText: 'Office Type',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
+            if (_propertyType == 'office') ...[
+              ModernCustomDropdown<String>(
+                label: 'Office Type',
+                value: _officeType,
+                items: _officeTypeOptions,
+                itemLabelBuilder: (t) => t,
+                onChanged: (v) => setState(() => _officeType = v),
               ),
-              items: _officeTypeOptions
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _officeType = v);
-              },
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    controller: _officeWorkstationsController,
-                    label: 'Workstations',
-                    keyboardType: TextInputType.number,
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ModernTextFormField(
+                      controller: _officeWorkstationsController,
+                      label: 'Workstations',
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icons.computer_rounded,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTextField(
-                    controller: _officeMeetingRoomsController,
-                    label: 'Meeting Rooms',
-                    keyboardType: TextInputType.number,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ModernTextFormField(
+                      controller: _officeMeetingRoomsController,
+                      label: 'Meeting Rooms',
+                      keyboardType: TextInputType.number,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _officeReceptionArea,
-              onChanged: (v) => setState(() => _officeReceptionArea = v),
-              title: const Text('Reception Area'),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _officeServerRoom,
-              onChanged: (v) => setState(() => _officeServerRoom = v),
-              title: const Text('Server Room'),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              initialValue: _officeWashroomType,
-              decoration: InputDecoration(
-                labelText: 'Washrooms',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                isDense: true,
+                ],
               ),
-              items: _officeWashroomOptions
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _officeWashroomType = v);
-              },
+              const SizedBox(height: 8),
+              ModernSwitchTile(
+                title: 'Reception Area',
+                value: _officeReceptionArea,
+                onChanged: (v) => setState(() => _officeReceptionArea = v),
+              ),
+              ModernSwitchTile(
+                title: 'Server Room',
+                value: _officeServerRoom,
+                onChanged: (v) => setState(() => _officeServerRoom = v),
+              ),
+              const SizedBox(height: 8),
+              ModernCustomDropdown<String>(
+                label: 'Washrooms',
+                value: _officeWashroomType,
+                items: _officeWashroomOptions,
+                itemLabelBuilder: (t) => t,
+                prefixIcon: Icons.wc_rounded,
+                onChanged: (v) => setState(() => _officeWashroomType = v),
+              ),
+            ],
+            const SizedBox(height: 8),
+            ModernSwitchTile(
+              title: 'Pantry Available',
+              value: _officePantry,
+              onChanged: (v) => setState(() => _officePantry = v),
+              icon: Icons.coffee_rounded,
             ),
           ],
+
+          // 2. Shop & Showroom
           if (_propertyType == 'shop' || _propertyType == 'showroom') ...[
+            Row(
+              children: [
+                Expanded(
+                  child: ModernTextFormField(
+                    controller: _shopCarpetAreaController,
+                    label: 'Carpet Area (sq ft)',
+                    keyboardType: TextInputType.number,
+                    validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ModernTextFormField(
+                    controller: _shopFrontageController,
+                    label: 'Frontage (ft)',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            _buildTextField(
+            ModernCustomDropdown<String>(
+              label: 'Footfall',
+              value: _shopFootfall,
+              items: const ['Low', 'Medium', 'High'],
+              itemLabelBuilder: (f) => f,
+              onChanged: (v) => setState(() => _shopFootfall = v),
+            ),
+            const SizedBox(height: 8),
+            ModernTextFormField(
               controller: _retailSuitableForController,
               label: 'Suitable For (optional)',
-              hint: 'e.g., Café, Salon, Electronics, Clothing',
+              hint: 'e.g., Café, Salon, Electronics',
             ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            const SizedBox(height: 12),
+            ModernSwitchTile(
+              title: 'Washroom Available',
+              value: _shopWashroom,
+              onChanged: (v) => setState(() => _shopWashroom = v),
+            ),
+            ModernSwitchTile(
+              title: 'Display Window',
               value: _shopDisplayWindow,
               onChanged: (v) => setState(() => _shopDisplayWindow = v),
-              title: const Text('Display Window'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Exhaust (for kitchen)',
               value: _shopExhaust,
               onChanged: (v) => setState(() => _shopExhaust = v),
-              title: const Text('Exhaust (for kitchen/food use)'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Grease Trap Installed',
               value: _shopGreaseTrap,
               onChanged: (v) => setState(() => _shopGreaseTrap = v),
-              title: const Text('Grease Trap Installed'),
             ),
           ],
-          if (_propertyType == 'restaurant') ...[
-            const SizedBox(height: 12),
-            Text(
-              'Hospitality Details',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+
+          // 3. Warehouse & Industrial
+          if (_propertyType == 'warehouse' || _propertyType == 'industrial') ...[
+            ModernTextFormField(
+              controller: _warehouseBuiltUpAreaController,
+              label: 'Built-up Area (sq ft)',
+              keyboardType: TextInputType.number,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            if (_propertyType == 'warehouse')
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ModernCustomDropdown<String>(
+                  label: 'Warehouse Type',
+                  value: _warehouseType,
+                  items: _warehouseTypeOptions,
+                  itemLabelBuilder: (t) => t,
+                  onChanged: (v) => setState(() => _warehouseType = v),
+                ),
+              ),
             Row(
               children: [
                 Expanded(
-                  child: _buildTextField(
-                    controller: _hospitalRoomsController,
-                    label: 'Number of Rooms (if hotel/resort)',
+                  child: ModernTextFormField(
+                    controller: _warehouseCeilingHeightController,
+                    label: 'Ceiling Height (ft)',
                     keyboardType: TextInputType.number,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildTextField(
-                    controller: _hospitalDiningCapacityController,
-                    label: 'Dining Area Capacity (covers)',
+                  child: ModernTextFormField(
+                    controller: _warehouseLoadingBaysController,
+                    label: 'Loading Bays',
                     keyboardType: TextInputType.number,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            _buildTextField(
+            const SizedBox(height: 12),
+            ModernTextFormField(
+              controller: _warehousePowerController,
+              label: 'Power (kVA)',
+              keyboardType: TextInputType.number,
+              prefixIcon: Icons.electric_bolt_rounded,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ModernTextFormField(
+                    controller: _warehouseShutterHeightController,
+                    label: 'Shutter Ht (ft)',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ModernTextFormField(
+                    controller: _warehouseFloorLoadController,
+                    label: 'Floor Load',
+                    hint: 'kg/sq m',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ModernSwitchTile(
+              title: 'Truck Access',
+              value: _warehouseTruckAccess,
+              onChanged: (v) => setState(() => _warehouseTruckAccess = v),
+              icon: Icons.local_shipping_rounded,
+            ),
+          ],
+
+          // 4. Hospitality (Restaurant) - Additions
+          if (_propertyType == 'restaurant') ...[
+            const SizedBox(height: 24),
+            Text(
+              'Hospitality Details',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ModernTextFormField(
+                    controller: _hospitalRoomsController,
+                    label: 'No. of Rooms',
+                    hint: 'If Hotel/Resort',
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ModernTextFormField(
+                    controller: _hospitalDiningCapacityController,
+                    label: 'Dining Capacity',
+                    hint: 'Covers',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.dining_rounded,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ModernTextFormField(
               controller: _hospitalKitchenSetupController,
               label: 'Kitchen Setup',
-              hint: 'e.g., Fully equipped, FSSAI compliant, veg / non-veg',
+              hint: 'e.g., Equipped, FSSAI compliant',
               maxLines: 2,
             ),
           ],
+
+          // 5. Healthcare (Clinic) - Additions
           if (_propertyType == 'clinic') ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             Text(
               'Healthcare Details',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: 8),
-            _buildTextField(
+            const SizedBox(height: 16),
+            ModernTextFormField(
               controller: _clinicOtIcuDiagController,
-              label: 'OT / ICU / Diagnostic Areas',
+              label: 'Facilities',
               hint: 'e.g., 1 OT, 2 ICU beds, X-ray, MRI',
               maxLines: 2,
+              prefixIcon: Icons.local_hospital_rounded,
             ),
           ],
+          
+          // Generic fallback
+          if (!['office', 'coworking', 'shop', 'showroom', 'warehouse', 'industrial'].contains(_propertyType)) ...[
+             ModernTextFormField(
+               controller: _commercialBuiltUpAreaController,
+               label: 'Built-up Area (sq ft)',
+               keyboardType: TextInputType.number,
+               validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+             ),
+          ],
+
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1076,11 +1080,22 @@ class _FixedAddCommercialListingScreenState
                 onPressed: () => _tabController.animateTo(1),
                 icon: const Icon(Icons.arrow_back),
                 label: const Text('Back'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
               ElevatedButton.icon(
                 onPressed: () => _tabController.animateTo(3),
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Next'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                ),
               ),
             ],
           ),
@@ -1107,247 +1122,169 @@ class _FixedAddCommercialListingScreenState
               color: theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Amenities',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text('Building Amenities',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _buildingAmenities.map((a) {
-              final selected = _selectedAmenities.contains(a);
-              return FilterChip(
-                label: Text(a),
-                selected: selected,
-                showCheckmark: false,
-                selectedColor: theme.colorScheme.primary.withValues(alpha: 0.16),
-                backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
-                shape: StadiumBorder(
-                  side: BorderSide(
-                    color: selected
-                        ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                        : theme.colorScheme.outline.withValues(alpha: 0.4),
-                  ),
-                ),
-                onSelected: (v) {
-                  setState(() {
-                    if (v) {
-                      _selectedAmenities.add(a);
-                    } else {
-                      _selectedAmenities.remove(a);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Text('Parking',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _parkingAmenities.map((a) {
-              final selected = _selectedAmenities.contains(a);
-              return FilterChip(
-                label: Text(a),
-                selected: selected,
-                onSelected: (v) {
-                  setState(() {
-                    if (v) {
-                      _selectedAmenities.add(a);
-                    } else {
-                      _selectedAmenities.remove(a);
-                    }
-                  });
-                },
-              );
-            }).toList(),
+          const SizedBox(height: 16),
+          
+          ModernChipGroup<String>(
+            label: 'Building Amenities',
+            items: _buildingAmenities,
+            selectedItems: _selectedAmenities.toList(),
+            labelBuilder: (a) => a,
+            onItemSelected: (a) {
+              setState(() {
+                if (_selectedAmenities.contains(a)) {
+                  _selectedAmenities.remove(a);
+                } else {
+                  _selectedAmenities.add(a);
+                }
+              });
+            },
           ),
           const SizedBox(height: 16),
+          
+          ModernChipGroup<String>(
+            label: 'Parking',
+            items: _parkingAmenities,
+            selectedItems: _selectedAmenities.toList(),
+            labelBuilder: (a) => a,
+            onItemSelected: (a) {
+              setState(() {
+                if (_selectedAmenities.contains(a)) {
+                  _selectedAmenities.remove(a);
+                } else {
+                  _selectedAmenities.add(a);
+                }
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+
           if (_propertyType == 'restaurant') ...[
             Text(
               'Restaurant Specific',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Liquor License',
               value: _restLiquorLicense,
               onChanged: (v) => setState(() => _restLiquorLicense = v),
-              title: const Text('Liquor License'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Outdoor Seating',
               value: _restOutdoorSeating,
               onChanged: (v) => setState(() => _restOutdoorSeating = v),
-              title: const Text('Outdoor Seating'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Live Music / Entertainment',
               value: _restLiveMusic,
               onChanged: (v) => setState(() => _restLiveMusic = v),
-              title: const Text('Live Music / Entertainment'),
             ),
             const SizedBox(height: 16),
           ],
+
           if (_propertyType == 'clinic') ...[
             Text(
               'Clinic Specific',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: '24x7 Emergency',
               value: _clinicEmergency24x7,
               onChanged: (v) => setState(() => _clinicEmergency24x7 = v),
-              title: const Text('24x7 Emergency'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'In-house Pharmacy',
               value: _clinicInHousePharmacy,
               onChanged: (v) => setState(() => _clinicInHousePharmacy = v),
-              title: const Text('In-house Pharmacy'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Daycare Facility',
               value: _clinicDaycare,
               onChanged: (v) => setState(() => _clinicDaycare = v),
-              title: const Text('Daycare Facility'),
             ),
             const SizedBox(height: 16),
           ],
+
           if (_propertyType == 'warehouse' || _propertyType == 'industrial') ...[
             Text(
               'Warehouse Specific',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Security Cabin',
               value: _warehouseSecurityCabin,
-              onChanged: (v) =>
-                  setState(() => _warehouseSecurityCabin = v),
-              title: const Text('Security Cabin'),
+              onChanged: (v) => setState(() => _warehouseSecurityCabin = v),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Weighbridge',
               value: _warehouseWeighbridge,
               onChanged: (v) => setState(() => _warehouseWeighbridge = v),
-              title: const Text('Weighbridge'),
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ModernSwitchTile(
+              title: 'Sprinkler System',
               value: _warehouseSprinklerSystem,
-              onChanged: (v) =>
-                  setState(() => _warehouseSprinklerSystem = v),
-              title: const Text('Sprinkler System Installed'),
+              onChanged: (v) => setState(() => _warehouseSprinklerSystem = v),
             ),
             const SizedBox(height: 16),
           ],
-          const SizedBox(height: 8),
+
           Text(
             'Financial Terms',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
-          _buildTextField(
+          const SizedBox(height: 12),
+          ModernTextFormField(
             controller: _maintenanceController,
             label: 'Maintenance (₹ / month)',
             keyboardType: TextInputType.number,
+            prefixIcon: Icons.currency_rupee_rounded,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _leasePeriodController,
-                  label: 'Lease Period (years)',
+                  label: 'Lease (years)',
                   keyboardType: TextInputType.number,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _lockinPeriodController,
-                  label: 'Lock-in Period (months)',
+                  label: 'Lock-in (months)',
                   keyboardType: TextInputType.number,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: const [1, 3, 5, 9, 15].map((yrs) {
-              return Builder(builder: (context) {
-                final theme = Theme.of(context);
-                final isSelected = _leasePeriodController.text.trim() == yrs.toString();
-                return ChoiceChip(
-                  label: Text('$yrs yr${yrs > 1 ? 's' : ''}'),
-                  selected: isSelected,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.secondary.withAlpha(90),
-                  backgroundColor: theme.colorScheme.surface.withAlpha(90),
-                  onSelected: (_) {
-                    setState(() {
-                      _leasePeriodController.text = yrs.toString();
-                    });
-                  },
-                );
-              });
-            }).toList(),
+          const SizedBox(height: 12),
+          
+          ModernChipGroup<int>(
+            label: 'Quick Select Lease Period',
+            items: const [1, 3, 5, 9, 15],
+            selectedItems: [int.tryParse(_leasePeriodController.text) ?? 0],
+            labelBuilder: (y) => '$y yr${y > 1 ? 's' : ''}',
+            onItemSelected: (y) => setState(() => _leasePeriodController.text = y.toString()),
           ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: const [3, 6, 9, 12, 18, 24].map((mths) {
-              return Builder(builder: (context) {
-                final theme = Theme.of(context);
-                final isSelected = _lockinPeriodController.text.trim() == mths.toString();
-                return ChoiceChip(
-                  label: Text('$mths mo'),
-                  selected: isSelected,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  selectedColor: theme.colorScheme.primary,
-                  onSelected: (_) {
-                    setState(() {
-                      _lockinPeriodController.text = mths.toString();
-                    });
-                  },
-                );
-              });
-            }).toList(),
+          const SizedBox(height: 12),
+
+          ModernChipGroup<int>(
+            label: 'Quick Select Lock-in Period',
+            items: const [3, 6, 9, 12, 18, 24],
+            selectedItems: [int.tryParse(_lockinPeriodController.text) ?? 0],
+            labelBuilder: (m) => '$m mo',
+            onItemSelected: (m) => setState(() => _lockinPeriodController.text = m.toString()),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _noticePeriodController,
                   label: 'Notice Period (days)',
                   keyboardType: TextInputType.number,
@@ -1355,7 +1292,7 @@ class _FixedAddCommercialListingScreenState
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _escalationRateController,
                   label: 'Rent Escalation (% / year)',
                   keyboardType: TextInputType.number,
@@ -1363,40 +1300,21 @@ class _FixedAddCommercialListingScreenState
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: const [15, 30, 45, 60, 90].map((days) {
-              return Builder(builder: (context) {
-                final theme = Theme.of(context);
-                final isSelected = _noticePeriodController.text.trim() == days.toString();
-                return ChoiceChip(
-                  label: Text('$days days'),
-                  selected: isSelected,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.secondary.withAlpha(90),
-                  backgroundColor: theme.colorScheme.surface.withAlpha(90),
-                  onSelected: (_) {
-                    setState(() {
-                      _noticePeriodController.text = days.toString();
-                    });
-                  },
-                );
-              });
-            }).toList(),
+          const SizedBox(height: 12),
+
+          ModernChipGroup<int>(
+            label: 'Quick Select Notice Period',
+            items: const [15, 30, 45, 60, 90],
+            selectedItems: [int.tryParse(_noticePeriodController.text) ?? 0],
+            labelBuilder: (d) => '$d days',
+            onItemSelected: (d) => setState(() => _noticePeriodController.text = d.toString()),
           ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
+          
+          const SizedBox(height: 12),
+          ModernSwitchTile(
+            title: 'GST applicable on rent',
             value: _gstApplicable,
             onChanged: (v) => setState(() => _gstApplicable = v),
-            title: const Text('GST applicable on rent'),
           ),
           const SizedBox(height: 24),
           Row(
@@ -1596,42 +1514,41 @@ class _FixedAddCommercialListingScreenState
                 ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
-          _buildTextField(
+          ModernTextFormField(
             controller: _contactPersonController,
-            label: 'Contact Person*',
-            prefixIcon: Icons.person_outline,
-            validator: (v) => (v == null || v.isEmpty)
-                ? 'Contact person is required'
-                : null,
+            label: 'Contact Person',
+            prefixIcon: Icons.person_rounded,
+            validator: (v) => (v == null || v.isEmpty) ? 'Contact person is required' : null,
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _phoneController,
-                  label: 'Phone Number*',
+                  label: 'Phone Number',
                   keyboardType: TextInputType.phone,
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? 'Phone is required'
-                      : null,
+                  prefixIcon: Icons.phone_rounded,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Phone is required' : null,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextField(
+                child: ModernTextFormField(
                   controller: _alternatePhoneController,
                   label: 'Alternate Phone',
                   keyboardType: TextInputType.phone,
+                  prefixIcon: Icons.phone_in_talk_rounded,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildTextField(
+          ModernTextFormField(
             controller: _emailController,
             label: 'Email',
             keyboardType: TextInputType.emailAddress,
+            prefixIcon: Icons.email_rounded,
           ),
           const SizedBox(height: 24),
           Row(
@@ -1793,7 +1710,7 @@ class _FixedAddCommercialListingScreenState
                 children: [
                   _buildBasicsStep(),
                   _buildLocationStep(),
-                  _buildSpecificationsStep(),
+                  _buildDetailsStep(),
                   _buildAmenitiesFinancialsStep(),
                   _buildMediaContactStep(),
                 ],
