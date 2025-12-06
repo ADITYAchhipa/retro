@@ -24,10 +24,7 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
   bool _isLoading = false;
   
   // Document verification - store both XFile and bytes for cross-platform
-  XFile? _frontIdXFile;
-  XFile? _backIdXFile;
-  XFile? _selfieXFile;
-  XFile? _profileIdXFile;
+
   Uint8List? _frontIdBytes;
   Uint8List? _backIdBytes;
   Uint8List? _selfieBytes;
@@ -69,28 +66,24 @@ class _KYCVerificationScreenState extends ConsumerState<KYCVerificationScreen> {
         if (profile.frontIdPath != null) {
           final file = File(profile.frontIdPath!);
           if (await file.exists()) {
-            _frontIdXFile = XFile(profile.frontIdPath!);
             _frontIdBytes = await file.readAsBytes();
           }
         }
         if (profile.backIdPath != null) {
           final file = File(profile.backIdPath!);
           if (await file.exists()) {
-            _backIdXFile = XFile(profile.backIdPath!);
             _backIdBytes = await file.readAsBytes();
           }
         }
         if (profile.selfiePath != null) {
           final file = File(profile.selfiePath!);
           if (await file.exists()) {
-            _selfieXFile = XFile(profile.selfiePath!);
             _selfieBytes = await file.readAsBytes();
           }
         }
         if (profileIdPath != null) {
           final file = File(profileIdPath);
           if (await file.exists()) {
-            _profileIdXFile = XFile(profileIdPath);
             _profileIdBytes = await file.readAsBytes();
           }
         }
